@@ -41,14 +41,18 @@ class SlidingShell {
   bool get isSlidingActive => _initialized && !isCompact;
 
   /// 当前宽度下视口应显示的栏数（expanded 为 2，否则 1）。
-  int get visibleColumnCount => LayoutBreakpoints.visibleColumnCount(viewportWidth.value);
+  int get visibleColumnCount =>
+      LayoutBreakpoints.visibleColumnCount(viewportWidth.value);
 
   /// 当前 Tab 的滑动栈。须在 [init] 之后访问。
   SlidingWindowController get currentStack => stacks[currentIndex.value];
 
   /// 为每个 Tab 分配空栈。读 [stacks] 或把 [isSlidingActive] 交给导航之前调用。
   void init() {
-    stacks = List<SlidingWindowController>.generate(tabCount, (_) => SlidingWindowController());
+    stacks = List<SlidingWindowController>.generate(
+      tabCount,
+      (_) => SlidingWindowController(),
+    );
     _initialized = true;
   }
 

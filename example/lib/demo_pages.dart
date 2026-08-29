@@ -15,7 +15,8 @@ class HomeTab extends StatelessWidget {
             key: DemoKeys.openInbox,
             title: const Text('Inbox'),
             subtitle: const Text('pushNamed from root — peer replace'),
-            onTap: () => demoNavigator.pushNamed(DemoRoutes.inbox, from: context),
+            onTap: () =>
+                demoNavigator.pushNamed(DemoRoutes.inbox, from: context),
           ),
           ListTile(
             key: DemoKeys.openSettings,
@@ -43,7 +44,8 @@ class HomeTab extends StatelessWidget {
             key: DemoKeys.openReplaced,
             title: const Text('Replace top'),
             subtitle: const Text('pushReplacementNamed — swap stack top only'),
-            onTap: () => demoNavigator.pushReplacementNamed(DemoRoutes.replaced),
+            onTap: () =>
+                demoNavigator.pushReplacementNamed(DemoRoutes.replaced),
           ),
           ListTile(
             key: DemoKeys.openChat,
@@ -61,7 +63,8 @@ class HomeTab extends StatelessWidget {
             key: DemoKeys.openPhoto,
             title: const Text('Photo'),
             subtitle: const Text('handlesRoute false — always fullscreen'),
-            onTap: () => demoNavigator.pushNamed(DemoRoutes.photo, from: context),
+            onTap: () =>
+                demoNavigator.pushNamed(DemoRoutes.photo, from: context),
           ),
           ListTile(
             key: DemoKeys.popToRoot,
@@ -86,7 +89,8 @@ class ExploreTab extends StatelessWidget {
           ListTile(
             key: DemoKeys.openProfile,
             title: const Text('Profile'),
-            onTap: () => demoNavigator.pushNamed(DemoRoutes.profile, from: context),
+            onTap: () =>
+                demoNavigator.pushNamed(DemoRoutes.profile, from: context),
           ),
         ],
       ),
@@ -145,7 +149,12 @@ class InboxPage extends StatelessWidget {
 }
 
 class ThreadPage extends StatelessWidget {
-  const ThreadPage({super.key, required this.id, this.extra, this.query = const {}});
+  const ThreadPage({
+    super.key,
+    required this.id,
+    this.extra,
+    this.query = const {},
+  });
 
   final String id;
   final Object? extra;
@@ -285,12 +294,20 @@ class PhotoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DemoDetailPage(title: 'Photo fullscreen', body: 'Not intercepted');
+    return const DemoDetailPage(
+      title: 'Photo fullscreen',
+      body: 'Not intercepted',
+    );
   }
 }
 
 class DemoDetailPage extends StatelessWidget {
-  const DemoDetailPage({super.key, required this.title, required this.body, this.children = const []});
+  const DemoDetailPage({
+    super.key,
+    required this.title,
+    required this.body,
+    this.children = const [],
+  });
 
   final String title;
   final String body;
@@ -304,7 +321,9 @@ class DemoDetailPage extends StatelessWidget {
         leading: inSlidingWindow(context) ? const SlidingBackButton() : null,
         actions: [
           PopupMenuButton<String>(
-            key: title == 'Inbox' ? DemoKeys.overlayMenu : Key('overlay-menu-$title'),
+            key: title == 'Inbox'
+                ? DemoKeys.overlayMenu
+                : Key('overlay-menu-$title'),
             useRootNavigator: inSlidingWindow(context),
             itemBuilder: (context) => const [
               PopupMenuItem<String>(value: 'pin', child: Text('Pin')),
@@ -314,10 +333,7 @@ class DemoDetailPage extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          Text(body),
-          ...children,
-        ],
+        children: [Text(body), ...children],
       ),
     );
   }

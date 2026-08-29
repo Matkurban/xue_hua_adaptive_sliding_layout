@@ -25,13 +25,19 @@ void main() {
       );
       controller.push(
         (_) => Center(
-          child: TextButton(onPressed: () => leftTaps++, child: const Text('left-btn')),
+          child: TextButton(
+            onPressed: () => leftTaps++,
+            child: const Text('left-btn'),
+          ),
         ),
         name: 'A',
       );
       controller.push(
         (_) => Center(
-          child: TextButton(onPressed: () => rightTaps++, child: const Text('right-btn')),
+          child: TextButton(
+            onPressed: () => rightTaps++,
+            child: const Text('right-btn'),
+          ),
         ),
         name: 'B',
       );
@@ -54,13 +60,19 @@ void main() {
       );
       controller.push(
         (_) => Center(
-          child: TextButton(onPressed: () => leftTaps++, child: const Text('left-btn')),
+          child: TextButton(
+            onPressed: () => leftTaps++,
+            child: const Text('left-btn'),
+          ),
         ),
         name: 'A',
       );
       controller.push(
         (_) => Center(
-          child: TextButton(onPressed: () => rightTaps++, child: const Text('right-btn')),
+          child: TextButton(
+            onPressed: () => rightTaps++,
+            child: const Text('right-btn'),
+          ),
         ),
         name: 'B',
       );
@@ -91,7 +103,10 @@ class _ViewportHarness extends StatelessWidget {
           height: 600,
           child: SlidingWindowScope(
             controller: controller,
-            child: SlidingWindowViewport(controller: controller, visibleCount: 2),
+            child: SlidingWindowViewport(
+              controller: controller,
+              visibleCount: 2,
+            ),
           ),
         ),
       ),

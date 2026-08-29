@@ -30,7 +30,10 @@ class _RecordingFallback implements AdaptiveNavigatorFallback {
   }
 
   @override
-  Future<T?> pushReplacement<T extends Object?>(Widget page, {BuildContext? from}) {
+  Future<T?> pushReplacement<T extends Object?>(
+    Widget page, {
+    BuildContext? from,
+  }) {
     pushReplacementCount++;
     return Future<T?>.value();
   }
@@ -178,7 +181,9 @@ void main() {
       expect(stack.visiblePages(2).map((page) => page.name), ['A', 'C']);
     });
 
-    testWidgets('left pane same name replaces right pane not stack', (tester) async {
+    testWidgets('left pane same name replaces right pane not stack', (
+      tester,
+    ) async {
       stack.push((_) => const SizedBox(), name: 'A');
       stack.push((_) => const SizedBox(), name: 'B');
 
@@ -200,19 +205,30 @@ void main() {
       expect(stack.pages.value.map((page) => page.name), ['Home', 'A', 'D']);
     });
 
-    testWidgets('push without pane at depth 3 stacks to depth 4', (tester) async {
+    testWidgets('push without pane at depth 3 stacks to depth 4', (
+      tester,
+    ) async {
       stack.push((_) => const SizedBox(), name: 'A');
       stack.push((_) => const SizedBox(), name: 'B');
 
       navigator.push(const SizedBox(), name: 'C');
 
       expect(stack.depth, 4);
-      expect(stack.pages.value.map((page) => page.name), ['Home', 'A', 'B', 'C']);
+      expect(stack.pages.value.map((page) => page.name), [
+        'Home',
+        'A',
+        'B',
+        'C',
+      ]);
     });
 
     test('pushAndRemoveUntil untilRoot replaces peer at depth 2', () {
       stack.push((_) => const SizedBox(), name: 'ChatA');
-      navigator.pushAndRemoveUntil(const SizedBox(), AdaptiveNavigator.untilRoot, name: 'ChatB');
+      navigator.pushAndRemoveUntil(
+        const SizedBox(),
+        AdaptiveNavigator.untilRoot,
+        name: 'ChatB',
+      );
 
       expect(stack.depth, 2);
       expect(stack.pages.value.map((page) => page.name), ['Home', 'ChatB']);

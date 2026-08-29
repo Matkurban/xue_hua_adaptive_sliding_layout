@@ -4,12 +4,17 @@ import 'package:xue_hua_adaptive_sliding_layout/src/sliding_window_controller.da
 /// 当前 [context] 是否位于桌面多栏滑动窗口内。
 ///
 /// 栏内嵌套 Navigator 的 Overlay 会被栏边界裁剪，菜单/遮罩应提升到根 Overlay。
-bool inSlidingWindow(BuildContext context) => SlidingWindowScope.maybeOf(context) != null;
+bool inSlidingWindow(BuildContext context) =>
+    SlidingWindowScope.maybeOf(context) != null;
 
 /// 向子树暴露当前 Tab 的滑动窗口控制器。
 class SlidingWindowScope extends InheritedWidget {
   /// [controller] 为本 Tab 的栈，通常由 [MultiColumnScaffold] 写入。
-  const SlidingWindowScope({super.key, required this.controller, required super.child});
+  const SlidingWindowScope({
+    super.key,
+    required this.controller,
+    required super.child,
+  });
 
   /// 当前 Tab 的 [SlidingWindowController]。
   final SlidingWindowController controller;
@@ -28,7 +33,8 @@ class SlidingWindowScope extends InheritedWidget {
 
   /// [controller] 实例变化时通知依赖。
   @override
-  bool updateShouldNotify(SlidingWindowScope oldWidget) => controller != oldWidget.controller;
+  bool updateShouldNotify(SlidingWindowScope oldWidget) =>
+      controller != oldWidget.controller;
 }
 
 /// 当前栏在滑动栈中的位置。返回按钮只应出现在栈顶（最右可见栏）。

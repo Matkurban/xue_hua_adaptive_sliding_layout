@@ -20,7 +20,8 @@ class SlidingBackButton extends StatelessWidget {
       return const SizedBox.shrink();
     }
     return BackButton(
-      onPressed: onPressed ??
+      onPressed:
+          onPressed ??
           () {
             final actions = SlidingActions.maybeOf(context);
             if (actions != null) {

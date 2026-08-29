@@ -152,7 +152,9 @@ void main() {
     expect(find.byType(ThreadPage), findsNothing);
   });
 
-  testWidgets('expanded pushReplacementNamed replaces stack top only', (tester) async {
+  testWidgets('expanded pushReplacementNamed replaces stack top only', (
+    tester,
+  ) async {
     await _pumpDemo(tester, expandedSize);
     await tester.tap(find.byKey(DemoKeys.openInbox));
     await tester.pumpAndSettle();

@@ -27,7 +27,10 @@ void main() {
 
     test('depth 2 shows Home and A', () {
       controller.push((_) => page('A'), name: 'A');
-      expect(controller.visiblePages(2).map((page) => page.name), ['Home', 'A']);
+      expect(controller.visiblePages(2).map((page) => page.name), [
+        'Home',
+        'A',
+      ]);
     });
 
     test('depth 3 shows A and B', () {
@@ -68,20 +71,31 @@ void main() {
       expect(await future, 'ok');
     });
 
-    test('openAfter keepCount 2 at depth 3 with same name B stays Home A B', () {
-      controller.push((_) => page('A'), name: 'A');
-      controller.push((_) => page('B'), name: 'B');
-      controller.openAfter(2, (_) => page('B2'), name: 'B');
-      expect(controller.depth, 3);
-      expect(controller.pages.value.map((page) => page.name), ['Home', 'A', 'B']);
-    });
+    test(
+      'openAfter keepCount 2 at depth 3 with same name B stays Home A B',
+      () {
+        controller.push((_) => page('A'), name: 'A');
+        controller.push((_) => page('B'), name: 'B');
+        controller.openAfter(2, (_) => page('B2'), name: 'B');
+        expect(controller.depth, 3);
+        expect(controller.pages.value.map((page) => page.name), [
+          'Home',
+          'A',
+          'B',
+        ]);
+      },
+    );
 
     test('openAfter keepCount 2 at depth 3 with new name D is Home A D', () {
       controller.push((_) => page('A'), name: 'A');
       controller.push((_) => page('B'), name: 'B');
       controller.openAfter(2, (_) => page('D'), name: 'D');
       expect(controller.depth, 3);
-      expect(controller.pages.value.map((page) => page.name), ['Home', 'A', 'D']);
+      expect(controller.pages.value.map((page) => page.name), [
+        'Home',
+        'A',
+        'D',
+      ]);
     });
 
     test('indexOfName finds from the back', () {
@@ -98,7 +112,10 @@ void main() {
       controller.openSecondary((_) => page('A'), name: 'A');
       expect(controller.depth, 2);
       expect(controller.pages.value.map((page) => page.name), ['Home', 'A']);
-      expect(controller.visiblePages(2).map((page) => page.name), ['Home', 'A']);
+      expect(controller.visiblePages(2).map((page) => page.name), [
+        'Home',
+        'A',
+      ]);
     });
 
     test('openSecondary at depth 2 stays depth 2 with Home and B', () {
@@ -106,23 +123,32 @@ void main() {
       controller.openSecondary((_) => page('B'), name: 'B');
       expect(controller.depth, 2);
       expect(controller.pages.value.map((page) => page.name), ['Home', 'B']);
-      expect(controller.visiblePages(2).map((page) => page.name), ['Home', 'B']);
+      expect(controller.visiblePages(2).map((page) => page.name), [
+        'Home',
+        'B',
+      ]);
     });
 
-    test('openSecondary then push C is depth 3; pops return to Home B then root', () {
-      controller.openSecondary((_) => page('B'), name: 'B');
-      controller.push((_) => page('C'), name: 'C');
-      expect(controller.depth, 3);
-      expect(controller.visiblePages(2).map((page) => page.name), ['B', 'C']);
+    test(
+      'openSecondary then push C is depth 3; pops return to Home B then root',
+      () {
+        controller.openSecondary((_) => page('B'), name: 'B');
+        controller.push((_) => page('C'), name: 'C');
+        expect(controller.depth, 3);
+        expect(controller.visiblePages(2).map((page) => page.name), ['B', 'C']);
 
-      expect(controller.pop(), isTrue);
-      expect(controller.pages.value.map((page) => page.name), ['Home', 'B']);
-      expect(controller.visiblePages(2).map((page) => page.name), ['Home', 'B']);
+        expect(controller.pop(), isTrue);
+        expect(controller.pages.value.map((page) => page.name), ['Home', 'B']);
+        expect(controller.visiblePages(2).map((page) => page.name), [
+          'Home',
+          'B',
+        ]);
 
-      expect(controller.pop(), isTrue);
-      expect(controller.depth, 1);
-      expect(controller.pages.value.single.name, 'Home');
-    });
+        expect(controller.pop(), isTrue);
+        expect(controller.depth, 1);
+        expect(controller.pages.value.single.name, 'Home');
+      },
+    );
 
     test('popToRoot from depth 3 returns to root', () {
       controller.push((_) => page('A'), name: 'A');

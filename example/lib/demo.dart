@@ -157,9 +157,14 @@ class DemoNavigatorFallback implements AdaptiveNavigatorFallback {
   }
 
   @override
-  Future<T?> pushReplacement<T extends Object?>(Widget page, {BuildContext? from}) {
+  Future<T?> pushReplacement<T extends Object?>(
+    Widget page, {
+    BuildContext? from,
+  }) {
     final nav = from != null ? Navigator.of(from) : demoNavKey.currentState!;
-    return nav.pushReplacement<T, T>(MaterialPageRoute<T>(builder: (_) => page));
+    return nav.pushReplacement<T, T>(
+      MaterialPageRoute<T>(builder: (_) => page),
+    );
   }
 
   @override

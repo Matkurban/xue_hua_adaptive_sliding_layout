@@ -8,7 +8,10 @@ void main() {
 
   group('SlidingPageTitle.humanize', () {
     test('falls back to last path segment', () {
-      expect(SlidingPageTitle.humanize('/unknownRouteName'), 'Unknown Route Name');
+      expect(
+        SlidingPageTitle.humanize('/unknownRouteName'),
+        'Unknown Route Name',
+      );
     });
 
     test('strips Page suffix', () {
@@ -87,7 +90,9 @@ void main() {
       controller.dispose();
     });
 
-    testWidgets('AppBar title overwrites initial title on first frame', (tester) async {
+    testWidgets('AppBar title overwrites initial title on first frame', (
+      tester,
+    ) async {
       controller.ensureRoot(name: 'Home', builder: (_) => const SizedBox());
       controller.push(
         (_) => Scaffold(
@@ -107,7 +112,10 @@ void main() {
               height: 600,
               child: SlidingWindowScope(
                 controller: controller,
-                child: SlidingWindowViewport(controller: controller, visibleCount: 2),
+                child: SlidingWindowViewport(
+                  controller: controller,
+                  visibleCount: 2,
+                ),
               ),
             ),
           ),
@@ -120,7 +128,9 @@ void main() {
       controller.dispose();
     });
 
-    testWidgets('report during SignalBuilder build does not throw', (tester) async {
+    testWidgets('report during SignalBuilder build does not throw', (
+      tester,
+    ) async {
       controller.ensureRoot(name: 'Home', builder: (_) => const SizedBox());
       controller.push(
         (_) => Scaffold(
@@ -147,7 +157,10 @@ void main() {
               height: 600,
               child: SlidingWindowScope(
                 controller: controller,
-                child: SlidingWindowViewport(controller: controller, visibleCount: 2),
+                child: SlidingWindowViewport(
+                  controller: controller,
+                  visibleCount: 2,
+                ),
               ),
             ),
           ),

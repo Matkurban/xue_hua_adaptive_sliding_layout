@@ -11,7 +11,9 @@ class SlidingWindowController {
   SlidingWindowController();
 
   /// 当前栈快照。视口与面包屑订阅此 signal。
-  final Signal<List<SlidingWindowPage>> pages = signal(const <SlidingWindowPage>[]);
+  final Signal<List<SlidingWindowPage>> pages = signal(
+    const <SlidingWindowPage>[],
+  );
 
   /// 除根以外还有页时为 true。
   bool get canPop => pages.value.length > 1;
@@ -42,7 +44,11 @@ class SlidingWindowController {
   ///
   /// 根页 [SlidingWindowPage.key] 固定为 `ValueKey('sliding-root')`，
   /// [AdaptiveNavigator.untilRoot] 依赖此 key。
-  void ensureRoot({required String name, required WidgetBuilder builder, String? title}) {
+  void ensureRoot({
+    required String name,
+    required WidgetBuilder builder,
+    String? title,
+  }) {
     if (pages.value.isNotEmpty) return;
     pages.value = [
       SlidingWindowPage(
@@ -113,7 +119,9 @@ class SlidingWindowController {
     if (all.isEmpty) {
       return push<T>(builder, name: name, title: title, key: key);
     }
-    final keep = keepCount < 1 ? 1 : (keepCount > all.length ? all.length : keepCount);
+    final keep = keepCount < 1
+        ? 1
+        : (keepCount > all.length ? all.length : keepCount);
     if (keep >= all.length) {
       return push<T>(builder, name: name, title: title, key: key);
     }

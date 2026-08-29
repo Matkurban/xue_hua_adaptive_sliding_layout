@@ -27,7 +27,11 @@ void main() {
     testWidgets('hides when not stack top', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: SlidingPaneScope(index: 0, depth: 2, child: Scaffold(body: SlidingBackButton())),
+          home: SlidingPaneScope(
+            index: 0,
+            depth: 2,
+            child: Scaffold(body: SlidingBackButton()),
+          ),
         ),
       );
       expect(find.byType(BackButton), findsNothing);
@@ -36,7 +40,11 @@ void main() {
     testWidgets('shows on stack top when depth > 1', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: SlidingPaneScope(index: 1, depth: 2, child: Scaffold(body: SlidingBackButton())),
+          home: SlidingPaneScope(
+            index: 1,
+            depth: 2,
+            child: Scaffold(body: SlidingBackButton()),
+          ),
         ),
       );
       expect(find.byType(BackButton), findsOneWidget);
@@ -68,7 +76,9 @@ void main() {
       expect(find.text('a:1'), findsOneWidget);
     });
 
-    testWidgets('depth 3 left pane (former top) reports showBack false', (tester) async {
+    testWidgets('depth 3 left pane (former top) reports showBack false', (
+      tester,
+    ) async {
       controller.ensureRoot(
         name: 'Root',
         builder: (_) => const _ShowBackProbe(id: 'root'),
@@ -83,7 +93,9 @@ void main() {
       expect(find.text('b:1'), findsOneWidget);
     });
 
-    testWidgets('depth 2 default AppBar back only on stack top', (tester) async {
+    testWidgets('depth 2 default AppBar back only on stack top', (
+      tester,
+    ) async {
       controller.ensureRoot(
         name: 'Root',
         builder: (_) => Scaffold(
@@ -104,16 +116,24 @@ void main() {
 
       expect(find.byType(BackButton), findsOneWidget);
       expect(
-        find.descendant(of: find.widgetWithText(AppBar, 'Root'), matching: find.byType(BackButton)),
+        find.descendant(
+          of: find.widgetWithText(AppBar, 'Root'),
+          matching: find.byType(BackButton),
+        ),
         findsNothing,
       );
       expect(
-        find.descendant(of: find.widgetWithText(AppBar, 'Top'), matching: find.byType(BackButton)),
+        find.descendant(
+          of: find.widgetWithText(AppBar, 'Top'),
+          matching: find.byType(BackButton),
+        ),
         findsOneWidget,
       );
     });
 
-    testWidgets('depth 3 default AppBar back moves to new stack top', (tester) async {
+    testWidgets('depth 3 default AppBar back moves to new stack top', (
+      tester,
+    ) async {
       controller.ensureRoot(
         name: 'Root',
         builder: (_) => Scaffold(
@@ -132,7 +152,10 @@ void main() {
       await tester.pumpWidget(_ViewportHarness(controller: controller));
       await tester.pumpAndSettle();
       expect(
-        find.descendant(of: find.widgetWithText(AppBar, 'A'), matching: find.byType(BackButton)),
+        find.descendant(
+          of: find.widgetWithText(AppBar, 'A'),
+          matching: find.byType(BackButton),
+        ),
         findsOneWidget,
       );
 
@@ -146,16 +169,24 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.descendant(of: find.widgetWithText(AppBar, 'A'), matching: find.byType(BackButton)),
+        find.descendant(
+          of: find.widgetWithText(AppBar, 'A'),
+          matching: find.byType(BackButton),
+        ),
         findsNothing,
       );
       expect(
-        find.descendant(of: find.widgetWithText(AppBar, 'B'), matching: find.byType(BackButton)),
+        find.descendant(
+          of: find.widgetWithText(AppBar, 'B'),
+          matching: find.byType(BackButton),
+        ),
         findsOneWidget,
       );
     });
 
-    testWidgets('pop restores default AppBar back on the new stack top', (tester) async {
+    testWidgets('pop restores default AppBar back on the new stack top', (
+      tester,
+    ) async {
       controller.ensureRoot(
         name: 'Root',
         builder: (_) => Scaffold(
@@ -181,11 +212,17 @@ void main() {
       await tester.pumpWidget(_ViewportHarness(controller: controller));
       await tester.pumpAndSettle();
       expect(
-        find.descendant(of: find.widgetWithText(AppBar, 'B'), matching: find.byType(BackButton)),
+        find.descendant(
+          of: find.widgetWithText(AppBar, 'B'),
+          matching: find.byType(BackButton),
+        ),
         findsOneWidget,
       );
       expect(
-        find.descendant(of: find.widgetWithText(AppBar, 'A'), matching: find.byType(BackButton)),
+        find.descendant(
+          of: find.widgetWithText(AppBar, 'A'),
+          matching: find.byType(BackButton),
+        ),
         findsNothing,
       );
 
@@ -194,7 +231,10 @@ void main() {
 
       expect(find.widgetWithText(AppBar, 'B'), findsNothing);
       expect(
-        find.descendant(of: find.widgetWithText(AppBar, 'A'), matching: find.byType(BackButton)),
+        find.descendant(
+          of: find.widgetWithText(AppBar, 'A'),
+          matching: find.byType(BackButton),
+        ),
         findsOneWidget,
       );
 
@@ -203,7 +243,10 @@ void main() {
 
       expect(find.byType(BackButton), findsNothing);
       expect(
-        find.descendant(of: find.widgetWithText(AppBar, 'Root'), matching: find.byType(BackButton)),
+        find.descendant(
+          of: find.widgetWithText(AppBar, 'Root'),
+          matching: find.byType(BackButton),
+        ),
         findsNothing,
       );
     });
@@ -225,7 +268,10 @@ class _ViewportHarness extends StatelessWidget {
           height: 600,
           child: SlidingWindowScope(
             controller: controller,
-            child: SlidingWindowViewport(controller: controller, visibleCount: 2),
+            child: SlidingWindowViewport(
+              controller: controller,
+              visibleCount: 2,
+            ),
           ),
         ),
       ),
