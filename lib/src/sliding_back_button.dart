@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/sliding_actions.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/sliding_window_scope.dart';
 

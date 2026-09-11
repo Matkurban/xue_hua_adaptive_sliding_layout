@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/sliding_window_page.dart';
 
 /// 滑动栏页面标题：入栈初值、AppBar 同步、动态 [report]。
