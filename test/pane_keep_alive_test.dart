@@ -1,59 +1,47 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:signals_flutter/signals_flutter.dart';
 import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('SlidingWindowViewport keep-alive', () {
-    late SlidingWindowController controller;
-
+  group('SlidingPaneViewport keep-alive', () {
     setUp(() {
-      controller = SlidingWindowController();
       _KeepAliveProbe.initCount = 0;
-    });
-
-    tearDown(() {
-      controller.dispose();
     });
 
     testWidgets('depth 2 to 3 keeps the previous right pane State', (
       tester,
     ) async {
-      controller.ensureRoot(
-        name: 'Root',
-        builder: (_) => const ColoredBox(color: Colors.grey),
-      );
-      controller.push((_) => const _KeepAliveProbe(label: 'A'), name: 'A');
-
-      await tester.pumpWidget(
-        _KeepAliveHarness(controller: controller, visibleCount: 2),
-      );
+      final root = _pane('Root');
+      final a = _pane('A', child: const _KeepAliveProbe(label: 'A'));
+      await tester.pumpWidget(_KeepAliveHarness(panes: [root, a]));
       await tester.pumpAndSettle();
       expect(_KeepAliveProbe.initCount, 1);
 
-      controller.push((_) => const ColoredBox(color: Colors.green), name: 'B');
+      await tester.pumpWidget(
+        _KeepAliveHarness(
+          panes: [root, a, _pane('B', child: const ColoredBox(color: Colors.green))],
+        ),
+      );
       await tester.pumpAndSettle();
-
       expect(_KeepAliveProbe.initCount, 1);
       expect(find.text('probe-A'), findsOneWidget);
     });
 
     testWidgets('depth 1 to 2 keeps the root pane State', (tester) async {
-      controller.ensureRoot(
-        name: 'Root',
-        builder: (_) => const _KeepAliveProbe(label: 'Root'),
-      );
-
-      await tester.pumpWidget(
-        _KeepAliveHarness(controller: controller, visibleCount: 2),
-      );
+      final root = _pane('Root', child: const _KeepAliveProbe(label: 'Root'));
+      await tester.pumpWidget(_KeepAliveHarness(panes: [root]));
       await tester.pumpAndSettle();
       expect(_KeepAliveProbe.initCount, 1);
 
-      controller.push((_) => const ColoredBox(color: Colors.blue), name: 'A');
+      await tester.pumpWidget(
+        _KeepAliveHarness(
+          panes: [root, _pane('A', child: const ColoredBox(color: Colors.blue))],
+        ),
+      );
       await tester.pumpAndSettle();
-
       expect(_KeepAliveProbe.initCount, 1);
       expect(find.text('probe-Root'), findsOneWidget);
     });
@@ -61,30 +49,37 @@ void main() {
     testWidgets('single column depth 1 to 2 keeps the root pane State', (
       tester,
     ) async {
-      controller.ensureRoot(
-        name: 'Root',
-        builder: (_) => const _KeepAliveProbe(label: 'Root'),
-      );
-
+      final root = _pane('Root', child: const _KeepAliveProbe(label: 'Root'));
       await tester.pumpWidget(
-        _KeepAliveHarness(controller: controller, visibleCount: 1),
+        _KeepAliveHarness(panes: [root], visibleCount: 1),
       );
       await tester.pumpAndSettle();
       expect(_KeepAliveProbe.initCount, 1);
 
-      controller.push((_) => const ColoredBox(color: Colors.blue), name: 'A');
+      await tester.pumpWidget(
+        _KeepAliveHarness(
+          panes: [root, _pane('A')],
+          visibleCount: 1,
+        ),
+      );
       await tester.pumpAndSettle();
-
       expect(_KeepAliveProbe.initCount, 1);
     });
   });
+}
+
+SlidingPane _pane(String name, {Widget? child}) {
+  return SlidingPane(
+    key: ValueKey<String>(name),
+    title: signal(name),
+    child: child ?? ColoredBox(color: Colors.grey, child: Text(name)),
+  );
 }
 
 class _KeepAliveProbe extends StatefulWidget {
   const _KeepAliveProbe({required this.label});
 
   final String label;
-
   static int initCount = 0;
 
   @override
@@ -105,12 +100,9 @@ class _KeepAliveProbeState extends State<_KeepAliveProbe> {
 }
 
 class _KeepAliveHarness extends StatelessWidget {
-  const _KeepAliveHarness({
-    required this.controller,
-    required this.visibleCount,
-  });
+  const _KeepAliveHarness({required this.panes, this.visibleCount = 2});
 
-  final SlidingWindowController controller;
+  final List<SlidingPane> panes;
   final int visibleCount;
 
   @override
@@ -121,13 +113,7 @@ class _KeepAliveHarness extends StatelessWidget {
         child: SizedBox(
           width: 800,
           height: 600,
-          child: SlidingWindowScope(
-            controller: controller,
-            child: SlidingWindowViewport(
-              controller: controller,
-              visibleCount: visibleCount,
-            ),
-          ),
+          child: SlidingPaneViewport(panes: panes, visibleCount: visibleCount),
         ),
       ),
     );

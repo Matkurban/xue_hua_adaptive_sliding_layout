@@ -1,26 +1,15 @@
-/// 自适应移动端 / 桌面端多栏滑动布局与命名路由拦截。
+/// 自适应移动端 / 桌面端多栏滑动布局与声明式路由。
 ///
-/// 宿主拥有路由、DI、l10n；本库只导出断点、每 Tab 滑动栈、视口和
-/// [AdaptiveNavigator]。接入步骤与参数说明见仓库根目录 README。
-///
-/// 导出类型按职责：
-/// - 断点：[LayoutBreakpoints]（别名 [AppBreakpoints]）
-/// - 多 Tab 壳：[SlidingShell]
-/// - 单 Tab 栈：[SlidingWindowController]、[SlidingWindowPage]
-/// - 布局：[MultiColumnScaffold]、[SlidingWindowViewport]
-/// - 导航：[AdaptiveNavigator]、[AdaptiveNavigatorFallback]、[AdaptiveRouteArgs]
-/// - 栏内辅助：[SlidingActions]、[SlidingBackButton]、[SlidingPageTitle]、
-///   [SlidingWindowScope]、[SlidingPaneScope]、[inSlidingWindow]
+/// 一张路由表决定 URL、页面栈和栏位；调用 API 与 [NavigatorState] 同名
+///（`AdaptiveRouter.of(context).pushNamed(...)`）。不依赖 go_router，
+/// 路由 / DI 由宿主自己持有路由器实例。
 library;
 
-export 'src/adaptive_navigator.dart';
-export 'src/layout_breakpoints.dart';
-export 'src/multi_column_scaffold.dart';
-export 'src/sliding_actions.dart';
-export 'src/sliding_back_button.dart';
-export 'src/sliding_page_title.dart';
-export 'src/sliding_shell.dart';
-export 'src/sliding_window_controller.dart';
-export 'src/sliding_window_page.dart';
-export 'src/sliding_window_scope.dart';
-export 'src/sliding_window_viewport.dart';
+export 'src/layout/breadcrumbs.dart';
+export 'src/layout/layout_breakpoints.dart';
+export 'src/layout/pane_scope.dart';
+export 'src/layout/sliding_pane_viewport.dart';
+export 'src/router/adaptive_router.dart';
+export 'src/router/match.dart';
+export 'src/router/route.dart';
+export 'src/router/route_state.dart';

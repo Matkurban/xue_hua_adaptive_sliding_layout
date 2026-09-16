@@ -1,3 +1,20 @@
+## 3.0.0
+
+### Breaking Changes ⚠️
+
+* Replaced the 2.x host-assembled toolkit (`SlidingShell`, `AdaptiveNavigator`, `AdaptiveNavigatorFallback`, `MultiColumnScaffold`, `SlidingWindowController`, title scraping) with a single declarative router: **`AdaptiveRouter`**.
+* Navigation verbs match **`NavigatorState`** names and signatures (`pushNamed`, `pushReplacementNamed`, `pushNamedAndRemoveUntil`, `popAndPushNamed`, `pop`, `maybePop`, `popUntil`, `canPop`). There are no `context.go` / `context.pop` extensions.
+* `routeName` is a location string (`/mail/inbox/42`). `arguments` replaces 2.x / go_router `extra`.
+* One route table is the source of truth: URL → match list → 1-column `Navigator` or 2-column `SlidingPaneViewport`. `openAfter` / `openSecondary` / `from:` / `handlesRoute` / `buildPage` / fallback are gone.
+* `fullscreen: true` routes stack on the root Navigator (login, photo). `AdaptivePaneScope` replaces `inSlidingWindow` + `SlidingPaneScope` + `SlidingPageTitle`.
+* No compatibility layer. Migrate hosts to `MaterialApp.router(routerConfig: router)`.
+
+### Features
+
+* go_router-style route tree (`AdaptiveRoute` / `AdaptiveShellRoute` / `AdaptiveBranch`) with `:param` paths, `redirect`, `onExit`, `namedLocation`, and `errorBuilder`.
+* Configurable `LayoutBreakpoints` (defaults 600 / 840). Sliding viewport, sash, keep-alive, breadcrumbs, and Escape are kept.
+* Example app covers Mail / Contacts / Settings / Playground, plus a DemoFrame width preset for the web demo.
+
 ## 2.0.0
 
 ### Breaking Changes ⚠️
