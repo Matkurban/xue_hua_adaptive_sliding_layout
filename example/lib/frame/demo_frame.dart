@@ -30,62 +30,67 @@ class DemoFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SignalBuilder(
-      builder: (context) {
-        final preset = demoSizePreset.value;
-        final loc = appRouter.location.value;
-        final width = MediaQuery.sizeOf(context).width;
-        final framed = preset.width ?? width;
-        final bp = const LayoutBreakpoints();
-        final mode = bp.isCompact(framed)
-            ? 'compact'
-            : bp.isMedium(framed)
-            ? 'medium'
-            : 'expanded';
-        final columns = bp.visibleColumnCount(framed);
-        return Column(
-          children: [
-            Material(
-              color: Theme.of(context).colorScheme.surfaceContainer,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text('Demo', style: Theme.of(context).textTheme.titleSmall),
-                    for (final item in DemoSizePreset.values)
-                      ChoiceChip(
-                        label: Text(item.label),
-                        selected: item == preset,
-                        onSelected: (_) => demoSizePreset.value = item,
+    return Scaffold(
+      body: SignalBuilder(
+        builder: (context) {
+          final preset = demoSizePreset.value;
+          final loc = appRouter.location.value;
+          final width = MediaQuery.sizeOf(context).width;
+          final framed = preset.width ?? width;
+          final bp = const LayoutBreakpoints();
+          final mode = bp.isCompact(framed)
+              ? 'compact'
+              : bp.isMedium(framed)
+              ? 'medium'
+              : 'expanded';
+          final columns = bp.visibleColumnCount(framed);
+          return Column(
+            children: [
+              Material(
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        'Demo',
+                        style: Theme.of(context).textTheme.titleSmall,
                       ),
-                    Text('$loc  ·  $mode  ·  $columns col'),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: SizedBox(
-                  width: framed,
-                  child: MediaQuery(
-                    data: MediaQuery.of(context).copyWith(
-                      size: Size(framed, MediaQuery.sizeOf(context).height),
-                    ),
-                    child: child,
+                      for (final item in DemoSizePreset.values)
+                        ChoiceChip(
+                          label: Text(item.label),
+                          selected: item == preset,
+                          onSelected: (_) => demoSizePreset.value = item,
+                        ),
+                      Text('$loc  ·  $mode  ·  $columns col'),
+                    ],
                   ),
                 ),
               ),
-            ),
-          ],
-        );
-      },
+              Expanded(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: framed,
+                    child: MediaQuery(
+                      data: MediaQuery.of(context).copyWith(
+                        size: Size(framed, MediaQuery.sizeOf(context).height),
+                      ),
+                      child: child,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
