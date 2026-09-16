@@ -69,7 +69,7 @@ AdaptiveRouter createAppRouter() {
           return AdaptiveBreadcrumbs(
             panes: panes,
             onSelect: onSelect,
-            height: 40,
+            height: 32,
             backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
           );
         },
