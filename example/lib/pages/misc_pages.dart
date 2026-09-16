@@ -70,7 +70,11 @@ class PhotoPage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.image, size: 96, color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.image,
+              size: 96,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             Text('photo-$id', key: const Key('photo-id')),
           ],
         ),

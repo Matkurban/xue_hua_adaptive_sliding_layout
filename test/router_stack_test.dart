@@ -16,7 +16,12 @@ List<String> _locs(AdaptiveRouteMatchList list) {
 List<AdaptiveRouteBase> _routes() {
   return [
     AdaptiveRoute(path: '/login', fullscreen: true, builder: _page),
-    AdaptiveRoute(path: '/photo/:id', name: 'photo', fullscreen: true, builder: _page),
+    AdaptiveRoute(
+      path: '/photo/:id',
+      name: 'photo',
+      fullscreen: true,
+      builder: _page,
+    ),
     AdaptiveShellRoute(
       builder: (context, shell, child) => child,
       branches: [
@@ -29,9 +34,7 @@ List<AdaptiveRouteBase> _routes() {
                 AdaptiveRoute(
                   path: ':folder',
                   builder: _page,
-                  routes: [
-                    AdaptiveRoute(path: ':threadId', builder: _page),
-                  ],
+                  routes: [AdaptiveRoute(path: ':threadId', builder: _page)],
                 ),
               ],
             ),
@@ -42,9 +45,7 @@ List<AdaptiveRouteBase> _routes() {
             AdaptiveRoute(
               path: '/contacts',
               builder: _page,
-              routes: [
-                AdaptiveRoute(path: ':id', builder: _page),
-              ],
+              routes: [AdaptiveRoute(path: ':id', builder: _page)],
             ),
           ],
         ),
@@ -182,10 +183,7 @@ void main() {
 
   group('goBranch', () {
     test('rebuilds the target branch from location', () {
-      final stack = engine.goBranch(
-        at('/mail/inbox'),
-        location: '/contacts',
-      );
+      final stack = engine.goBranch(at('/mail/inbox'), location: '/contacts');
       expect(_locs(stack), ['/contacts']);
       expect(stack.branchIndex, 1);
     });

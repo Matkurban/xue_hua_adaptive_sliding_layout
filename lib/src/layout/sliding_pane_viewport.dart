@@ -215,16 +215,12 @@ class _SlidingPaneViewportState extends State<SlidingPaneViewport> {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final height = constraints.maxHeight;
-        if (!width.isFinite ||
-            width <= 0 ||
-            !height.isFinite ||
-            height <= 0) {
+        if (!width.isFinite || width <= 0 || !height.isFinite || height <= 0) {
           return const SizedBox.shrink();
         }
         final leftPaneWidth = count == 2 ? width * _fraction : width;
         final rightPaneWidth = count == 2 ? width - leftPaneWidth : width;
-        final showHandle =
-            (widget.resizeLeftPane ?? count == 2) && count == 2;
+        final showHandle = (widget.resizeLeftPane ?? count == 2) && count == 2;
         return Stack(
           key: _viewportKey,
           clipBehavior: Clip.hardEdge,
@@ -279,7 +275,8 @@ class _PaneResizeHandle extends StatelessWidget {
         behavior: HitTestBehavior.translucent,
         onPointerDown: onPointerDown,
         child: SizedBox.expand(
-          child: builder?.call(context) ??
+          child:
+              builder?.call(context) ??
               Center(
                 child: SizedBox(
                   width: 2,
@@ -335,7 +332,10 @@ class _SlidingPaneStripState extends State<_SlidingPaneStrip>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.slideDuration);
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.slideDuration,
+    );
     _curved = CurvedAnimation(parent: _controller, curve: widget.slideCurve);
     _toOffset = _targetOffset(widget);
     _fromOffset = _toOffset;
@@ -589,10 +589,7 @@ class _PaneNavigator extends StatelessWidget {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (routeContext) {
-            return _SlidingDismissalBinder(
-              onPop: onPop,
-              child: pane.child,
-            );
+            return _SlidingDismissalBinder(onPop: onPop, child: pane.child);
           },
         );
       },
@@ -631,7 +628,8 @@ class _SlidingDismissalBinderState extends State<_SlidingDismissalBinder> {
     } else if (_entry == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || _entry != null) return;
-        final scope = context.getInheritedWidgetOfExactType<AdaptivePaneScope>();
+        final scope = context
+            .getInheritedWidgetOfExactType<AdaptivePaneScope>();
         if (scope != null && scope.showBack) _attach();
       });
     }

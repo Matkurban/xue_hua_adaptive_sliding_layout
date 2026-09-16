@@ -36,7 +36,8 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
     super.initState();
     _navKeys = List<GlobalKey<NavigatorState>>.generate(
       _shell.branches.length,
-      (index) => GlobalKey<NavigatorState>(debugLabel: 'adaptive-branch-$index'),
+      (index) =>
+          GlobalKey<NavigatorState>(debugLabel: 'adaptive-branch-$index'),
     );
   }
 
@@ -148,9 +149,7 @@ class _BranchView extends StatelessWidget {
     if (visibleCount < 2) {
       return Navigator(
         key: navigatorKey,
-        pages: [
-          for (final match in matches) router.pageFor(context, match),
-        ],
+        pages: [for (final match in matches) router.pageFor(context, match)],
         onDidRemovePage: router.handleRemovedPage,
       );
     }

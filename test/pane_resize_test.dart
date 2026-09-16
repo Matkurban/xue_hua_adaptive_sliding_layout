@@ -24,14 +24,20 @@ void main() {
 
   group('SlidingPaneViewport resize', () {
     testWidgets('default 800-wide split is 400 / 400', (tester) async {
-      await tester.pumpWidget(_ResizeHarness(panes: [_pane('Root'), _pane('A')]));
+      await tester.pumpWidget(
+        _ResizeHarness(panes: [_pane('Root'), _pane('A')]),
+      );
       await tester.pumpAndSettle();
       expect(
-        tester.getSize(find.byKey(SlidingPaneViewport.visibleLeftPaneKey)).width,
+        tester
+            .getSize(find.byKey(SlidingPaneViewport.visibleLeftPaneKey))
+            .width,
         400,
       );
       expect(
-        tester.getSize(find.byKey(SlidingPaneViewport.visibleRightPaneKey)).width,
+        tester
+            .getSize(find.byKey(SlidingPaneViewport.visibleRightPaneKey))
+            .width,
         400,
       );
       expect(find.byKey(SlidingPaneViewport.resizeHandleKey), findsOneWidget);
@@ -65,11 +71,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        tester.getSize(find.byKey(SlidingPaneViewport.visibleLeftPaneKey)).width,
+        tester
+            .getSize(find.byKey(SlidingPaneViewport.visibleLeftPaneKey))
+            .width,
         480,
       );
       expect(
-        tester.getSize(find.byKey(SlidingPaneViewport.visibleRightPaneKey)).width,
+        tester
+            .getSize(find.byKey(SlidingPaneViewport.visibleRightPaneKey))
+            .width,
         320,
       );
 
@@ -79,7 +89,9 @@ void main() {
     });
 
     testWidgets('dragging left clamps at 0.3 (240px on 800)', (tester) async {
-      await tester.pumpWidget(_ResizeHarness(panes: [_pane('Root'), _pane('A')]));
+      await tester.pumpWidget(
+        _ResizeHarness(panes: [_pane('Root'), _pane('A')]),
+      );
       await tester.pumpAndSettle();
       await tester.drag(
         find.byKey(SlidingPaneViewport.resizeHandleKey),
@@ -88,11 +100,15 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(
-        tester.getSize(find.byKey(SlidingPaneViewport.visibleLeftPaneKey)).width,
+        tester
+            .getSize(find.byKey(SlidingPaneViewport.visibleLeftPaneKey))
+            .width,
         240,
       );
       expect(
-        tester.getSize(find.byKey(SlidingPaneViewport.visibleRightPaneKey)).width,
+        tester
+            .getSize(find.byKey(SlidingPaneViewport.visibleRightPaneKey))
+            .width,
         560,
       );
     });
@@ -100,7 +116,9 @@ void main() {
     testWidgets('dragging right clamps at 0.7 so right pane stays 30%', (
       tester,
     ) async {
-      await tester.pumpWidget(_ResizeHarness(panes: [_pane('Root'), _pane('A')]));
+      await tester.pumpWidget(
+        _ResizeHarness(panes: [_pane('Root'), _pane('A')]),
+      );
       await tester.pumpAndSettle();
       await tester.drag(
         find.byKey(SlidingPaneViewport.resizeHandleKey),
@@ -109,11 +127,15 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(
-        tester.getSize(find.byKey(SlidingPaneViewport.visibleLeftPaneKey)).width,
+        tester
+            .getSize(find.byKey(SlidingPaneViewport.visibleLeftPaneKey))
+            .width,
         560,
       );
       expect(
-        tester.getSize(find.byKey(SlidingPaneViewport.visibleRightPaneKey)).width,
+        tester
+            .getSize(find.byKey(SlidingPaneViewport.visibleRightPaneKey))
+            .width,
         240,
       );
     });

@@ -45,9 +45,8 @@ AdaptiveRouter _createRouter({
 }) {
   return AdaptiveRouter(
     initialLocation: '/mail',
-    errorBuilder: (context, state) => Scaffold(
-      body: Text('error-${state.uri.path}'),
-    ),
+    errorBuilder: (context, state) =>
+        Scaffold(body: Text('error-${state.uri.path}')),
     routes: [
       AdaptiveRoute(
         path: '/photo/:id',
@@ -93,9 +92,7 @@ AdaptiveRouter _createRouter({
             ],
           ),
           AdaptiveBranch(
-            routes: [
-              AdaptiveRoute(path: '/contacts', builder: _page),
-            ],
+            routes: [AdaptiveRoute(path: '/contacts', builder: _page)],
           ),
         ],
       ),

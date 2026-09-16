@@ -74,9 +74,24 @@ const mailThreads = <String, List<MailThread>>{
 };
 
 const contacts = <Contact>[
-  Contact(id: '1', name: 'Ada Lovelace', email: 'ada@example.com', photoId: 'ada'),
-  Contact(id: '2', name: 'Linus Torvalds', email: 'linus@example.com', photoId: 'linus'),
-  Contact(id: '3', name: 'Grace Hopper', email: 'grace@example.com', photoId: 'grace'),
+  Contact(
+    id: '1',
+    name: 'Ada Lovelace',
+    email: 'ada@example.com',
+    photoId: 'ada',
+  ),
+  Contact(
+    id: '2',
+    name: 'Linus Torvalds',
+    email: 'linus@example.com',
+    photoId: 'linus',
+  ),
+  Contact(
+    id: '3',
+    name: 'Grace Hopper',
+    email: 'grace@example.com',
+    photoId: 'grace',
+  ),
 ];
 
 MailThread? threadById(String folder, String id) {

@@ -22,7 +22,11 @@ void main() {
 
       await tester.pumpWidget(
         _KeepAliveHarness(
-          panes: [root, a, _pane('B', child: const ColoredBox(color: Colors.green))],
+          panes: [
+            root,
+            a,
+            _pane('B', child: const ColoredBox(color: Colors.green)),
+          ],
         ),
       );
       await tester.pumpAndSettle();
@@ -38,7 +42,10 @@ void main() {
 
       await tester.pumpWidget(
         _KeepAliveHarness(
-          panes: [root, _pane('A', child: const ColoredBox(color: Colors.blue))],
+          panes: [
+            root,
+            _pane('A', child: const ColoredBox(color: Colors.blue)),
+          ],
         ),
       );
       await tester.pumpAndSettle();
@@ -57,10 +64,7 @@ void main() {
       expect(_KeepAliveProbe.initCount, 1);
 
       await tester.pumpWidget(
-        _KeepAliveHarness(
-          panes: [root, _pane('A')],
-          visibleCount: 1,
-        ),
+        _KeepAliveHarness(panes: [root, _pane('A')], visibleCount: 1),
       );
       await tester.pumpAndSettle();
       expect(_KeepAliveProbe.initCount, 1);

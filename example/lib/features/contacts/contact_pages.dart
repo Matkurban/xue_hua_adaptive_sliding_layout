@@ -66,7 +66,9 @@ class _ContactsPageState extends State<ContactsPage> {
               ),
               onChanged: (value) {
                 router.pushReplacementNamed(
-                  value.isEmpty ? '/contacts' : '/contacts?q=${Uri.encodeQueryComponent(value)}',
+                  value.isEmpty
+                      ? '/contacts'
+                      : '/contacts?q=${Uri.encodeQueryComponent(value)}',
                 );
               },
             ),
@@ -156,7 +158,9 @@ class ContactEditPageState extends State<ContactEditPage> {
   void initState() {
     super.initState();
     contactEditDirty.value = false;
-    controller = TextEditingController(text: contactById(widget.id)?.name ?? '');
+    controller = TextEditingController(
+      text: contactById(widget.id)?.name ?? '',
+    );
   }
 
   @override

@@ -111,10 +111,7 @@ class NavigationEngine {
   }
 
   /// 弹出栈顶（覆盖层或分支顶），根页不动。
-  AdaptiveRouteMatchList pop(
-    AdaptiveRouteMatchList current, [
-    Object? result,
-  ]) {
+  AdaptiveRouteMatchList pop(AdaptiveRouteMatchList current, [Object? result]) {
     return _removeTop(current, result);
   }
 

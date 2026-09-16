@@ -50,7 +50,11 @@ List<AdaptiveRouteBase> _routes() {
                       title: (s) => 'Thread ${s.pathParameters['threadId']}',
                       builder: _page,
                       routes: [
-                        AdaptiveRoute(path: 'reply', name: 'reply', builder: _page),
+                        AdaptiveRoute(
+                          path: 'reply',
+                          name: 'reply',
+                          builder: _page,
+                        ),
                       ],
                     ),
                   ],
@@ -66,11 +70,7 @@ List<AdaptiveRouteBase> _routes() {
               name: 'contacts',
               builder: _page,
               routes: [
-                AdaptiveRoute(
-                  path: ':id',
-                  name: 'contact',
-                  builder: _page,
-                ),
+                AdaptiveRoute(path: ':id', name: 'contact', builder: _page),
               ],
             ),
           ],
@@ -136,10 +136,11 @@ void main() {
       final list = registry.match(Uri.parse('/mail/inbox/42'));
       expect(list.error, isNull);
       expect(list.branchIndex, 0);
-      expect(
-        list.matches.map((m) => m.matchedLocation),
-        ['/mail', '/mail/inbox', '/mail/inbox/42'],
-      );
+      expect(list.matches.map((m) => m.matchedLocation), [
+        '/mail',
+        '/mail/inbox',
+        '/mail/inbox/42',
+      ]);
       expect(list.matches.last.pathParameters, {
         'folder': 'inbox',
         'threadId': '42',

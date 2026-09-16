@@ -42,15 +42,15 @@ class PlaygroundPage extends StatelessWidget {
               _item(
                 key: 'pg-push-color',
                 title: 'pushNamed /playground/color',
-                subtitle: 'await result · fullscreenDialog hides the bottom bar',
+                subtitle:
+                    'await result · fullscreenDialog hides the bottom bar',
                 onTap: () async {
                   final color = await router.pushNamed<Color>(
                     '/playground/color',
                   );
                   if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('result=$color')),
-                  );
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text('result=$color')));
                 },
               ),
               _item(
@@ -64,21 +64,15 @@ class PlaygroundPage extends StatelessWidget {
                 key: 'pg-remove-until',
                 title: 'pushNamedAndRemoveUntil /mail (_)=>false',
                 subtitle: 'rebuild from URL',
-                onTap: () => router.pushNamedAndRemoveUntil(
-                  '/mail',
-                  (_) => false,
-                ),
+                onTap: () =>
+                    router.pushNamedAndRemoveUntil('/mail', (_) => false),
               ),
               _item(
                 key: 'pg-pop-and-push',
                 title: 'popAndPushNamed /playground/replaced',
                 onTap: () => router.popAndPushNamed('/playground/replaced'),
               ),
-              _item(
-                key: 'pg-pop',
-                title: 'pop',
-                onTap: () => router.pop(),
-              ),
+              _item(key: 'pg-pop', title: 'pop', onTap: () => router.pop()),
               _item(
                 key: 'pg-maybe-pop',
                 title: 'maybePop',

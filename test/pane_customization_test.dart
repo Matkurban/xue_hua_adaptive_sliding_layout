@@ -30,10 +30,7 @@ void main() {
                 indexes.add(index);
                 return ColoredBox(
                   color: Colors.orange,
-                  child: KeyedSubtree(
-                    key: Key('framed-$index'),
-                    child: child,
-                  ),
+                  child: KeyedSubtree(key: Key('framed-$index'), child: child),
                 );
               },
             ),

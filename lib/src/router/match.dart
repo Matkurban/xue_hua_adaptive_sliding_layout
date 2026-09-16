@@ -141,10 +141,7 @@ class AdaptiveRouteMatchList {
   });
 
   /// 无路由命中时的空栈。
-  factory AdaptiveRouteMatchList.notFound(
-    Uri uri, {
-    Object? arguments,
-  }) {
+  factory AdaptiveRouteMatchList.notFound(Uri uri, {Object? arguments}) {
     return AdaptiveRouteMatchList(
       matches: const <AdaptiveRouteMatch>[],
       uri: uri,
@@ -284,11 +281,7 @@ class RouteRegistry {
           }
           _shell = node;
           for (var i = 0; i < node.branches.length; i++) {
-            _walk(
-              node.branches[i].routes,
-              parentFullPath: '',
-              branchIndex: i,
-            );
+            _walk(node.branches[i].routes, parentFullPath: '', branchIndex: i);
           }
         case AdaptiveRoute():
           final fullPath = joinPaths(parentFullPath, node.path);
@@ -429,7 +422,9 @@ class RouteRegistry {
       queryParameters: query,
       arguments: arguments,
       pageKey: ValueKey<String>(matchedLocation),
-      title: signal(_titleFor(route, matchedLocation, merged, query, arguments)),
+      title: signal(
+        _titleFor(route, matchedLocation, merged, query, arguments),
+      ),
       branchIndex: route.onRootNavigator ? null : branchIndex,
     );
     final nextPrefix = [...prefix, match];

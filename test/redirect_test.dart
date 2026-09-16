@@ -16,11 +16,7 @@ AdaptiveRouter _router({
     errorBuilder: (context, state) => Text('error-${state.uri.path}'),
     routes: [
       AdaptiveRoute(path: '/', redirect: (_, _) => '/mail'),
-      AdaptiveRoute(
-        path: '/login',
-        fullscreen: true,
-        builder: _page,
-      ),
+      AdaptiveRoute(path: '/login', fullscreen: true, builder: _page),
       AdaptiveShellRoute(
         builder: (context, shell, child) => child,
         branches: [
@@ -29,16 +25,12 @@ AdaptiveRouter _router({
               AdaptiveRoute(
                 path: '/mail',
                 builder: _page,
-                routes: [
-                  AdaptiveRoute(path: 'inbox', builder: _page),
-                ],
+                routes: [AdaptiveRoute(path: 'inbox', builder: _page)],
               ),
             ],
           ),
           AdaptiveBranch(
-            routes: [
-              AdaptiveRoute(path: '/settings', builder: _page),
-            ],
+            routes: [AdaptiveRoute(path: '/settings', builder: _page)],
           ),
         ],
       ),

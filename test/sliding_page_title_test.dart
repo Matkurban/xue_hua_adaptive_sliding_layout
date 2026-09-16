@@ -69,7 +69,9 @@ void main() {
       expect(find.text('Alice'), findsOneWidget);
     });
 
-    testWidgets('itemBuilder, separatorBuilder and height apply', (tester) async {
+    testWidgets('itemBuilder, separatorBuilder and height apply', (
+      tester,
+    ) async {
       final root = SlidingPane(
         key: const ValueKey('root'),
         title: signal('Home'),

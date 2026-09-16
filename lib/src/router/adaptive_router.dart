@@ -361,11 +361,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     Object? arguments,
   }) async {
     final location = await _redirected(routeName, arguments);
-    final next = _engine.pushNamed(
-      _current,
-      location,
-      arguments: arguments,
-    );
+    final next = _engine.pushNamed(_current, location, arguments: arguments);
     _setCurrent(next);
     return next;
   }
@@ -493,8 +489,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     return uri.path == parsed.path && uri.query == parsed.query;
   }
 
-  static bool _sameUri(Uri a, Uri b) =>
-      a.path == b.path && a.query == b.query;
+  static bool _sameUri(Uri a, Uri b) => a.path == b.path && a.query == b.query;
 
   static String _effectiveInitial(String initialLocation) {
     final fromPlatform =

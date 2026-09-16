@@ -23,7 +23,9 @@ void main() {
   }
 
   group('1200 mail panes', () {
-    testWidgets('pushReplacementNamed switches folder in place', (tester) async {
+    testWidgets('pushReplacementNamed switches folder in place', (
+      tester,
+    ) async {
       final router = await pumpExample(tester);
       await tester.tap(find.byKey(const Key('folder-inbox')));
       await tester.pumpAndSettle();

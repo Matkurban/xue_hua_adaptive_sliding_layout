@@ -101,8 +101,7 @@ AdaptiveRouter createAppRouter() {
                       AdaptiveRoute(
                         path: ':threadId',
                         name: 'thread',
-                        title: (s) =>
-                            'Thread ${s.pathParameters['threadId']}',
+                        title: (s) => 'Thread ${s.pathParameters['threadId']}',
                         builder: (context, state) => MailThreadPage(
                           folder: state.pathParameters['folder'] ?? 'inbox',
                           threadId: state.pathParameters['threadId'] ?? '',
@@ -131,9 +130,8 @@ AdaptiveRouter createAppRouter() {
                 path: '/contacts',
                 name: 'contacts',
                 title: (_) => 'Contacts',
-                builder: (context, state) => ContactsPage(
-                  query: state.queryParameters['q'] ?? '',
-                ),
+                builder: (context, state) =>
+                    ContactsPage(query: state.queryParameters['q'] ?? ''),
                 routes: [
                   AdaptiveRoute(
                     path: ':id',
@@ -167,8 +165,7 @@ AdaptiveRouter createAppRouter() {
                   ),
                   AdaptiveRoute(
                     path: 'appearance',
-                    builder: (context, state) =>
-                        const SettingsAppearancePage(),
+                    builder: (context, state) => const SettingsAppearancePage(),
                   ),
                   AdaptiveRoute(
                     path: 'about',
@@ -192,8 +189,7 @@ AdaptiveRouter createAppRouter() {
                   ),
                   AdaptiveRoute(
                     path: 'replaced',
-                    builder: (context, state) =>
-                        const PlaygroundReplacedPage(),
+                    builder: (context, state) => const PlaygroundReplacedPage(),
                   ),
                   AdaptiveRoute(
                     path: 'fade',

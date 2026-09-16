@@ -48,16 +48,16 @@ class DemoFrame extends StatelessWidget {
             Material(
               color: Theme.of(context).colorScheme.surfaceContainer,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Text(
-                      'Demo',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
+                    Text('Demo', style: Theme.of(context).textTheme.titleSmall),
                     for (final item in DemoSizePreset.values)
                       ChoiceChip(
                         label: Text(item.label),

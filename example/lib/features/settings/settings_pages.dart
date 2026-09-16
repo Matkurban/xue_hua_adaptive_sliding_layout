@@ -36,7 +36,8 @@ class SettingsHomePage extends StatelessWidget {
             key: const Key('open-about'),
             title: const Text('About'),
             subtitle: const Text('state.uri / query / arguments + 404 link'),
-            onTap: () => router.pushNamed('/settings/about', arguments: 'from-settings'),
+            onTap: () =>
+                router.pushNamed('/settings/about', arguments: 'from-settings'),
           ),
         ],
       ),
@@ -100,7 +101,13 @@ class SettingsAppearancePage extends StatelessWidget {
               ListTile(
                 title: Text(
                   'width=${shell?.width.toStringAsFixed(0)}  '
-                  'mode=${shell == null ? '-' : shell.isCompact ? 'compact' : shell.isMedium ? 'medium' : 'expanded'}',
+                  'mode=${shell == null
+                      ? '-'
+                      : shell.isCompact
+                      ? 'compact'
+                      : shell.isMedium
+                      ? 'medium'
+                      : 'expanded'}',
                 ),
               ),
               ListTile(
@@ -113,7 +120,9 @@ class SettingsAppearancePage extends StatelessWidget {
               ListTile(
                 key: const Key('pane-style-flat'),
                 title: const Text('Pane style: Flat'),
-                subtitle: const Text('paneBuilder returns the column unwrapped'),
+                subtitle: const Text(
+                  'paneBuilder returns the column unwrapped',
+                ),
                 selected: !card,
                 onTap: () => paneCardStyle.value = false,
               ),

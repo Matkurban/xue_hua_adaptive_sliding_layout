@@ -142,10 +142,7 @@ typedef AdaptivePlaceholderBuilder = Widget Function(BuildContext context);
 
 /// 返回非 null 的 location 则改去那里。可同步或异步。
 typedef AdaptiveRedirect =
-    FutureOr<String?> Function(
-      BuildContext context,
-      AdaptiveRouteState state,
-    );
+    FutureOr<String?> Function(BuildContext context, AdaptiveRouteState state);
 
 /// 返回 false 则取消这次离开（[AdaptiveRouter.maybePop] / 系统返回 / 浏览器后退）。
 typedef AdaptiveOnExit =
@@ -303,7 +300,10 @@ class AdaptiveShellRoute extends AdaptiveRouteBase {
     this.slideDuration = SlidingPaneViewport.defaultSlideDuration,
     this.slideCurve = SlidingPaneViewport.defaultSlideCurve,
     this.escapePops = true,
-  }) : assert(branches.isNotEmpty, 'AdaptiveShellRoute.branches must not be empty');
+  }) : assert(
+         branches.isNotEmpty,
+         'AdaptiveShellRoute.branches must not be empty',
+       );
 
   /// 宿主壳 UI。必须把 [child] 放到内容区。
   final AdaptiveShellBuilder builder;

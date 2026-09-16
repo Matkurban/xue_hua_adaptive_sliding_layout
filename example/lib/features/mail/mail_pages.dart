@@ -53,9 +53,8 @@ class MailFolderPage extends StatelessWidget {
                   ActionChip(
                     key: Key('switch-folder-${entry.key}'),
                     label: Text(entry.value),
-                    onPressed: () => router.pushReplacementNamed(
-                      '/mail/${entry.key}',
-                    ),
+                    onPressed: () =>
+                        router.pushReplacementNamed('/mail/${entry.key}'),
                   ),
               ],
             ),
@@ -115,7 +114,9 @@ class _MailThreadPageState extends State<MailThreadPage> {
         threadById(widget.folder, widget.threadId) ??
         (state.arguments is MailThread ? state.arguments as MailThread : null);
     return Scaffold(
-      appBar: AppBar(title: Text(thread?.subject ?? 'Thread ${widget.threadId}')),
+      appBar: AppBar(
+        title: Text(thread?.subject ?? 'Thread ${widget.threadId}'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -126,7 +127,9 @@ class _MailThreadPageState extends State<MailThreadPage> {
           ListTile(
             key: const Key('open-reply'),
             title: const Text('Reply'),
-            subtitle: const Text('pushNamed — deeper pane + onExit on the draft'),
+            subtitle: const Text(
+              'pushNamed — deeper pane + onExit on the draft',
+            ),
             onTap: () => router.pushNamed(
               '/mail/${widget.folder}/${widget.threadId}/reply',
             ),
