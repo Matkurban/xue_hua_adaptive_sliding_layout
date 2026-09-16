@@ -423,7 +423,7 @@ class RouteRegistry {
       arguments: arguments,
       pageKey: ValueKey<String>(matchedLocation),
       title: signal(
-        _titleFor(route, matchedLocation, merged, query, arguments),
+        _titleFor(route, matchedLocation, fullPath, merged, query, arguments),
       ),
       branchIndex: route.onRootNavigator ? null : branchIndex,
     );
@@ -466,9 +466,13 @@ class RouteRegistry {
   }
 
   /// [AdaptiveRoute.title] 或 path 末段 humanize。
+  ///
+  /// 给 builder 的 state 与 [AdaptiveRouteMatch.toState] 一致：
+  /// [fullPath] 为完整模式（如 `/mail/:folder/:threadId`），`uri` 带 query。
   static String _titleFor(
     AdaptiveRoute route,
     String matchedLocation,
+    String fullPath,
     Map<String, String> pathParameters,
     Map<String, String> queryParameters,
     Object? arguments,
@@ -476,9 +480,12 @@ class RouteRegistry {
     if (route.title != null) {
       return route.title!(
         AdaptiveRouteState(
-          uri: Uri.parse(matchedLocation),
+          uri: Uri(
+            path: matchedLocation,
+            queryParameters: queryParameters.isEmpty ? null : queryParameters,
+          ),
           matchedLocation: matchedLocation,
-          fullPath: route.path,
+          fullPath: fullPath,
           name: route.name,
           pathParameters: pathParameters,
           queryParameters: queryParameters,

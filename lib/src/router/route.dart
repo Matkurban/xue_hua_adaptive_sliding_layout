@@ -148,7 +148,10 @@ typedef AdaptiveRedirect =
 typedef AdaptiveOnExit =
     FutureOr<bool> Function(BuildContext context, AdaptiveRouteState state);
 
-/// 入栈时的面包屑 / 栏标题。
+/// 入栏时的面包屑 / 栏标题。匹配时求值一次，没有 [BuildContext]。
+///
+/// 国际化用 gen-l10n 的 `lookupAppLocalizations(locale)` 或 `Intl.defaultLocale`；
+/// 需要 context 或要跟随语言切换的，在页面里写 [AdaptivePaneScope.title]。
 typedef AdaptiveTitleBuilder = String Function(AdaptiveRouteState state);
 
 /// 自定义过场，签名与 [PageRouteBuilder.transitionsBuilder] 相同。
@@ -203,6 +206,8 @@ class AdaptiveRoute extends AdaptiveRouteBase {
   final AdaptiveRouteBuilder? builder;
 
   /// 入栈时的栏标题；缺省由 path / name humanize。
+  ///
+  /// 匹配时求值一次，无 context；state 的 `fullPath` 为完整模式、`uri` 带 query。
   final AdaptiveTitleBuilder? title;
 
   /// 为 true 时在任何宽度都叠在根 Navigator 上，不进入滑动栏（登录、照片）。

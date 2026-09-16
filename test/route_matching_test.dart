@@ -53,6 +53,7 @@ List<AdaptiveRouteBase> _routes() {
                         AdaptiveRoute(
                           path: 'reply',
                           name: 'reply',
+                          title: (s) => '${s.fullPath}|${s.uri.query}',
                           builder: _page,
                         ),
                       ],
@@ -153,6 +154,14 @@ void main() {
       final list = registry.match(Uri.parse('/mail/inbox?ref=home'));
       expect(list.matches.last.queryParameters['ref'], 'home');
       expect(list.uri.queryParameters['ref'], 'home');
+    });
+
+    test('title builder sees the full pattern and the query', () {
+      final list = registry.match(Uri.parse('/mail/inbox/42/reply?ref=x'));
+      expect(
+        list.matches.last.title.value,
+        '/mail/:folder/:threadId/reply|ref=x',
+      );
     });
 
     test('root path matches the redirect route', () {

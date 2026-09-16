@@ -31,7 +31,7 @@ class AdaptiveBreadcrumbs extends StatelessWidget {
     super.key,
     required this.panes,
     required this.onSelect,
-    this.height = 36,
+    this.height = 32,
     this.padding = const EdgeInsets.symmetric(horizontal: 12),
     this.backgroundColor,
     this.itemBuilder,
@@ -96,10 +96,9 @@ class AdaptiveBreadcrumbs extends StatelessWidget {
                 return itemBuilder?.call(context, pane, isLast, onTap) ??
                     InkWell(
                       onTap: onTap,
-                      hoverColor: colorScheme.onSurface.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(6),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
                         child: Center(
                           child: Text(
                             pane.title.value,

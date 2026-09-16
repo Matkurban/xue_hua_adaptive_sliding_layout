@@ -3,6 +3,7 @@ import 'package:signals_flutter/signals_flutter.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/features/settings/settings_pages.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/frame/demo_frame.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/router.dart';
+import 'package:xue_hua_adaptive_sliding_layout_example/theme/app_theme.dart';
 
 void main() {
   runApp(const DemoApp());
@@ -17,12 +18,8 @@ class DemoApp extends StatelessWidget {
       builder: (context) {
         return MaterialApp.router(
           title: 'Adaptive Sliding Layout',
-          theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
-          darkTheme: ThemeData(
-            colorSchemeSeed: Colors.indigo,
-            brightness: Brightness.dark,
-            useMaterial3: true,
-          ),
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
           themeMode: demoThemeMode.value,
           routerConfig: appRouter,
           builder: (context, child) {

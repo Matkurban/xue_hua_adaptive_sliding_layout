@@ -31,6 +31,7 @@ class DemoFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surfaceDim,
       body: SignalBuilder(
         builder: (context) {
           final preset = demoSizePreset.value;
@@ -46,33 +47,32 @@ class DemoFrame extends StatelessWidget {
           final columns = bp.visibleColumnCount(framed);
           return Column(
             children: [
-              Material(
-                color: Theme.of(context).colorScheme.surfaceContainer,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        'Demo',
-                        style: Theme.of(context).textTheme.titleSmall,
+              Container(
+                width: framed,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceDim,
+                ),
+                child: Wrap(
+                  spacing: 4,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    for (final item in DemoSizePreset.values)
+                      ChoiceChip(
+                        label: Text(item.label),
+                        selected: item == preset,
+                        onSelected: (_) => demoSizePreset.value = item,
+                        materialTapTargetSize: .shrinkWrap,
+                        visualDensity: .compact,
                       ),
-                      for (final item in DemoSizePreset.values)
-                        ChoiceChip(
-                          label: Text(item.label),
-                          selected: item == preset,
-                          onSelected: (_) => demoSizePreset.value = item,
-                        ),
-                      Text('$loc  ·  $mode  ·  $columns col'),
-                    ],
-                  ),
+                  ],
                 ),
               ),
+              Text('$loc  ·  $mode  ·  $columns col'),
               Expanded(
                 child: Align(
                   alignment: Alignment.topCenter,
