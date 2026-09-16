@@ -41,9 +41,7 @@ void main() {
         expect(router.location.value, '/mail');
       });
 
-      testWidgets('Register toggles with Log in and registers', (
-        tester,
-      ) async {
+      testWidgets('Register toggles with Log in and registers', (tester) async {
         final router = await pumpExample(
           tester,
           width: width,

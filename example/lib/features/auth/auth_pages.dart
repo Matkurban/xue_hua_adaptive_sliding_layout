@@ -32,7 +32,11 @@ class OnboardingPage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(Icons.view_sidebar_outlined, size: 72, color: scheme.primary),
+              Icon(
+                Icons.view_sidebar_outlined,
+                size: 72,
+                color: scheme.primary,
+              ),
               const SizedBox(height: 16),
               Text(
                 'Adaptive Sliding Layout',
