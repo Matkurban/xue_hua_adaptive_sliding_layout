@@ -145,10 +145,12 @@ class NavigationEngine {
     return target;
   }
 
-  /// 目标是 fullscreen 或壳外路由。
+  /// 目标是根 Navigator 覆盖层或壳外路由。
   bool _isOverlayTarget(AdaptiveRouteMatchList target) {
     if (target.matches.isEmpty) return true;
-    if (target.matches.any((match) => match.route.fullscreen)) return true;
+    if (target.matches.any((match) => match.route.onRootNavigator)) {
+      return true;
+    }
     return target.branchIndex == null;
   }
 

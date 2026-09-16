@@ -208,10 +208,19 @@ class AdaptiveRoute extends AdaptiveRouteBase {
   final AdaptiveTitleBuilder? title;
 
   /// 为 true 时叠在根 Navigator 上，不进入滑动栏。
+  ///
+  /// 等价于 go_router 的 `parentNavigatorKey: rootNavigatorKey`：
+  /// compact 下盖住宿主 bottom bar。
   final bool fullscreen;
 
   /// 根 Navigator 上按全屏对话框呈现（[MaterialPage.fullscreenDialog]）。
+  ///
+  /// 为 true 时同样叠在根 Navigator 上（见 [onRootNavigator]），
+  /// compact 下盖住宿主 bottom bar。
   final bool fullscreenDialog;
+
+  /// 是否叠在根 Navigator 上：[fullscreen] 或 [fullscreenDialog]。
+  bool get onRootNavigator => fullscreen || fullscreenDialog;
 
   /// 有 [transitionsBuilder] 时传给 [PageRouteBuilder.opaque]。默认不透明。
   final bool opaque;

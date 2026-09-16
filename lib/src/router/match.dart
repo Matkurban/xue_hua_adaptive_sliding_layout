@@ -65,7 +65,7 @@ class AdaptiveRouteMatch {
   bool _disposed = false;
 
   /// 是否叠在根 Navigator 上。
-  bool get isOverlay => route.fullscreen || branchIndex == null;
+  bool get isOverlay => route.onRootNavigator || branchIndex == null;
 
   /// 把本匹配转成 builder 用的 [AdaptiveRouteState]。
   ///
@@ -171,11 +171,11 @@ class AdaptiveRouteMatchList {
   /// 未匹配或 redirect 循环。
   final Exception? error;
 
-  /// 当前分支内的页（非 fullscreen、带 branchIndex）。
+  /// 当前分支内的页（非 overlay）。
   List<AdaptiveRouteMatch> get branchMatches {
     return [
       for (final match in matches)
-        if (!match.route.fullscreen && match.branchIndex != null) match,
+        if (!match.isOverlay) match,
     ];
   }
 
@@ -183,7 +183,7 @@ class AdaptiveRouteMatchList {
   List<AdaptiveRouteMatch> get overlayMatches {
     return [
       for (final match in matches)
-        if (match.route.fullscreen || match.branchIndex == null) match,
+        if (match.isOverlay) match,
     ];
   }
 
@@ -430,7 +430,7 @@ class RouteRegistry {
       arguments: arguments,
       pageKey: ValueKey<String>(matchedLocation),
       title: signal(_titleFor(route, matchedLocation, merged, query, arguments)),
-      branchIndex: route.fullscreen ? null : branchIndex,
+      branchIndex: route.onRootNavigator ? null : branchIndex,
     );
     final nextPrefix = [...prefix, match];
     if (consumedEnd == pathSegments.length) {

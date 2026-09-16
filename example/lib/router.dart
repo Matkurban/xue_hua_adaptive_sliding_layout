@@ -187,6 +187,7 @@ AdaptiveRouter createAppRouter() {
                 routes: [
                   AdaptiveRoute(
                     path: 'color',
+                    fullscreenDialog: true,
                     builder: (context, state) => const ColorPickerPage(),
                   ),
                   AdaptiveRoute(

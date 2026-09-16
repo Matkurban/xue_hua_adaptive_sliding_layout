@@ -97,7 +97,7 @@ flowchart LR
   Delegate --> Overlay["fullscreen / 壳外路由"]
 ```
 
-`/mail/inbox/42/reply` 沿路由树匹配出一串 match，这一串就是页面栈。低于 `expandedMinWidth`（默认 840）时走经典 `Navigator`；达到该宽度时，最后两层并排显示在 [`SlidingPaneViewport`](lib/src/layout/sliding_pane_viewport.dart)，更深的页把旧栏推向左侧。`fullscreen: true` 的匹配叠在**根** Navigator（登录、照片）。
+`/mail/inbox/42/reply` 沿路由树匹配出一串 match，这一串就是页面栈。低于 `expandedMinWidth`（默认 840）时走经典 `Navigator`；达到该宽度时，最后两层并排显示在 [`SlidingPaneViewport`](lib/src/layout/sliding_pane_viewport.dart)，更深的页把旧栏推向左侧。`fullscreen: true` 与 `fullscreenDialog: true` 的匹配叠在**根** Navigator（登录、照片、撰写对话框）。
 
 浏览器后退、深链、刷新都只是换了一个 location，走同一条路径。Web 使用默认 **hash** 策略（`/#/mail/inbox/42`），GitHub Pages 不需要 404 回退。
 
@@ -179,11 +179,13 @@ UI 订阅用 `SignalBuilder`（见 `signals_flutter`）。
 | `AdaptiveShellRoute.breadcrumbsBuilder` | `AdaptiveBreadcrumbs` | 整条替换（仍受 `showBreadcrumbs` 控制） |
 | `escapePops` | true | Escape 调用 `maybePop` |
 
+嵌套页保留宿主 chrome（同 go_router `ShellRoute`）。要盖住底栏，用 `fullscreen` 或 `fullscreenDialog`。
+
 ### 覆盖层（`AdaptiveRoute`）
 
 | 参数 | 默认 | 作用 |
 | --- | --- | --- |
-| `fullscreenDialog` | false | `MaterialPage` / `PageRouteBuilder` 全屏对话框 |
+| `fullscreenDialog` | false | 根 Navigator 全屏对话框，盖住壳 / 底栏（= go_router `parentNavigatorKey: rootNavigatorKey`） |
 | `opaque` | true | 配合 `transitionsBuilder`：透明照片查看器 |
 | `barrierColor` | null | 配合 `transitionsBuilder` |
 | `barrierDismissible` | false | 点屏障弹出 |

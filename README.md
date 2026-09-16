@@ -97,7 +97,7 @@ flowchart LR
   Delegate --> Overlay["fullscreen / off-shell routes"]
 ```
 
-A location such as `/mail/inbox/42/reply` walks the route tree and produces a list of matches. That list **is** the page stack. Below `expandedMinWidth` (default 840) it is a classic `Navigator`. At or above it, the last two matches sit side by side in [`SlidingPaneViewport`](lib/src/layout/sliding_pane_viewport.dart); deeper pages slide older ones off to the left. `fullscreen: true` matches stack on the **root** Navigator (login, photo).
+A location such as `/mail/inbox/42/reply` walks the route tree and produces a list of matches. That list **is** the page stack. Below `expandedMinWidth` (default 840) it is a classic `Navigator`. At or above it, the last two matches sit side by side in [`SlidingPaneViewport`](lib/src/layout/sliding_pane_viewport.dart); deeper pages slide older ones off to the left. `fullscreen: true` and `fullscreenDialog: true` matches stack on the **root** Navigator (login, photo, compose dialogs).
 
 Browser back, deep links, and refresh all change the location and take the same path. Web uses the default **hash** strategy (`/#/mail/inbox/42`), so GitHub Pages needs no 404 fallback.
 
@@ -179,11 +179,13 @@ Use **builders** to replace structure, **value parameters** to tweak numbers. De
 | `AdaptiveShellRoute.breadcrumbsBuilder` | `AdaptiveBreadcrumbs` | Replace the whole strip (`showBreadcrumbs` still gates it) |
 | `escapePops` | true | Escape calls `maybePop` |
 
+Nested pages keep the host chrome (same as go_router `ShellRoute`). To cover the bottom bar, set `fullscreen` or `fullscreenDialog`.
+
 ### Overlay routes (`AdaptiveRoute`)
 
 | Parameter | Default | Role |
 | --- | --- | --- |
-| `fullscreenDialog` | false | `MaterialPage` / `PageRouteBuilder` fullscreen dialog |
+| `fullscreenDialog` | false | Root-Navigator fullscreen dialog; covers the shell / bottom bar (= go_router `parentNavigatorKey: rootNavigatorKey`) |
 | `opaque` | true | With `transitionsBuilder`: transparent photo viewer |
 | `barrierColor` | null | With `transitionsBuilder` |
 | `barrierDismissible` | false | Tap the barrier to pop |

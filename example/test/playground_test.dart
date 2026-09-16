@@ -26,10 +26,16 @@ void main() {
         await tester.tap(find.byKey(const Key('pg-push-color')));
         await tester.pumpAndSettle();
         expect(router.location.value, '/playground/color');
+        if (width == 400) {
+          expect(find.byType(NavigationBar), findsNothing);
+        }
         await tester.tap(find.byKey(const Key('pick-red')));
         await tester.pumpAndSettle();
         expect(router.location.value, '/playground');
         expect(find.textContaining('result='), findsWidgets);
+        if (width == 400) {
+          expect(find.byType(NavigationBar), findsOneWidget);
+        }
       });
     });
   }

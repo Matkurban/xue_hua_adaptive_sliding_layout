@@ -35,6 +35,11 @@ List<AdaptiveRouteBase> _routes() {
               builder: _page,
               routes: [
                 AdaptiveRoute(
+                  path: 'compose',
+                  fullscreenDialog: true,
+                  builder: _page,
+                ),
+                AdaptiveRoute(
                   path: ':folder',
                   name: 'folder',
                   builder: _page,
@@ -161,6 +166,15 @@ void main() {
       expect(list.matches.single.pathParameters['id'], '9');
       expect(list.overlayMatches, hasLength(1));
       expect(list.branchMatches, isEmpty);
+    });
+
+    test('fullscreenDialog compose overlays the mail branch', () {
+      final list = registry.match(Uri.parse('/mail/compose'));
+      expect(list.error, isNull);
+      expect(list.branchIndex, 0);
+      expect(list.last!.isOverlay, isTrue);
+      expect(list.branchMatches, hasLength(1));
+      expect(list.overlayMatches.single.route.fullscreenDialog, isTrue);
     });
 
     test('contacts branch index is 1', () {

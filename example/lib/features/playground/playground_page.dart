@@ -42,7 +42,7 @@ class PlaygroundPage extends StatelessWidget {
               _item(
                 key: 'pg-push-color',
                 title: 'pushNamed /playground/color',
-                subtitle: 'await result (color picker)',
+                subtitle: 'await result · fullscreenDialog hides the bottom bar',
                 onTap: () async {
                   final color = await router.pushNamed<Color>(
                     '/playground/color',

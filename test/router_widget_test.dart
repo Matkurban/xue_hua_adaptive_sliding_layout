@@ -23,6 +23,12 @@ Widget _page(BuildContext context, AdaptiveRouteState state) {
         ),
         TextButton(
           onPressed: () {
+            AdaptiveRouter.of(context).pushNamed('/mail/compose');
+          },
+          child: const Text('open-compose'),
+        ),
+        TextButton(
+          onPressed: () {
             AdaptiveRouter.of(context).pushNamed('/missing');
           },
           child: const Text('open-missing'),
@@ -77,6 +83,11 @@ AdaptiveRouter _createRouter({
                     onExit: inboxOnExit,
                     builder: _page,
                   ),
+                  AdaptiveRoute(
+                    path: 'compose',
+                    fullscreenDialog: true,
+                    builder: _page,
+                  ),
                 ],
               ),
             ],
@@ -117,6 +128,31 @@ void main() {
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pumpAndSettle();
     expect(find.text('cols-1'), findsOneWidget);
+  });
+
+  testWidgets('nested push keeps the shell; fullscreenDialog covers it', (
+    tester,
+  ) async {
+    await setWidth(tester, 400);
+    final router = _createRouter();
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail/inbox');
+    expect(find.text('branch-0'), findsOneWidget);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail');
+    await tester.tap(find.text('open-compose'));
+    await tester.pumpAndSettle();
+    expect(find.text('page-/mail/compose'), findsOneWidget);
+    expect(find.text('branch-0'), findsNothing);
+    expect(find.byType(CloseButton), findsOneWidget);
+    await tester.tap(find.byType(CloseButton));
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail');
+    expect(find.text('branch-0'), findsOneWidget);
   });
 
   testWidgets('pushNamed opens inbox then AppBar back pops', (tester) async {
