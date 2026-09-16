@@ -32,14 +32,22 @@ void resetExampleSignals() {
 }
 
 /// 泵入一条干净的示例路由树，返回路由器实例。
+///
+/// 应用启动落在 `/onboarding`；[enterHome] 为 true（默认）时点 “Enter home”
+/// 进入 `/mail`，让分支用例从主页开始。
 Future<AdaptiveRouter> pumpExample(
   WidgetTester tester, {
   double width = 1200,
+  bool enterHome = true,
 }) async {
   resetExampleSignals();
   await setSurfaceSize(tester, width);
   final router = createAppRouter();
   await tester.pumpWidget(exampleApp(router));
   await tester.pumpAndSettle();
+  if (enterHome) {
+    await tester.tap(find.byKey(const Key('onboarding-home')));
+    await tester.pumpAndSettle();
+  }
   return router;
 }

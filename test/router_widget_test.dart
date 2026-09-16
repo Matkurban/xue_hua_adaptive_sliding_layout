@@ -40,6 +40,7 @@ Widget _page(BuildContext context, AdaptiveRouteState state) {
 
 AdaptiveRouter _createRouter({
   bool escapePops = true,
+  bool inboxHidesBar = true,
   AdaptiveOnExit? inboxOnExit,
   AdaptiveBreadcrumbsBuilder? breadcrumbsBuilder,
 }) {
@@ -79,6 +80,7 @@ AdaptiveRouter _createRouter({
                 routes: [
                   AdaptiveRoute(
                     path: 'inbox',
+                    hidesBottomBarWhenPushed: inboxHidesBar,
                     onExit: inboxOnExit,
                     builder: _page,
                   ),
@@ -127,11 +129,41 @@ void main() {
     expect(find.text('cols-1'), findsOneWidget);
   });
 
-  testWidgets('nested push keeps the shell; fullscreenDialog covers it', (
-    tester,
-  ) async {
+  testWidgets('compact push hides the shell chrome by default', (tester) async {
     await setWidth(tester, 400);
     final router = _createRouter();
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    expect(find.text('branch-0'), findsOneWidget);
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail/inbox');
+    expect(find.text('page-/mail/inbox'), findsOneWidget);
+    expect(find.text('branch-0'), findsNothing);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail');
+    expect(find.text('branch-0'), findsOneWidget);
+  });
+
+  testWidgets('expanded width ignores hidesBottomBarWhenPushed', (
+    tester,
+  ) async {
+    await setWidth(tester, 1200);
+    final router = _createRouter();
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    expect(find.text('cols-2'), findsOneWidget);
+    expect(find.text('page-/mail'), findsOneWidget);
+    expect(find.text('page-/mail/inbox'), findsOneWidget);
+  });
+
+  testWidgets('hidesBottomBarWhenPushed false keeps the shell; '
+      'fullscreenDialog covers it', (tester) async {
+    await setWidth(tester, 400);
+    final router = _createRouter(inboxHidesBar: false);
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pumpAndSettle();
     await tester.tap(find.text('open-inbox'));

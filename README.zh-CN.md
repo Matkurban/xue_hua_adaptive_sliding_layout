@@ -106,7 +106,7 @@ flowchart LR
 | 类型 | 职责 |
 | --- | --- |
 | [`AdaptiveRouter`](lib/src/router/adaptive_router.dart) | `RouterConfig<AdaptiveRouteMatchList>`。动词 + `namedLocation` / `refresh`。只读 signal：`location`、`matches`、`currentBranch`。`of` / `maybeOf`。 |
-| [`AdaptiveRoute`](lib/src/router/route.dart) | 一页。`path`、可选 `name`、`builder`、`title`、`fullscreen`、`fullscreenDialog`、`opaque`、`barrierColor`、`barrierDismissible`、`transitionsBuilder`、`redirect`、`onExit`、子 `routes`。子路径为相对路径，`:param` 与 go_router 相同。顺序优先匹配。 |
+| [`AdaptiveRoute`](lib/src/router/route.dart) | 一页。`path`、可选 `name`、`builder`、`title`、`fullscreen`、`fullscreenDialog`、`hidesBottomBarWhenPushed`、`opaque`、`barrierColor`、`barrierDismissible`、`transitionsBuilder`、`redirect`、`onExit`、子 `routes`。子路径为相对路径，`:param` 与 go_router 相同。顺序优先匹配。 |
 | [`AdaptiveShellRoute`](lib/src/router/route.dart) | Tab + 自适应壳。整棵树只允许一个，且必须顶层。`builder(context, shell, child)`、`branches`、`breakpoints`、分割条 / 面包屑，以及 [UI 属性](#自定义-ui)。 |
 | [`AdaptiveBranch`](lib/src/router/route.dart) | 一个 Tab。`routes`，可选 `initialLocation` / `placeholder`。 |
 | [`AdaptiveRouteState`](lib/src/router/route_state.dart) | builder 参数，也可 `AdaptiveRouteState.of(context)`：`uri`、`matchedLocation`、`fullPath`、`name`、`pathParameters`、`queryParameters`、`arguments`、`error`、`pageKey`。 |
@@ -179,13 +179,15 @@ UI 订阅用 `SignalBuilder`（见 `signals_flutter`）。
 | `AdaptiveShellRoute.breadcrumbsBuilder` | `AdaptiveBreadcrumbs` | 整条替换（仍受 `showBreadcrumbs` 控制） |
 | `escapePops` | true | Escape 调用 `maybePop` |
 
-嵌套页保留宿主 chrome（同 go_router `ShellRoute`）。要盖住底栏，用 `fullscreen` 或 `fullscreenDialog`。
+medium / expanded 下嵌套页保留宿主 chrome（同 go_router `ShellRoute`）；compact 下分支根以下的页默认隐藏底栏（`hidesBottomBarWhenPushed`，设 false 保留）；`fullscreen` / `fullscreenDialog` 在任何宽度都盖住壳。
 
 ### 覆盖层（`AdaptiveRoute`）
 
 | 参数 | 默认 | 作用 |
 | --- | --- | --- |
-| `fullscreenDialog` | false | 根 Navigator 全屏对话框，盖住壳 / 底栏（= go_router `parentNavigatorKey: rootNavigatorKey`） |
+| `hidesBottomBarWhenPushed` | true | 仅 compact：推入本页时盖住宿主 bottom bar（与 iOS 同名属性同义）；桌面双栏不受影响 |
+| `fullscreen` | false | 任何宽度都上根 Navigator，普通过场（= go_router `parentNavigatorKey: rootNavigatorKey`） |
+| `fullscreenDialog` | false | 任何宽度都上根 Navigator，按 Material 全屏对话框呈现（上滑、关闭图标） |
 | `opaque` | true | 配合 `transitionsBuilder`：透明照片查看器 |
 | `barrierColor` | null | 配合 `transitionsBuilder` |
 | `barrierDismissible` | false | 点屏障弹出 |
@@ -216,6 +218,7 @@ UI 订阅用 `SignalBuilder`（见 `signals_flutter`）。
 | Contacts | `?q=` 即 URL 状态、`namedLocation`、`await pushNamed<bool>` + `pop(true)`、`onExit`（`maybePop` vs `pop`）、头像 → 照片 | [`features/contacts`](example/lib/features/contacts/contact_pages.dart) |
 | Settings | `redirect` 到 `/login?from=`、登录后 `pushNamedAndRemoveUntil` 回跳、登出 `refresh()`、主题 / 分割比例、`errorBuilder` 404 | [`features/settings`](example/lib/features/settings/settings_pages.dart) |
 | Playground | 每个 Navigator 动词、无 context 的 `router.pushNamed`、自定义过场、对话框 / 底部弹层 `useRootNavigator` 对比、Escape | [`features/playground`](example/lib/features/playground/playground_page.dart) |
+| 引导 / 登录 | 启动落在 `/onboarding`（登录 / 注册 / 直接进入主页）、登录 ↔ 注册 `pushReplacementNamed` 互换、`?from=` 回跳、`pushNamedAndRemoveUntil` 进壳 | [`features/auth`](example/lib/features/auth/auth_pages.dart) |
 | 壳 / 外框 | compact `NavigationBar` vs rail、宽度预设 | [`app_shell.dart`](example/lib/shell/app_shell.dart)、[`demo_frame.dart`](example/lib/frame/demo_frame.dart) |
 
 ```bash

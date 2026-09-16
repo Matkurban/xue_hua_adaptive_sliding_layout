@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/data/auth.dart';
+import 'package:xue_hua_adaptive_sliding_layout_example/features/auth/auth_pages.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/features/contacts/contact_pages.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/features/mail/mail_pages.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/features/playground/playground_page.dart';
@@ -13,9 +14,13 @@ import 'package:xue_hua_adaptive_sliding_layout_example/shell/app_shell.dart';
 final AdaptiveRouter appRouter = createAppRouter();
 
 /// 完整路由表，可当作接入模板照抄。
+///
+/// 启动落在 `/onboarding`（登录 / 注册 / 直接进入主页）；深链不经过引导页。
+/// 分支内嵌套页在 compact 下默认盖住底栏（`hidesBottomBarWhenPushed`），
+/// 路由表无需额外标记。
 AdaptiveRouter createAppRouter() {
   return AdaptiveRouter(
-    initialLocation: '/mail',
+    initialLocation: '/onboarding',
     redirect: (context, state) {
       final path = state.uri.path;
       if (path.startsWith('/settings/account') && !signedIn.value) {
@@ -25,11 +30,21 @@ AdaptiveRouter createAppRouter() {
     },
     errorBuilder: (context, state) => NotFoundPage(uri: state.uri),
     routes: [
-      AdaptiveRoute(path: '/', redirect: (_, _) => '/mail'),
+      AdaptiveRoute(path: '/', redirect: (_, _) => '/onboarding'),
+      AdaptiveRoute(
+        path: '/onboarding',
+        fullscreen: true,
+        builder: (context, state) => const OnboardingPage(),
+      ),
       AdaptiveRoute(
         path: '/login',
         fullscreen: true,
         builder: (context, state) => const LoginPage(),
+      ),
+      AdaptiveRoute(
+        path: '/register',
+        fullscreen: true,
+        builder: (context, state) => const RegisterPage(),
       ),
       AdaptiveRoute(
         path: '/photo/:id',

@@ -178,6 +178,7 @@ class AdaptiveRoute extends AdaptiveRouteBase {
     this.title,
     this.fullscreen = false,
     this.fullscreenDialog = false,
+    this.hidesBottomBarWhenPushed = true,
     this.opaque = true,
     this.barrierColor,
     this.barrierDismissible = false,
@@ -204,20 +205,29 @@ class AdaptiveRoute extends AdaptiveRouteBase {
   /// 入栈时的栏标题；缺省由 path / name humanize。
   final AdaptiveTitleBuilder? title;
 
-  /// 为 true 时叠在根 Navigator 上，不进入滑动栏。
+  /// 为 true 时在任何宽度都叠在根 Navigator 上，不进入滑动栏（登录、照片）。
   ///
-  /// 等价于 go_router 的 `parentNavigatorKey: rootNavigatorKey`：
-  /// compact 下盖住宿主 bottom bar。
+  /// 等价于 go_router 的 `parentNavigatorKey: rootNavigatorKey`。
   final bool fullscreen;
 
-  /// 根 Navigator 上按全屏对话框呈现（[MaterialPage.fullscreenDialog]）。
+  /// Material 全屏对话框（[MaterialPage.fullscreenDialog]：上滑、关闭图标）。
   ///
-  /// 为 true 时同样叠在根 Navigator 上（见 [onRootNavigator]），
-  /// compact 下盖住宿主 bottom bar。
+  /// 语义是“模态对话框”，为 true 时同样在任何宽度叠在根 Navigator 上
+  /// （见 [onRootNavigator]）。只想在手机上隐藏底栏用 [hidesBottomBarWhenPushed]。
   final bool fullscreenDialog;
 
   /// 是否叠在根 Navigator 上：[fullscreen] 或 [fullscreenDialog]。
   bool get onRootNavigator => fullscreen || fullscreenDialog;
+
+  /// compact（低于 [LayoutBreakpoints.compactMaxWidth]，宿主通常画 bottom bar）
+  /// 下推入本页时，把本页推到宿主 chrome 之上，底栏被盖住。默认 true。
+  ///
+  /// 与 iOS `UIViewController.hidesBottomBarWhenPushed` 同名同义。
+  /// 设 false 则本页留在 chrome 内的分支 Navigator 里，底栏保留。
+  /// medium 的 rail 与 expanded 双栏不受影响；分支根页与 [onRootNavigator]
+  /// 的页忽略本值。相当于只在手机上给本路由加 go_router 的
+  /// `parentNavigatorKey: rootNavigatorKey`。
+  final bool hidesBottomBarWhenPushed;
 
   /// 有 [transitionsBuilder] 时传给 [PageRouteBuilder.opaque]。默认不透明。
   final bool opaque;

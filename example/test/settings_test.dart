@@ -37,6 +37,23 @@ void main() {
     });
   }
 
+  testWidgets('register link keeps from and returns to account', (
+    tester,
+  ) async {
+    final router = await pumpExample(tester);
+    router.goBranch(2);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('open-account')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('go-register')));
+    await tester.pumpAndSettle();
+    expect(router.location.value, startsWith('/register?from='));
+    await tester.tap(find.byKey(const Key('register-submit')));
+    await tester.pumpAndSettle();
+    expect(signedIn.value, isTrue);
+    expect(router.location.value, '/settings/account');
+  });
+
   testWidgets('sign out refresh redirects back to login', (tester) async {
     final router = await pumpExample(tester);
     signedIn.value = true;

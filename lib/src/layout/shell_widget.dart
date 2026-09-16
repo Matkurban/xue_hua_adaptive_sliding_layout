@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/breadcrumbs.dart';
@@ -59,6 +58,17 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
     _router.maybePop();
   }
 
+  /// compact 下分支栈从哪个下标起盖住宿主 chrome；没有则 [matches.length]。
+  ///
+  /// 第一个 [AdaptiveRoute.hidesBottomBarWhenPushed] 为 true 的非根页及其上
+  /// 所有页都进 cover Navigator：更深的页在栈上本来就在它之上。
+  static int _coverStart(List<AdaptiveRouteMatch> matches) {
+    for (var i = 1; i < matches.length; i++) {
+      if (matches[i].route.hidesBottomBarWhenPushed) return i;
+    }
+    return matches.length;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SignalBuilder(
@@ -71,6 +81,7 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
                 ? constraints.maxWidth
                 : MediaQuery.sizeOf(context).width;
             final columns = _shell.breakpoints.visibleColumnCount(width);
+            final compact = _shell.breakpoints.isCompact(width);
             final shellState = AdaptiveShellState(
               currentIndex: _router.currentBranch.value,
               branchCount: _shell.branches.length,
@@ -79,20 +90,44 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
               leftPaneFraction: _router.leftPaneFraction,
               goBranch: _router.goBranch,
             );
+            final stacks = [
+              for (var i = 0; i < _shell.branches.length; i++)
+                _router.stackForBranch(i),
+            ];
             final child = IndexedStack(
               index: shellState.currentIndex,
               sizing: StackFit.expand,
               children: [
-                for (var i = 0; i < _shell.branches.length; i++)
+                for (var i = 0; i < stacks.length; i++)
                   _BranchView(
                     navigatorKey: _navKeys[i],
                     router: _router,
                     shell: _shell,
                     branchIndex: i,
-                    matches: _router.stackForBranch(i),
+                    matches: compact
+                        ? stacks[i].take(_coverStart(stacks[i])).toList()
+                        : stacks[i],
                     visibleCount: columns,
                   ),
               ],
+            );
+            // cover Navigator 常驻包住 chrome：非 compact 时只有 chrome 一页，
+            // 推页或跨断点缩放都不会重建壳。
+            // ponytail: 只挂当前分支的 cover 页，其他分支的深层页在 compact 下
+            // 不保活（底栏被盖住时切不了 Tab）；升级路径是每分支一个透明底页的
+            // Navigator。
+            final current = stacks[shellState.currentIndex];
+            final chrome = Navigator(
+              pages: [
+                MaterialPage<void>(
+                  key: const ValueKey<String>('adaptive-chrome'),
+                  child: _shell.builder(context, shellState, child),
+                ),
+                if (compact)
+                  for (final match in current.skip(_coverStart(current)))
+                    _router.pageFor(context, match),
+              ],
+              onDidRemovePage: _router.handleRemovedPage,
             );
             return AdaptiveShellScope(
               state: shellState,
@@ -101,10 +136,7 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
                   if (_shell.escapePops)
                     const SingleActivator(LogicalKeyboardKey.escape): _onEscape,
                 },
-                child: Focus(
-                  autofocus: true,
-                  child: _shell.builder(context, shellState, child),
-                ),
+                child: Focus(autofocus: true, child: chrome),
               ),
             );
           },

@@ -22,6 +22,17 @@ void main() {
     });
   }
 
+  testWidgets('400 pushed page hides the NavigationBar', (tester) async {
+    await pumpExample(tester, width: 400);
+    expect(find.byType(NavigationBar), findsOneWidget);
+    await tester.tap(find.byKey(const Key('folder-inbox')));
+    await tester.pumpAndSettle();
+    expect(find.byType(NavigationBar), findsNothing);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.byType(NavigationBar), findsOneWidget);
+  });
+
   group('1200 mail panes', () {
     testWidgets('pushReplacementNamed switches folder in place', (
       tester,

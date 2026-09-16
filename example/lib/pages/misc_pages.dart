@@ -1,31 +1,5 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.dart';
-import 'package:xue_hua_adaptive_sliding_layout_example/data/auth.dart';
-
-/// 全屏登录。登录后 `pushNamedAndRemoveUntil(from, (_) => false)` 回跳。
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final router = AdaptiveRouter.of(context);
-    final from = AdaptiveRouteState.of(context).queryParameters['from'];
-    return Scaffold(
-      appBar: AppBar(title: const Text('Sign in')),
-      body: Center(
-        child: FilledButton(
-          key: const Key('sign-in'),
-          onPressed: () {
-            signedIn.value = true;
-            final target = (from == null || from.isEmpty) ? '/mail' : from;
-            router.pushNamedAndRemoveUntil(target, (_) => false);
-          },
-          child: Text('Sign in and return to ${from ?? '/mail'}'),
-        ),
-      ),
-    );
-  }
-}
 
 /// [AdaptiveRouter.errorBuilder] 使用的 404 页。
 class NotFoundPage extends StatelessWidget {

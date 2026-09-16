@@ -106,7 +106,7 @@ Browser back, deep links, and refresh all change the location and take the same 
 | Type | Role |
 | --- | --- |
 | [`AdaptiveRouter`](lib/src/router/adaptive_router.dart) | `RouterConfig<AdaptiveRouteMatchList>`. Verbs + `namedLocation` / `refresh`. Signals: `location`, `matches`, `currentBranch`. `of` / `maybeOf`. |
-| [`AdaptiveRoute`](lib/src/router/route.dart) | One page. `path`, optional `name`, `builder`, `title`, `fullscreen`, `fullscreenDialog`, `opaque`, `barrierColor`, `barrierDismissible`, `transitionsBuilder`, `redirect`, `onExit`, nested `routes`. Child paths are relative; `:param` matches go_router. First match wins. |
+| [`AdaptiveRoute`](lib/src/router/route.dart) | One page. `path`, optional `name`, `builder`, `title`, `fullscreen`, `fullscreenDialog`, `hidesBottomBarWhenPushed`, `opaque`, `barrierColor`, `barrierDismissible`, `transitionsBuilder`, `redirect`, `onExit`, nested `routes`. Child paths are relative; `:param` matches go_router. First match wins. |
 | [`AdaptiveShellRoute`](lib/src/router/route.dart) | Tabs + adaptive chrome. One per tree, top-level only. `builder(context, shell, child)`, `branches`, `breakpoints`, sash / breadcrumbs, plus [UI knobs](#customizing-the-ui). |
 | [`AdaptiveBranch`](lib/src/router/route.dart) | One tab. `routes`, optional `initialLocation` / `placeholder`. |
 | [`AdaptiveRouteState`](lib/src/router/route_state.dart) | Builder argument, also `AdaptiveRouteState.of(context)`: `uri`, `matchedLocation`, `fullPath`, `name`, `pathParameters`, `queryParameters`, `arguments`, `error`, `pageKey`. |
@@ -179,13 +179,15 @@ Use **builders** to replace structure, **value parameters** to tweak numbers. De
 | `AdaptiveShellRoute.breadcrumbsBuilder` | `AdaptiveBreadcrumbs` | Replace the whole strip (`showBreadcrumbs` still gates it) |
 | `escapePops` | true | Escape calls `maybePop` |
 
-Nested pages keep the host chrome (same as go_router `ShellRoute`). To cover the bottom bar, set `fullscreen` or `fullscreenDialog`.
+On medium / expanded, nested pages keep the host chrome (same as go_router `ShellRoute`). On compact, pages below the branch root hide the bottom bar by default (`hidesBottomBarWhenPushed`; set `false` to keep it). `fullscreen` / `fullscreenDialog` cover the shell at every width.
 
 ### Overlay routes (`AdaptiveRoute`)
 
 | Parameter | Default | Role |
 | --- | --- | --- |
-| `fullscreenDialog` | false | Root-Navigator fullscreen dialog; covers the shell / bottom bar (= go_router `parentNavigatorKey: rootNavigatorKey`) |
+| `hidesBottomBarWhenPushed` | true | Compact only: the pushed page covers the host bottom bar (same name as iOS). Two panes on desktop are untouched |
+| `fullscreen` | false | Root Navigator at every width, normal transition (= go_router `parentNavigatorKey: rootNavigatorKey`) |
+| `fullscreenDialog` | false | Root Navigator at every width as a Material fullscreen dialog (slide up, close icon) |
 | `opaque` | true | With `transitionsBuilder`: transparent photo viewer |
 | `barrierColor` | null | With `transitionsBuilder` |
 | `barrierDismissible` | false | Tap the barrier to pop |
@@ -216,6 +218,7 @@ Breakpoints (window width, not device type):
 | Contacts | `?q=` as URL state, `namedLocation`, `await pushNamed<bool>` + `pop(true)`, `onExit` dialog (`maybePop` vs `pop`), avatar → photo | [`features/contacts`](example/lib/features/contacts/contact_pages.dart) |
 | Settings | `redirect` to `/login?from=`, `pushNamedAndRemoveUntil` return, `refresh()` on sign-out, theme / sash, `errorBuilder` 404 | [`features/settings`](example/lib/features/settings/settings_pages.dart) |
 | Playground | Every Navigator verb, no-context `router.pushNamed`, custom `transitionsBuilder`, `showDialog` / sheet `useRootNavigator` contrast, Escape | [`features/playground`](example/lib/features/playground/playground_page.dart) |
+| Onboarding / auth | App starts on `/onboarding` (log in / register / enter home), login ↔ register via `pushReplacementNamed`, `?from=` return, `pushNamedAndRemoveUntil` into the shell | [`features/auth`](example/lib/features/auth/auth_pages.dart) |
 | Shell / frame | compact `NavigationBar` vs rail, width presets | [`app_shell.dart`](example/lib/shell/app_shell.dart), [`demo_frame.dart`](example/lib/frame/demo_frame.dart) |
 
 ```bash
