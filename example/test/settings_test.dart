@@ -48,4 +48,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('Sign in'), findsWidgets);
   });
+
+  testWidgets('paneBuilder card/flat switch updates the column chrome', (
+    tester,
+  ) async {
+    final router = await pumpExample(tester);
+    router.goBranch(2);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('open-appearance')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('pane-card')), findsWidgets);
+    await tester.tap(find.byKey(const Key('pane-style-flat')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('pane-flat')), findsWidgets);
+    expect(find.byKey(const Key('pane-card')), findsNothing);
+  });
 }

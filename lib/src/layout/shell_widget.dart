@@ -97,10 +97,11 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
               state: shellState,
               child: CallbackShortcuts(
                 bindings: {
-                  const SingleActivator(LogicalKeyboardKey.escape): _onEscape,
+                  if (_shell.escapePops)
+                    const SingleActivator(LogicalKeyboardKey.escape): _onEscape,
                 },
                 child: Focus(
-                  canRequestFocus: false,
+                  autofocus: true,
                   child: _shell.builder(context, shellState, child),
                 ),
               ),
@@ -155,15 +156,15 @@ class _BranchView extends StatelessWidget {
     }
     final panes = _panes(context);
     final branch = shell.branches[branchIndex];
+    void onSelect(SlidingPane pane) {
+      router.popUntil((match) => match.pageKey == pane.key);
+    }
+
     return Column(
       children: [
         if (shell.showBreadcrumbs)
-          AdaptiveBreadcrumbs(
-            panes: panes,
-            onSelect: (pane) {
-              router.popUntil((match) => match.pageKey == pane.key);
-            },
-          ),
+          shell.breadcrumbsBuilder?.call(context, panes, onSelect) ??
+              AdaptiveBreadcrumbs(panes: panes, onSelect: onSelect),
         Expanded(
           child: SignalBuilder(
             builder: (context) {
@@ -173,7 +174,9 @@ class _BranchView extends StatelessWidget {
                 onPop: () {
                   router.maybePop();
                 },
-                placeholder: branch.placeholder?.call(context),
+                placeholder:
+                    branch.placeholder?.call(context) ??
+                    shell.placeholder?.call(context),
                 leftPaneFraction: router.leftPaneFraction.value,
                 minLeftPaneFraction: shell.minLeftPaneFraction,
                 minRightPaneFraction: shell.minRightPaneFraction,
@@ -182,6 +185,10 @@ class _BranchView extends StatelessWidget {
                   shell.onLeftPaneFractionChanged?.call(value);
                 },
                 resizeLeftPane: shell.resizable,
+                slideDuration: shell.slideDuration,
+                slideCurve: shell.slideCurve,
+                paneBuilder: shell.paneBuilder,
+                resizeHandleBuilder: shell.resizeHandleBuilder,
               );
             },
           ),

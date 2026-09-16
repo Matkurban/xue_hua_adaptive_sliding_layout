@@ -12,7 +12,7 @@ import 'package:xue_hua_adaptive_sliding_layout/src/router/route_state.dart';
 ///
 /// 交给 [MaterialApp.router] 的 `routerConfig`。页面内用 [of] / [maybeOf]
 /// 取实例再 `pushNamed` / `pop`；也可以直接持有本对象，无需依赖注入。
-class AdaptiveRouter implements RouterConfig<Object> {
+class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   /// [routes] 为顶层路由表；[initialLocation] 在平台未给出 URL 时使用。
   AdaptiveRouter({
     required List<AdaptiveRouteBase> routes,
@@ -69,10 +69,11 @@ class AdaptiveRouter implements RouterConfig<Object> {
   late final RouteInformationProvider routeInformationProvider;
 
   @override
-  late final RouteInformationParser<Object> routeInformationParser;
+  late final RouteInformationParser<AdaptiveRouteMatchList>
+  routeInformationParser;
 
   @override
-  late final RouterDelegate<Object> routerDelegate;
+  late final RouterDelegate<AdaptiveRouteMatchList> routerDelegate;
 
   @override
   late final BackButtonDispatcher backButtonDispatcher;
@@ -321,6 +322,10 @@ class AdaptiveRouter implements RouterConfig<Object> {
         arguments: match.arguments,
         canPop: !hasExit,
         onPopInvoked: onPopInvoked,
+        fullscreenDialog: match.route.fullscreenDialog,
+        opaque: match.route.opaque,
+        barrierColor: match.route.barrierColor,
+        barrierDismissible: match.route.barrierDismissible,
         transitionsBuilder: match.route.transitionsBuilder!,
         transitionDuration:
             match.route.transitionDuration ?? const Duration(milliseconds: 300),
@@ -333,6 +338,7 @@ class AdaptiveRouter implements RouterConfig<Object> {
       arguments: match.arguments,
       canPop: !hasExit,
       onPopInvoked: onPopInvoked,
+      fullscreenDialog: match.route.fullscreenDialog,
       child: child,
     );
   }
@@ -517,13 +523,14 @@ class AdaptiveRouterScope extends InheritedWidget {
       router != oldWidget.router;
 }
 
-class _AdaptiveRouteInformationParser extends RouteInformationParser<Object> {
+class _AdaptiveRouteInformationParser
+    extends RouteInformationParser<AdaptiveRouteMatchList> {
   _AdaptiveRouteInformationParser(this.router);
 
   final AdaptiveRouter router;
 
   @override
-  Future<Object> parseRouteInformationWithDependencies(
+  Future<AdaptiveRouteMatchList> parseRouteInformationWithDependencies(
     RouteInformation routeInformation,
     BuildContext context,
   ) {
@@ -531,13 +538,14 @@ class _AdaptiveRouteInformationParser extends RouteInformationParser<Object> {
   }
 
   @override
-  RouteInformation? restoreRouteInformation(Object configuration) {
-    final list = configuration as AdaptiveRouteMatchList;
-    return RouteInformation(uri: list.uri);
+  RouteInformation? restoreRouteInformation(
+    AdaptiveRouteMatchList configuration,
+  ) {
+    return RouteInformation(uri: configuration.uri);
   }
 }
 
-class _AdaptiveRouterDelegate extends RouterDelegate<Object>
+class _AdaptiveRouterDelegate extends RouterDelegate<AdaptiveRouteMatchList>
     with ChangeNotifier {
   _AdaptiveRouterDelegate(this.router);
 
@@ -551,13 +559,13 @@ class _AdaptiveRouterDelegate extends RouterDelegate<Object>
       router._ready ? router._current : null;
 
   @override
-  Future<void> setNewRoutePath(Object configuration) {
-    return router.applyParsed(configuration as AdaptiveRouteMatchList);
+  Future<void> setNewRoutePath(AdaptiveRouteMatchList configuration) {
+    return router.applyParsed(configuration);
   }
 
   @override
-  Future<void> setInitialRoutePath(Object configuration) {
-    return router.applyParsed(configuration as AdaptiveRouteMatchList);
+  Future<void> setInitialRoutePath(AdaptiveRouteMatchList configuration) {
+    return router.applyParsed(configuration);
   }
 
   @override
@@ -655,6 +663,10 @@ class _AdaptiveTransitionPage<T> extends Page<T> {
     required this.child,
     required this.transitionsBuilder,
     required this.transitionDuration,
+    this.opaque = true,
+    this.barrierColor,
+    this.barrierDismissible = false,
+    this.fullscreenDialog = false,
     super.key,
     super.name,
     super.arguments,
@@ -665,11 +677,19 @@ class _AdaptiveTransitionPage<T> extends Page<T> {
   final Widget child;
   final AdaptiveTransitionsBuilder transitionsBuilder;
   final Duration transitionDuration;
+  final bool opaque;
+  final Color? barrierColor;
+  final bool barrierDismissible;
+  final bool fullscreenDialog;
 
   @override
   Route<T> createRoute(BuildContext context) {
     return PageRouteBuilder<T>(
       settings: this,
+      fullscreenDialog: fullscreenDialog,
+      opaque: opaque,
+      barrierColor: barrierColor,
+      barrierDismissible: barrierDismissible,
       transitionDuration: transitionDuration,
       pageBuilder: (context, animation, secondaryAnimation) => child,
       transitionsBuilder: transitionsBuilder,

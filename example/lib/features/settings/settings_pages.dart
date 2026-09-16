@@ -6,6 +6,9 @@ import 'package:xue_hua_adaptive_sliding_layout_example/data/auth.dart';
 /// 示例主题，Settings → Appearance 可切换。
 final Signal<ThemeMode> demoThemeMode = signal(ThemeMode.system);
 
+/// 双栏卡片装饰。true 走 [AdaptiveShellRoute.paneBuilder] 的卡片，false 平铺。
+final Signal<bool> paneCardStyle = signal(true);
+
 /// Settings 根。Account 受 redirect 保护。
 class SettingsHomePage extends StatelessWidget {
   const SettingsHomePage({super.key});
@@ -26,7 +29,7 @@ class SettingsHomePage extends StatelessWidget {
           ListTile(
             key: const Key('open-appearance'),
             title: const Text('Appearance'),
-            subtitle: const Text('theme + sash fraction'),
+            subtitle: const Text('theme + sash + paneBuilder card/flat'),
             onTap: () => router.pushNamed('/settings/appearance'),
           ),
           ListTile(
@@ -76,6 +79,7 @@ class SettingsAppearancePage extends StatelessWidget {
       body: SignalBuilder(
         builder: (context) {
           final mode = demoThemeMode.value;
+          final card = paneCardStyle.value;
           return ListView(
             children: [
               ListTile(
@@ -98,6 +102,20 @@ class SettingsAppearancePage extends StatelessWidget {
                   'width=${shell?.width.toStringAsFixed(0)}  '
                   'mode=${shell == null ? '-' : shell.isCompact ? 'compact' : shell.isMedium ? 'medium' : 'expanded'}',
                 ),
+              ),
+              ListTile(
+                key: const Key('pane-style-card'),
+                title: const Text('Pane style: Card'),
+                subtitle: const Text('paneBuilder wraps each column in a card'),
+                selected: card,
+                onTap: () => paneCardStyle.value = true,
+              ),
+              ListTile(
+                key: const Key('pane-style-flat'),
+                title: const Text('Pane style: Flat'),
+                subtitle: const Text('paneBuilder returns the column unwrapped'),
+                selected: !card,
+                onTap: () => paneCardStyle.value = false,
               ),
               ListTile(
                 key: const Key('reset-sash'),

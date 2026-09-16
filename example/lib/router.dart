@@ -35,6 +35,9 @@ AdaptiveRouter createAppRouter() {
         path: '/photo/:id',
         name: 'photo',
         fullscreen: true,
+        opaque: false,
+        barrierColor: Colors.black54,
+        barrierDismissible: true,
         transitionsBuilder: (context, animation, secondary, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -45,11 +48,44 @@ AdaptiveRouter createAppRouter() {
         showBreadcrumbs: true,
         resizable: true,
         initialLeftPaneFraction: 0.4,
+        placeholder: (context) => const EmptyDetail(),
+        slideDuration: const Duration(milliseconds: 280),
+        breadcrumbsBuilder: (context, panes, onSelect) {
+          return AdaptiveBreadcrumbs(
+            panes: panes,
+            onSelect: onSelect,
+            height: 40,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+          );
+        },
+        paneBuilder: (context, index, child) {
+          return SignalBuilder(
+            builder: (context) {
+              final card = paneCardStyle.value;
+              if (!card) {
+                return KeyedSubtree(key: const Key('pane-flat'), child: child);
+              }
+              return KeyedSubtree(
+                key: const Key('pane-card'),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Material(
+                    elevation: 2,
+                    color: Theme.of(context).colorScheme.surface,
+                    shadowColor: Colors.black26,
+                    borderRadius: BorderRadius.circular(12),
+                    clipBehavior: Clip.antiAlias,
+                    child: child,
+                  ),
+                ),
+              );
+            },
+          );
+        },
         builder: (context, shell, child) =>
             AppShell(shell: shell, child: child),
         branches: [
           AdaptiveBranch(
-            placeholder: (context) => const EmptyDetail(),
             routes: [
               AdaptiveRoute(
                 path: '/mail',
@@ -90,7 +126,6 @@ AdaptiveRouter createAppRouter() {
             ],
           ),
           AdaptiveBranch(
-            placeholder: (context) => const EmptyDetail(),
             routes: [
               AdaptiveRoute(
                 path: '/contacts',

@@ -11,6 +11,7 @@
 - [路由表](#路由表)
 - [导航动词](#导航动词)
 - [读取状态](#读取状态)
+- [自定义 UI](#自定义-ui)
 - [不用路由只要布局](#不用路由只要布局)
 - [示例场景](#示例场景)
 - [从 2.x 迁移](#从-2x-迁移)
@@ -104,9 +105,9 @@ flowchart LR
 
 | 类型 | 职责 |
 | --- | --- |
-| [`AdaptiveRouter`](lib/src/router/adaptive_router.dart) | `RouterConfig`。动词 + `namedLocation` / `refresh`。只读 signal：`location`、`matches`、`currentBranch`。`of` / `maybeOf`。 |
-| [`AdaptiveRoute`](lib/src/router/route.dart) | 一页。`path`、可选 `name`、`builder`、`title`、`fullscreen`、`transitionsBuilder`、`redirect`、`onExit`、子 `routes`。子路径为相对路径，`:param` 与 go_router 相同。顺序优先匹配。 |
-| [`AdaptiveShellRoute`](lib/src/router/route.dart) | Tab + 自适应壳。整棵树只允许一个，且必须顶层。`builder(context, shell, child)`、`branches`、`breakpoints`、分割条 / 面包屑。 |
+| [`AdaptiveRouter`](lib/src/router/adaptive_router.dart) | `RouterConfig<AdaptiveRouteMatchList>`。动词 + `namedLocation` / `refresh`。只读 signal：`location`、`matches`、`currentBranch`。`of` / `maybeOf`。 |
+| [`AdaptiveRoute`](lib/src/router/route.dart) | 一页。`path`、可选 `name`、`builder`、`title`、`fullscreen`、`fullscreenDialog`、`opaque`、`barrierColor`、`barrierDismissible`、`transitionsBuilder`、`redirect`、`onExit`、子 `routes`。子路径为相对路径，`:param` 与 go_router 相同。顺序优先匹配。 |
+| [`AdaptiveShellRoute`](lib/src/router/route.dart) | Tab + 自适应壳。整棵树只允许一个，且必须顶层。`builder(context, shell, child)`、`branches`、`breakpoints`、分割条 / 面包屑，以及 [UI 属性](#自定义-ui)。 |
 | [`AdaptiveBranch`](lib/src/router/route.dart) | 一个 Tab。`routes`，可选 `initialLocation` / `placeholder`。 |
 | [`AdaptiveRouteState`](lib/src/router/route_state.dart) | builder 参数，也可 `AdaptiveRouteState.of(context)`：`uri`、`matchedLocation`、`fullPath`、`name`、`pathParameters`、`queryParameters`、`arguments`、`error`、`pageKey`。 |
 | [`AdaptiveShellState`](lib/src/router/route_state.dart) | 壳 builder 参数：`currentIndex`、宽度 / 断点、`leftPaneFraction`、`goBranch`。 |
@@ -150,6 +151,45 @@ AdaptiveShellScope.maybeOf(context)?.isExpanded;
 
 UI 订阅用 `SignalBuilder`（见 `signals_flutter`）。
 
+想在**自己的**壳里画标题而不是内置条带，读 `AdaptiveRouter.of(context).matches.value.branchMatches`（每个 match 有 `title` signal 和 `name`）。
+
+## 自定义 UI
+
+用 **builder** 换结构，用 **值参数** 换数值。默认行为与 3.0 首次发布一致。主题色仍从 `Theme.of(context)` 取。1 栏过场走 Flutter 的 `ThemeData.pageTransitionsTheme`。
+
+### 视口（`SlidingPaneViewport` / `AdaptiveShellRoute`）
+
+| 参数 | 默认 | 作用 |
+| --- | --- | --- |
+| `slideDuration` | 280ms | 栏位平移 |
+| `slideCurve` | `Curves.easeOutCubic` | 栏位平移 |
+| `paneBuilder` | 双栏卡片 / 单栏平铺 | 包每一栏。`index == panes.length` 是右侧空槽 |
+| `resizeHandleBuilder` | 2px `outline` 线 | 只换视觉；命中区仍是 44px |
+| `placeholder` | outline 图标 | 壳级右栏空态；`AdaptiveBranch.placeholder` 优先 |
+
+### 面包屑
+
+| 参数 | 默认 | 作用 |
+| --- | --- | --- |
+| `height` | 36 | 条带高度 |
+| `padding` | 水平 12 | 条带内边距 |
+| `backgroundColor` | `surfaceContainerLow` | 条带底色 |
+| `itemBuilder` | InkWell + Text | 单个面包屑 |
+| `separatorBuilder` | chevron | 分隔符 |
+| `AdaptiveShellRoute.breadcrumbsBuilder` | `AdaptiveBreadcrumbs` | 整条替换（仍受 `showBreadcrumbs` 控制） |
+| `escapePops` | true | Escape 调用 `maybePop` |
+
+### 覆盖层（`AdaptiveRoute`）
+
+| 参数 | 默认 | 作用 |
+| --- | --- | --- |
+| `fullscreenDialog` | false | `MaterialPage` / `PageRouteBuilder` 全屏对话框 |
+| `opaque` | true | 配合 `transitionsBuilder`：透明照片查看器 |
+| `barrierColor` | null | 配合 `transitionsBuilder` |
+| `barrierDismissible` | false | 点屏障弹出 |
+
+完整例子见 [`example/lib/router.dart`](example/lib/router.dart)：卡片 / 平铺 `paneBuilder`、40px 面包屑、半透明 `/photo/:id`。
+
 ## 不用路由只要布局
 
 [`SlidingPaneViewport`](lib/src/layout/sliding_pane_viewport.dart)、[`SlidingPane`](lib/src/layout/pane_scope.dart)、[`AdaptiveBreadcrumbs`](lib/src/layout/breadcrumbs.dart) 保持公开，只想要滑动栏时可以直接用。
@@ -158,8 +198,8 @@ UI 订阅用 `SignalBuilder`（见 `signals_flutter`）。
 
 | 宽度 | 分档 | 可见栏 |
 | --- | --- | --- |
-| `< compactMaxWidth`（600） | compact | 1 — 平台 `Navigator` |
-| `600–839` | medium | 1 — 滑动栈，一栏 |
+| `< compactMaxWidth`（600） | compact | 1 — `Navigator` 全屏栈 |
+| `600–839` | medium | 1 — 同样是 `Navigator`；宿主用 `shell.isMedium` 区分 chrome |
 | `≥ expandedMinWidth`（840） | expanded | 2 — 最后两栏 + 可选分割条 |
 
 `ponytail:` 视口只支持 1 / 2 栏。三栏及以上需要改 `visibleColumnCount` 并让视口按 N 栏布局。

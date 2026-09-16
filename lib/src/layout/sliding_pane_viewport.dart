@@ -21,6 +21,10 @@ class SlidingPaneViewport extends StatefulWidget {
     this.minRightPaneFraction = defaultMinRightPaneFraction,
     this.onLeftPaneFractionChanged,
     this.resizeLeftPane,
+    this.slideDuration = defaultSlideDuration,
+    this.slideCurve = defaultSlideCurve,
+    this.paneBuilder,
+    this.resizeHandleBuilder,
   });
 
   /// 未指定时左栏占一半视口。
@@ -31,6 +35,12 @@ class SlidingPaneViewport extends StatefulWidget {
 
   /// 右栏默认最小 30%。
   static const double defaultMinRightPaneFraction = 0.3;
+
+  /// 栏位平移动画默认时长。
+  static const Duration defaultSlideDuration = Duration(milliseconds: 280);
+
+  /// 栏位平移动画默认曲线。
+  static const Curve defaultSlideCurve = Curves.easeOutCubic;
 
   /// 分割条命中区域的测试 Key。
   static const Key resizeHandleKey = Key('pane-resize-handle');
@@ -67,6 +77,19 @@ class SlidingPaneViewport extends StatefulWidget {
 
   /// 是否显示分割条。缺省在 [visibleCount] 为 2 时开启。
   final bool? resizeLeftPane;
+
+  /// 栏位平移动画时长。
+  final Duration slideDuration;
+
+  /// 栏位平移动画曲线。
+  final Curve slideCurve;
+
+  /// 包每一栏；[index] 等于 [panes.length] 时是右侧占位槽。
+  /// 缺省双栏用卡片、单栏平铺。
+  final SlidingPaneFrameBuilder? paneBuilder;
+
+  /// 只换分割条视觉；Listener、光标、44px 命中区仍由包负责。
+  final WidgetBuilder? resizeHandleBuilder;
 
   /// 把 [fraction] 夹到 [minLeftPaneFraction] 与 `1 - minRightPaneFraction` 之间。
   /// 区间倒置时取中点，避免 NaN。
@@ -215,6 +238,9 @@ class _SlidingPaneViewportState extends State<SlidingPaneViewport> {
               decoratePanes: count == 2,
               onPop: widget.onPop,
               placeholder: widget.placeholder ?? const _SlidingPlaceholder(),
+              slideDuration: widget.slideDuration,
+              slideCurve: widget.slideCurve,
+              paneBuilder: widget.paneBuilder,
             ),
             if (showHandle)
               Positioned(
@@ -222,7 +248,10 @@ class _SlidingPaneViewportState extends State<SlidingPaneViewport> {
                 top: 0,
                 bottom: 0,
                 width: _PaneResizeHandle.hitExtent,
-                child: _PaneResizeHandle(onPointerDown: _onHandlePointerDown),
+                child: _PaneResizeHandle(
+                  onPointerDown: _onHandlePointerDown,
+                  builder: widget.resizeHandleBuilder,
+                ),
               ),
           ],
         );
@@ -233,11 +262,12 @@ class _SlidingPaneViewportState extends State<SlidingPaneViewport> {
 
 /// 双栏中间的拖动手柄：视觉 2px，命中宽度 [hitExtent]。
 class _PaneResizeHandle extends StatelessWidget {
-  const _PaneResizeHandle({required this.onPointerDown});
+  const _PaneResizeHandle({required this.onPointerDown, this.builder});
 
   static const double hitExtent = 44;
 
   final ValueChanged<PointerDownEvent> onPointerDown;
+  final WidgetBuilder? builder;
 
   @override
   Widget build(BuildContext context) {
@@ -249,13 +279,14 @@ class _PaneResizeHandle extends StatelessWidget {
         behavior: HitTestBehavior.translucent,
         onPointerDown: onPointerDown,
         child: SizedBox.expand(
-          child: Center(
-            child: SizedBox(
-              width: 2,
-              height: double.infinity,
-              child: ColoredBox(color: color),
-            ),
-          ),
+          child: builder?.call(context) ??
+              Center(
+                child: SizedBox(
+                  width: 2,
+                  height: double.infinity,
+                  child: ColoredBox(color: color),
+                ),
+              ),
         ),
       ),
     );
@@ -273,6 +304,9 @@ class _SlidingPaneStrip extends StatefulWidget {
     required this.decoratePanes,
     required this.placeholder,
     required this.onPop,
+    required this.slideDuration,
+    required this.slideCurve,
+    this.paneBuilder,
   });
 
   final List<SlidingPane> panes;
@@ -283,6 +317,9 @@ class _SlidingPaneStrip extends StatefulWidget {
   final bool decoratePanes;
   final Widget placeholder;
   final VoidCallback? onPop;
+  final Duration slideDuration;
+  final Curve slideCurve;
+  final SlidingPaneFrameBuilder? paneBuilder;
 
   @override
   State<_SlidingPaneStrip> createState() => _SlidingPaneStripState();
@@ -290,19 +327,16 @@ class _SlidingPaneStrip extends StatefulWidget {
 
 class _SlidingPaneStripState extends State<_SlidingPaneStrip>
     with SingleTickerProviderStateMixin {
-  static const Duration _duration = Duration(milliseconds: 280);
-  static const Curve _curve = Curves.easeOutCubic;
-
   late final AnimationController _controller;
-  late final CurvedAnimation _curved;
+  late CurvedAnimation _curved;
   double _fromOffset = 0;
   double _toOffset = 0;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: _duration);
-    _curved = CurvedAnimation(parent: _controller, curve: _curve);
+    _controller = AnimationController(vsync: this, duration: widget.slideDuration);
+    _curved = CurvedAnimation(parent: _controller, curve: widget.slideCurve);
     _toOffset = _targetOffset(widget);
     _fromOffset = _toOffset;
   }
@@ -310,6 +344,13 @@ class _SlidingPaneStripState extends State<_SlidingPaneStrip>
   @override
   void didUpdateWidget(covariant _SlidingPaneStrip oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.slideDuration != oldWidget.slideDuration) {
+      _controller.duration = widget.slideDuration;
+    }
+    if (widget.slideCurve != oldWidget.slideCurve) {
+      _curved.dispose();
+      _curved = CurvedAnimation(parent: _controller, curve: widget.slideCurve);
+    }
     final next = _targetOffset(widget);
     final widthChanged =
         oldWidget.leftPaneWidth != widget.leftPaneWidth ||
@@ -396,6 +437,7 @@ class _SlidingPaneStripState extends State<_SlidingPaneStrip>
                     alpha: 0.4,
                   ),
                   onPop: widget.onPop,
+                  paneBuilder: widget.paneBuilder,
                   layoutKey: visibleCount >= 2 && i == start
                       ? SlidingPaneViewport.visibleLeftPaneKey
                       : visibleCount >= 2 && i == start + 1
@@ -409,7 +451,13 @@ class _SlidingPaneStripState extends State<_SlidingPaneStrip>
                       : null,
                   width: widget.rightPaneWidth,
                   height: widget.viewportHeight,
-                  child: widget.decoratePanes
+                  child: widget.paneBuilder != null
+                      ? widget.paneBuilder!(
+                          context,
+                          panes.length,
+                          widget.placeholder,
+                        )
+                      : widget.decoratePanes
                       ? _PaneCardShell(child: widget.placeholder)
                       : widget.placeholder,
                 ),
@@ -435,6 +483,7 @@ class _SlidingPaneFrame extends StatelessWidget {
     required this.dividerColor,
     required this.onPop,
     this.layoutKey,
+    this.paneBuilder,
   });
 
   final SlidingPane pane;
@@ -448,6 +497,7 @@ class _SlidingPaneFrame extends StatelessWidget {
   final Color dividerColor;
   final VoidCallback? onPop;
   final Key? layoutKey;
+  final SlidingPaneFrameBuilder? paneBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -467,7 +517,9 @@ class _SlidingPaneFrame extends StatelessWidget {
         ),
       ),
     );
-    final decorated = decorate
+    final decorated = paneBuilder != null
+        ? paneBuilder!(context, index, inner)
+        : decorate
         ? _PaneCardShell(child: inner)
         : DecoratedBox(
             decoration: BoxDecoration(

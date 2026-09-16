@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/layout/breadcrumbs.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/layout_breakpoints.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/layout/pane_scope.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/layout/sliding_pane_viewport.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/route_state.dart';
 
 /// 把 [parent] 与 [child] 拼成完整 path 模式。
@@ -177,6 +180,10 @@ class AdaptiveRoute extends AdaptiveRouteBase {
     this.builder,
     this.title,
     this.fullscreen = false,
+    this.fullscreenDialog = false,
+    this.opaque = true,
+    this.barrierColor,
+    this.barrierDismissible = false,
     this.transitionsBuilder,
     this.transitionDuration,
     this.redirect,
@@ -202,6 +209,18 @@ class AdaptiveRoute extends AdaptiveRouteBase {
 
   /// 为 true 时叠在根 Navigator 上，不进入滑动栏。
   final bool fullscreen;
+
+  /// 根 Navigator 上按全屏对话框呈现（[MaterialPage.fullscreenDialog]）。
+  final bool fullscreenDialog;
+
+  /// 有 [transitionsBuilder] 时传给 [PageRouteBuilder.opaque]。默认不透明。
+  final bool opaque;
+
+  /// 有 [transitionsBuilder] 时的屏障色；透明覆盖层常用半透明黑。
+  final Color? barrierColor;
+
+  /// 有 [transitionsBuilder] 时点击屏障是否弹出。
+  final bool barrierDismissible;
 
   /// 根 Navigator 上的自定义过场；栏内页忽略（栏位是并排的）。
   final AdaptiveTransitionsBuilder? transitionsBuilder;
@@ -268,6 +287,13 @@ class AdaptiveShellRoute extends AdaptiveRouteBase {
     this.minLeftPaneFraction = 0.3,
     this.minRightPaneFraction = 0.3,
     this.onLeftPaneFractionChanged,
+    this.breadcrumbsBuilder,
+    this.placeholder,
+    this.paneBuilder,
+    this.resizeHandleBuilder,
+    this.slideDuration = SlidingPaneViewport.defaultSlideDuration,
+    this.slideCurve = SlidingPaneViewport.defaultSlideCurve,
+    this.escapePops = true,
   }) : assert(branches.isNotEmpty, 'AdaptiveShellRoute.branches must not be empty');
 
   /// 宿主壳 UI。必须把 [child] 放到内容区。
@@ -296,4 +322,25 @@ class AdaptiveShellRoute extends AdaptiveRouteBase {
 
   /// 分割条松手时的新比例。
   final ValueChanged<double>? onLeftPaneFractionChanged;
+
+  /// 非空时替换默认 [AdaptiveBreadcrumbs]；仍受 [showBreadcrumbs] 控制。
+  final AdaptiveBreadcrumbsBuilder? breadcrumbsBuilder;
+
+  /// 壳级默认右栏占位。[AdaptiveBranch.placeholder] 优先。
+  final AdaptivePlaceholderBuilder? placeholder;
+
+  /// 包每一栏；透传到 [SlidingPaneViewport.paneBuilder]。
+  final SlidingPaneFrameBuilder? paneBuilder;
+
+  /// 只换分割条视觉；透传到 [SlidingPaneViewport.resizeHandleBuilder]。
+  final WidgetBuilder? resizeHandleBuilder;
+
+  /// 栏位平移动画时长。
+  final Duration slideDuration;
+
+  /// 栏位平移动画曲线。
+  final Curve slideCurve;
+
+  /// 为 false 时 Escape 不再调用 [AdaptiveRouter.maybePop]。
+  final bool escapePops;
 }

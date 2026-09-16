@@ -59,6 +59,9 @@ class AdaptiveRouteMatch {
   /// 所属 [AdaptiveBranch] 下标；壳外路由为 null。
   final int? branchIndex;
 
+  /// 路由表里的 [AdaptiveRoute.name]，未命名则为 null。
+  String? get name => route.name;
+
   bool _disposed = false;
 
   /// 是否叠在根 Navigator 上。

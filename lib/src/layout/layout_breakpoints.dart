@@ -1,8 +1,8 @@
 /// 宽度断点：只看窗口宽度，不看设备类型或方向。
 ///
-/// 三档：compact（低于 [compactMaxWidth]）单栏全屏栈；
-/// medium（介于两者之间）单栏滑动栈；
-/// expanded（达到 [expandedMinWidth]）双栏。
+/// 三档：compact（低于 [compactMaxWidth]）单栏全屏 [Navigator] 栈；
+/// medium（介于两者之间）仍是单栏 [Navigator]，供宿主区分 rail / bottom bar；
+/// expanded（达到 [expandedMinWidth]）双栏滑动视口。
 ///
 /// `ponytail:` 视口只支持 1 / 2 栏。三栏及以上改 [visibleColumnCount]
 /// 并让 [SlidingPaneViewport] 按 N 栏布局。
@@ -22,7 +22,7 @@ class LayoutBreakpoints {
   /// [width] 是否低于 compact 上界。
   bool isCompact(double width) => width < compactMaxWidth;
 
-  /// [width] 是否处于 compact 与 expanded 之间。
+  /// [width] 是否处于 compact 与 expanded 之间。栏数仍为 1，与 compact 相同。
   bool isMedium(double width) =>
       width >= compactMaxWidth && width < expandedMinWidth;
 

@@ -68,5 +68,37 @@ void main() {
       await tester.pump();
       expect(find.text('Alice'), findsOneWidget);
     });
+
+    testWidgets('itemBuilder, separatorBuilder and height apply', (tester) async {
+      final root = SlidingPane(
+        key: const ValueKey('root'),
+        title: signal('Home'),
+        child: const SizedBox(),
+      );
+      final next = SlidingPane(
+        key: const ValueKey('next'),
+        title: signal('Next'),
+        child: const SizedBox(),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AdaptiveBreadcrumbs(
+              panes: [root, next],
+              onSelect: (_) {},
+              height: 48,
+              itemBuilder: (context, pane, isLast, onTap) {
+                return Text('item-${pane.title.value}');
+              },
+              separatorBuilder: (context, index) => const Text('|'),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('item-Home'), findsOneWidget);
+      expect(find.text('item-Next'), findsOneWidget);
+      expect(find.text('|'), findsOneWidget);
+      expect(tester.getSize(find.byType(AdaptiveBreadcrumbs)).height, 48);
+    });
   });
 }

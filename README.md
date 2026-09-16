@@ -11,6 +11,7 @@ It does **not** depend on `go_router`. The host holds the `AdaptiveRouter` insta
 - [Route table](#route-table)
 - [Navigation verbs](#navigation-verbs)
 - [Reading state](#reading-state)
+- [Customizing the UI](#customizing-the-ui)
 - [Layout without a router](#layout-without-a-router)
 - [Example scenarios](#example-scenarios)
 - [Migrating from 2.x](#migrating-from-2x)
@@ -104,9 +105,9 @@ Browser back, deep links, and refresh all change the location and take the same 
 
 | Type | Role |
 | --- | --- |
-| [`AdaptiveRouter`](lib/src/router/adaptive_router.dart) | `RouterConfig`. Verbs + `namedLocation` / `refresh`. Signals: `location`, `matches`, `currentBranch`. `of` / `maybeOf`. |
-| [`AdaptiveRoute`](lib/src/router/route.dart) | One page. `path`, optional `name`, `builder`, `title`, `fullscreen`, `transitionsBuilder`, `redirect`, `onExit`, nested `routes`. Child paths are relative; `:param` matches go_router. First match wins. |
-| [`AdaptiveShellRoute`](lib/src/router/route.dart) | Tabs + adaptive chrome. One per tree, top-level only. `builder(context, shell, child)`, `branches`, `breakpoints`, sash / breadcrumbs. |
+| [`AdaptiveRouter`](lib/src/router/adaptive_router.dart) | `RouterConfig<AdaptiveRouteMatchList>`. Verbs + `namedLocation` / `refresh`. Signals: `location`, `matches`, `currentBranch`. `of` / `maybeOf`. |
+| [`AdaptiveRoute`](lib/src/router/route.dart) | One page. `path`, optional `name`, `builder`, `title`, `fullscreen`, `fullscreenDialog`, `opaque`, `barrierColor`, `barrierDismissible`, `transitionsBuilder`, `redirect`, `onExit`, nested `routes`. Child paths are relative; `:param` matches go_router. First match wins. |
+| [`AdaptiveShellRoute`](lib/src/router/route.dart) | Tabs + adaptive chrome. One per tree, top-level only. `builder(context, shell, child)`, `branches`, `breakpoints`, sash / breadcrumbs, plus [UI knobs](#customizing-the-ui). |
 | [`AdaptiveBranch`](lib/src/router/route.dart) | One tab. `routes`, optional `initialLocation` / `placeholder`. |
 | [`AdaptiveRouteState`](lib/src/router/route_state.dart) | Builder argument, also `AdaptiveRouteState.of(context)`: `uri`, `matchedLocation`, `fullPath`, `name`, `pathParameters`, `queryParameters`, `arguments`, `error`, `pageKey`. |
 | [`AdaptiveShellState`](lib/src/router/route_state.dart) | Shell builder argument: `currentIndex`, width / breakpoints, `leftPaneFraction`, `goBranch`. |
@@ -150,6 +151,45 @@ AdaptiveShellScope.maybeOf(context)?.isExpanded;
 
 Subscribe in UI with `SignalBuilder` (see `signals_flutter`).
 
+To draw titles in **your** chrome instead of the built-in strip, read `AdaptiveRouter.of(context).matches.value.branchMatches` (each match has a `title` signal and `name`).
+
+## Customizing the UI
+
+Use **builders** to replace structure, **value parameters** to tweak numbers. Defaults match the 3.0 first release. Theme colors still come from `Theme.of(context)`. 1-column page transitions use Flutter's `ThemeData.pageTransitionsTheme`.
+
+### Viewport (`SlidingPaneViewport` / `AdaptiveShellRoute`)
+
+| Parameter | Default | Role |
+| --- | --- | --- |
+| `slideDuration` | 280ms | Column slide |
+| `slideCurve` | `Curves.easeOutCubic` | Column slide |
+| `paneBuilder` | 2-col card / 1-col flat | Wrap each column. `index == panes.length` is the empty right slot |
+| `resizeHandleBuilder` | 2px `outline` line | Visual only; hit target stays 44px |
+| `placeholder` | outline icon | Shell-level empty right pane; `AdaptiveBranch.placeholder` wins if set |
+
+### Breadcrumbs
+
+| Parameter | Default | Role |
+| --- | --- | --- |
+| `height` | 36 | Strip height |
+| `padding` | horizontal 12 | Strip padding |
+| `backgroundColor` | `surfaceContainerLow` | Strip color |
+| `itemBuilder` | InkWell + Text | One crumb |
+| `separatorBuilder` | chevron | Between crumbs |
+| `AdaptiveShellRoute.breadcrumbsBuilder` | `AdaptiveBreadcrumbs` | Replace the whole strip (`showBreadcrumbs` still gates it) |
+| `escapePops` | true | Escape calls `maybePop` |
+
+### Overlay routes (`AdaptiveRoute`)
+
+| Parameter | Default | Role |
+| --- | --- | --- |
+| `fullscreenDialog` | false | `MaterialPage` / `PageRouteBuilder` fullscreen dialog |
+| `opaque` | true | With `transitionsBuilder`: transparent photo viewer |
+| `barrierColor` | null | With `transitionsBuilder` |
+| `barrierDismissible` | false | Tap the barrier to pop |
+
+See [`example/lib/router.dart`](example/lib/router.dart) for card/flat `paneBuilder`, a 40px breadcrumb strip, and a translucent `/photo/:id` overlay.
+
 ## Layout without a router
 
 [`SlidingPaneViewport`](lib/src/layout/sliding_pane_viewport.dart), [`SlidingPane`](lib/src/layout/pane_scope.dart), and [`AdaptiveBreadcrumbs`](lib/src/layout/breadcrumbs.dart) stay public if you only want the sliding columns.
@@ -158,8 +198,8 @@ Breakpoints (window width, not device type):
 
 | Width | Band | Visible columns |
 | --- | --- | --- |
-| `< compactMaxWidth` (600) | compact | 1 — platform `Navigator` |
-| `600–839` | medium | 1 — sliding stack, one pane |
+| `< compactMaxWidth` (600) | compact | 1 — `Navigator` (full-screen stack) |
+| `600–839` | medium | 1 — same `Navigator`; host uses `shell.isMedium` for chrome |
 | `≥ expandedMinWidth` (840) | expanded | 2 — last two panes + optional sash |
 
 `ponytail:` the viewport is 1 or 2 columns. Three-plus columns would change `visibleColumnCount` and teach `SlidingPaneViewport` to lay out N panes.

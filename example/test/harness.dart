@@ -27,6 +27,7 @@ void resetExampleSignals() {
   mailReplyDirty.value = false;
   contactEditDirty.value = false;
   demoThemeMode.value = ThemeMode.system;
+  paneCardStyle.value = true;
   demoSizePreset.value = DemoSizePreset.desktop;
 }
 

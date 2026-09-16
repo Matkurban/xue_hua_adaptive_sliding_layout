@@ -140,6 +140,7 @@ void main() {
         'threadId': '42',
       });
       expect(list.matches.last.title.value, 'Thread 42');
+      expect(list.matches.last.name, 'thread');
     });
 
     test('matches query parameters', () {

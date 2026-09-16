@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.dart';
@@ -31,7 +32,11 @@ Widget _page(BuildContext context, AdaptiveRouteState state) {
   );
 }
 
-AdaptiveRouter _createRouter() {
+AdaptiveRouter _createRouter({
+  bool escapePops = true,
+  AdaptiveOnExit? inboxOnExit,
+  AdaptiveBreadcrumbsBuilder? breadcrumbsBuilder,
+}) {
   return AdaptiveRouter(
     initialLocation: '/mail',
     errorBuilder: (context, state) => Scaffold(
@@ -49,6 +54,8 @@ AdaptiveRouter _createRouter() {
           compactMaxWidth: 600,
           expandedMinWidth: 840,
         ),
+        escapePops: escapePops,
+        breadcrumbsBuilder: breadcrumbsBuilder,
         builder: (context, shell, child) {
           return Column(
             children: [
@@ -65,7 +72,11 @@ AdaptiveRouter _createRouter() {
                 path: '/mail',
                 builder: _page,
                 routes: [
-                  AdaptiveRoute(path: 'inbox', builder: _page),
+                  AdaptiveRoute(
+                    path: 'inbox',
+                    onExit: inboxOnExit,
+                    builder: _page,
+                  ),
                 ],
               ),
             ],
@@ -154,5 +165,83 @@ void main() {
     await tester.pumpAndSettle();
     expect(router.location.value, '/mail/inbox');
     expect(find.text('page-/mail/inbox'), findsOneWidget);
+  });
+
+  testWidgets('Escape pops the stack', (tester) async {
+    await setWidth(tester, 400);
+    final router = _createRouter();
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail');
+  });
+
+  testWidgets('escapePops false ignores Escape', (tester) async {
+    await setWidth(tester, 400);
+    final router = _createRouter(escapePops: false);
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail/inbox');
+  });
+
+  testWidgets('maybePop honors onExit; pop skips it', (tester) async {
+    await setWidth(tester, 400);
+    final router = _createRouter(inboxOnExit: (_, _) async => false);
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    expect(await router.maybePop(), isFalse);
+    expect(router.location.value, '/mail/inbox');
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail');
+  });
+
+  testWidgets('pushNamed future completes on pop', (tester) async {
+    await setWidth(tester, 400);
+    final router = _createRouter();
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    final future = router.pushNamed<String>('/mail/inbox');
+    await tester.pumpAndSettle();
+    router.pop('done');
+    await tester.pumpAndSettle();
+    expect(await future, 'done');
+  });
+
+  testWidgets('goBranch remembers the previous location', (tester) async {
+    await setWidth(tester, 400);
+    final router = _createRouter();
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    router.goBranch(1);
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/contacts');
+    router.goBranch(0);
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail/inbox');
+  });
+
+  testWidgets('breadcrumbsBuilder replaces the default strip', (tester) async {
+    await setWidth(tester, 1200);
+    final router = _createRouter(
+      breadcrumbsBuilder: (context, panes, onSelect) {
+        return const Text('custom-crumbs');
+      },
+    );
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    expect(find.text('custom-crumbs'), findsOneWidget);
+    expect(find.byType(AdaptiveBreadcrumbs), findsNothing);
   });
 }

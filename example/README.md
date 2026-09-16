@@ -24,7 +24,7 @@ Each page subtitle names the API it demonstrates.
 | --- | --- |
 | Mail `/mail → :folder → :threadId → reply` | 4-deep stack, two-pane slide, breadcrumbs `popUntil`, `pushReplacementNamed` folder swap, `pushNamed` slide vs stack-on-top, static `title` + async `AdaptivePaneScope.title`, `?ref=` + `arguments`, reply keep-alive, fullscreen `/photo/:id` |
 | Contacts `/contacts?q= → :id → edit` | search writes `q` into the URL, `namedLocation`, `await pushNamed<bool>` + `pop(true)`, `onExit` (`maybePop` blocked vs `pop` forced), avatar photo overlay, sash |
-| Settings `/settings → account \| appearance \| about` | `redirect` to `/login?from=`, return via `pushNamedAndRemoveUntil`, sign-out `refresh()`, theme and sash reset, `errorBuilder` 404 |
+| Settings `/settings → account \| appearance \| about` | `redirect` to `/login?from=`, return via `pushNamedAndRemoveUntil`, sign-out `refresh()`, theme / sash / `paneBuilder` card-flat, `errorBuilder` 404 |
 | Playground `/playground` | every Navigator verb, fullscreen, result Future, custom `transitionsBuilder`, no-context `router.pushNamed`, dialog / sheet `useRootNavigator` contrast, Escape |
 | Top-level | `/` redirect, `/login`, `/photo/:id`, unknown path |
 
