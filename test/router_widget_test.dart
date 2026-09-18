@@ -42,8 +42,23 @@ AdaptiveRouter _createRouter({
   bool escapePops = true,
   bool inboxHidesBar = true,
   AdaptiveOnExit? inboxOnExit,
+  AdaptiveOnExit? mailOnExit,
+  bool inboxPopScope = false,
+  bool shellPopScope = false,
+  List<bool>? popInvoked,
   AdaptiveBreadcrumbsBuilder? breadcrumbsBuilder,
 }) {
+  Widget maybePopScope(Widget child) {
+    if (!inboxPopScope && !shellPopScope) return child;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        popInvoked?.add(didPop);
+      },
+      child: child,
+    );
+  }
+
   return AdaptiveRouter(
     initialLocation: '/mail',
     errorBuilder: (context, state) =>
@@ -63,26 +78,32 @@ AdaptiveRouter _createRouter({
         escapePops: escapePops,
         breadcrumbsBuilder: breadcrumbsBuilder,
         builder: (context, shell, child) {
-          return Column(
+          Widget built = Column(
             children: [
               Text('cols-${shell.visibleColumnCount}'),
               Text('branch-${shell.currentIndex}'),
               Expanded(child: child),
             ],
           );
+          if (shellPopScope) built = maybePopScope(built);
+          return built;
         },
         branches: [
           AdaptiveBranch(
             routes: [
               AdaptiveRoute(
                 path: '/mail',
+                onExit: mailOnExit,
                 builder: _page,
                 routes: [
                   AdaptiveRoute(
                     path: 'inbox',
                     hidesBottomBarWhenPushed: inboxHidesBar,
                     onExit: inboxOnExit,
-                    builder: _page,
+                    builder: (context, state) {
+                      final page = _page(context, state);
+                      return inboxPopScope ? maybePopScope(page) : page;
+                    },
                   ),
                   AdaptiveRoute(
                     path: 'compose',
@@ -308,5 +329,176 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('custom-crumbs'), findsOneWidget);
     expect(find.byType(AdaptiveBreadcrumbs), findsNothing);
+  });
+
+  testWidgets('PopScope blocks AppBar back in compact', (tester) async {
+    await setWidth(tester, 400);
+    final invoked = <bool>[];
+    final router = _createRouter(inboxPopScope: true, popInvoked: invoked);
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail/inbox');
+    expect(invoked, [false]);
+  });
+
+  testWidgets('PopScope blocks system back in compact', (tester) async {
+    await setWidth(tester, 400);
+    final invoked = <bool>[];
+    final router = _createRouter(inboxPopScope: true, popInvoked: invoked);
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    expect(await tester.binding.handlePopRoute(), isTrue);
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail/inbox');
+    expect(invoked, [false]);
+  });
+
+  testWidgets('PopScope blocks Escape and maybePop; pop still pops', (
+    tester,
+  ) async {
+    await setWidth(tester, 400);
+    final invoked = <bool>[];
+    final router = _createRouter(inboxPopScope: true, popInvoked: invoked);
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail/inbox');
+    expect(await router.maybePop(), isFalse);
+    expect(router.location.value, '/mail/inbox');
+    expect(invoked, [false, false]);
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail');
+  });
+
+  testWidgets('PopScope blocks system back and Escape in expanded', (
+    tester,
+  ) async {
+    await setWidth(tester, 1200);
+    final invoked = <bool>[];
+    final router = _createRouter(inboxPopScope: true, popInvoked: invoked);
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    expect(await tester.binding.handlePopRoute(), isTrue);
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail/inbox');
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail/inbox');
+    expect(invoked, [false, false]);
+  });
+
+  testWidgets('PopScope veto is not overridden by onExit true', (tester) async {
+    await setWidth(tester, 400);
+    final invoked = <bool>[];
+    final router = _createRouter(
+      inboxPopScope: true,
+      inboxOnExit: (_, _) async => true,
+      popInvoked: invoked,
+    );
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail/inbox');
+    expect(invoked, [false]);
+  });
+
+  testWidgets('onExit false blocks back; system back does not exit the app', (
+    tester,
+  ) async {
+    await setWidth(tester, 400);
+    final router = _createRouter(inboxOnExit: (_, _) async => false);
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail/inbox');
+    expect(await tester.binding.handlePopRoute(), isTrue);
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail/inbox');
+  });
+
+  for (final width in [400.0, 1200.0]) {
+    testWidgets(
+      'shell PopScope blocks system back at root (${width.toInt()})',
+      (tester) async {
+        await setWidth(tester, width);
+        final invoked = <bool>[];
+        final router = _createRouter(shellPopScope: true, popInvoked: invoked);
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+        expect(await tester.binding.handlePopRoute(), isTrue);
+        await tester.pumpAndSettle();
+        expect(router.location.value, '/mail');
+        expect(invoked, [false]);
+        invoked.clear();
+        expect(await router.maybePop(), isFalse);
+        expect(invoked, isEmpty);
+      },
+    );
+  }
+
+  testWidgets('shell PopScope keeps frameworkHandlesBack after first landing', (
+    tester,
+  ) async {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    final handlesBack = <bool>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'SystemNavigator.setFrameworkHandlesBack') {
+          handlesBack.add(call.arguments as bool);
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+    await setWidth(tester, 400);
+    final router = _createRouter(shellPopScope: true);
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail');
+    expect(handlesBack, isNotEmpty);
+    expect(handlesBack.last, isTrue);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+  testWidgets('root onExit false blocks app exit', (tester) async {
+    await setWidth(tester, 400);
+    final router = _createRouter(mailOnExit: (_, _) async => false);
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    expect(await tester.binding.handlePopRoute(), isTrue);
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail');
+  });
+
+  testWidgets('root onExit true lets the app exit', (tester) async {
+    await setWidth(tester, 400);
+    final router = _createRouter(mailOnExit: (_, _) async => true);
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    expect(await tester.binding.handlePopRoute(), isFalse);
+    expect(router.location.value, '/mail');
   });
 }

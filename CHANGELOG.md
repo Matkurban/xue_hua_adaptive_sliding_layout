@@ -1,3 +1,15 @@
+## 3.1.0
+
+### Fixes
+
+* Page `PopScope` is honored on AppBar back, system back, Escape, and `maybePop` (it used to be overridden by `onExit` / skipped by nested Navigators).
+* System back no longer exits the app after an `onExit` or exit-dialog "Stay". At the bottom of the stack, the route's `onExit` can still block exit (go_router parity).
+* System back right after entering the shell still reaches a shell `PopScope` (the root Navigator's `canHandlePop: false` no longer wins).
+
+### Example
+
+* `AppShell` intercepts system back at a tab root with a confirm dialog (`SystemNavigator.pop()`). Use `showDialog(useRootNavigator: false)` so Stay then back shows the dialog again.
+
 ## 3.0.0
 
 ### Breaking Changes ⚠️

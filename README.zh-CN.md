@@ -128,7 +128,7 @@ flowchart LR
 | `pushNamedAndRemoveUntil` | 先弹到 predicate 为 true 再 `pushNamed`。`(_) => false` 按 URL 重建（深链、登录回跳、Tab 回根）。                                                                                                                                                                                |
 | `popAndPushNamed`         | 先 `pop` 再 `pushNamed`。                                                                                                                                                                                                                                                        |
 | `pop`                     | 立刻弹出。**不问** `onExit`。                                                                                                                                                                                                                                                    |
-| `maybePop`                | 询问栈顶 `onExit`。AppBar 返回、系统返回、浏览器后退、Escape 都走它。                                                                                                                                                                                                            |
+| `maybePop`                | 先问栈顶页内 `PopScope`，再问路由 `onExit`。AppBar 返回、系统返回、浏览器后退、Escape 都走它。栈底时 `maybePop` 是空操作；系统返回会在退出应用前询问底层路由的 `onExit`。                                                                                                                      |
 | `popUntil`                | 弹到 predicate 为 true，不超过分支根。                                                                                                                                                                                                                                           |
 | `canPop`                  | 有覆盖层，或当前分支深度 > 1。                                                                                                                                                                                                                                                   |
 
@@ -137,6 +137,10 @@ Tab 切换不是 Navigator 动词，用 `AdaptiveShellState.goBranch(index, {ini
 辅助：`namedLocation` 把路由名 + 参数拼成 location；`refresh()` 在登录态变化后重跑 redirect。
 
 `pushNamed` 返回的 `Future` 由 `pop(result)` 完成。
+
+### 拦截退出应用
+
+在壳层 `builder`（或某个 Tab 根页）放 `PopScope(canPop: false)`。系统返回会走到 `onPopInvokedWithResult(false)`，弹出确认后再 `SystemNavigator.pop()`。对话框用 `showDialog(useRootNavigator: false)`，跟 `PopScope` 同一层 Navigator；挂到根 Navigator 的话，关掉后再按返回会被 Android 直接退出。兼容 Android 预测性返回。见 [`example/lib/shell/app_shell.dart`](example/lib/shell/app_shell.dart)。栈底按 Escape 不会触发这段逻辑。
 
 ## 读取状态
 
@@ -221,7 +225,7 @@ medium / expanded 下嵌套页保留宿主 chrome（同 go_router `ShellRoute`�
 | Settings    | `redirect` 到 `/login?from=`、登录后 `pushNamedAndRemoveUntil` 回跳、登出 `refresh()`、主题 / 分割比例、`errorBuilder` 404                                     | [`features/settings`](example/lib/features/settings/settings_pages.dart)                                     |
 | Playground  | 每个 Navigator 动词、无 context 的 `router.pushNamed`、自定义过场、对话框 / 底部弹层 `useRootNavigator` 对比、Escape                                           | [`features/playground`](example/lib/features/playground/playground_page.dart)                                |
 | 引导 / 登录 | 启动落在 `/onboarding`（登录 / 注册 / 直接进入主页）、登录 ↔ 注册 `pushReplacementNamed` 互换、`?from=` 回跳、`pushNamedAndRemoveUntil` 进壳                   | [`features/auth`](example/lib/features/auth/auth_pages.dart)                                                 |
-| 壳 / 外框   | compact `NavigationBar` vs rail、宽度预设                                                                                                                      | [`app_shell.dart`](example/lib/shell/app_shell.dart)、[`demo_frame.dart`](example/lib/frame/demo_frame.dart) |
+| 壳 / 外框   | compact `NavigationBar` vs rail、宽度预设、系统返回退出确认                                                                                                    | [`app_shell.dart`](example/lib/shell/app_shell.dart)、[`demo_frame.dart`](example/lib/frame/demo_frame.dart) |
 
 ```bash
 cd example && flutter run -d chrome
@@ -259,7 +263,7 @@ cd example && flutter test
 
 - 跨越 840 断点会**重建**页面 `State`（Navigator 树 ↔ 视口树）。持久状态放进 URL、signal 或宿主存储。
 - 栏内 Overlay 会被裁剪。对话框、菜单、底部弹层请走根 Overlay：`useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`。
-- `onExit` 只在 `maybePop`、系统返回、浏览器后退时询问。`pop` / `pushReplacementNamed` / `pushNamedAndRemoveUntil` 与 Navigator 一样直接执行。
+- `onExit` 在 `maybePop`、系统返回、浏览器后退时询问，且排在页内 `PopScope` 之后。栈底时系统返回会在退出应用前询问该路由的 `onExit`。`pop` / `pushReplacementNamed` / `pushNamedAndRemoveUntil` 与 Navigator 一样直接执行。
 - Web 保持 hash URL。平台带了非 `/` 的初始路由时，优先于 `initialLocation`。
 - 整棵树只允许一个顶层 `AdaptiveShellRoute`。不做嵌套壳、`restorable*`、`context.pushNamed` 扩展。
 

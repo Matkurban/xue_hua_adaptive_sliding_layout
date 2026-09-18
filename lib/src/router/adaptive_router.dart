@@ -99,6 +99,10 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
       <int, List<AdaptiveRouteMatch>>{};
   final Map<int, String> _branchLocations = <int, String>{};
 
+  /// 每页当前所在的 [ModalRoute]，供 [maybePop] / [popRoute] 问 PopScope。
+  final Map<LocalKey, ModalRoute<dynamic>> _hostRoutes =
+      <LocalKey, ModalRoute<dynamic>>{};
+
   /// 位于 [AdaptiveRouterScope] 内时返回路由器；否则 assert。
   static AdaptiveRouter of(BuildContext context) {
     final scope = maybeOf(context);
@@ -194,16 +198,32 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     _setCurrent(_engine.pop(_current, result));
   }
 
-  /// 与 [Navigator.maybePop] 同名：询问栈顶 [AdaptiveRoute.onExit]。
+  /// 与 [Navigator.maybePop] 同名：先问栈顶页内 [PopScope]，再问 [AdaptiveRoute.onExit]。
   ///
   /// AppBar 返回、系统返回、浏览器后退、Escape 都走这里。
+  /// 栈底（[canPop] 为 false）时返回 false，不弹退出确认——那是系统返回 / popRoute 的事。
   Future<bool> maybePop<T extends Object?>([T? result]) async {
     if (!_current.canPop) return false;
-    final top = _current.last;
-    if (top != null && !await _allowExit(top)) {
-      return false;
+    final top = _current.last!;
+    final route = _hostRoutes[top.pageKey];
+    if (route != null) {
+      if (!route.isCurrent) return false;
+      final disposition = route is _ExitGuard
+          ? route.scopeDisposition
+          : route.popDisposition;
+      if (disposition == RoutePopDisposition.doNotPop) {
+        route.onPopInvokedWithResult(false, result);
+        return false;
+      }
     }
-    pop<T>(result);
+    return _exitThenPop(top, result);
+  }
+
+  /// PopScope 已放行后：询问 onExit，通过且栈顶未变则出栈。
+  Future<bool> _exitThenPop(AdaptiveRouteMatch top, Object? result) async {
+    if (!await _allowExit(top)) return false;
+    if (_current.last != top) return false;
+    _setCurrent(_engine.pop(_current, result));
     return true;
   }
 
@@ -300,46 +320,21 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     final state = match.toState(_current.uri, error: _current.error);
     final built =
         match.route.builder?.call(context, state) ?? const SizedBox.shrink();
-    return AdaptiveRouteScope(state: state, child: built);
+    return AdaptiveRouteScope(
+      state: state,
+      child: _PageHost(router: this, pageKey: match.pageKey, child: built),
+    );
   }
 
   /// 根 Navigator / 1 栏 Navigator 使用的 [Page]。
   Page<dynamic> pageFor(BuildContext context, AdaptiveRouteMatch match) {
-    final child = buildMatch(context, match);
-    final hasExit = match.route.onExit != null;
-    void onPopInvoked(bool didPop, Object? result) {
-      if (didPop) {
-        handleRemovedPageKey(match.pageKey, result);
-        return;
-      }
-      maybePop(result);
-    }
-
-    if (match.route.transitionsBuilder != null) {
-      return _AdaptiveTransitionPage<Object?>(
-        key: match.pageKey,
-        name: match.matchedLocation,
-        arguments: match.arguments,
-        canPop: !hasExit,
-        onPopInvoked: onPopInvoked,
-        fullscreenDialog: match.route.fullscreenDialog,
-        opaque: match.route.opaque,
-        barrierColor: match.route.barrierColor,
-        barrierDismissible: match.route.barrierDismissible,
-        transitionsBuilder: match.route.transitionsBuilder!,
-        transitionDuration:
-            match.route.transitionDuration ?? const Duration(milliseconds: 300),
-        child: child,
-      );
-    }
-    return MaterialPage<Object?>(
+    return _AdaptivePage<Object?>(
       key: match.pageKey,
       name: match.matchedLocation,
       arguments: match.arguments,
-      canPop: !hasExit,
-      onPopInvoked: onPopInvoked,
-      fullscreenDialog: match.route.fullscreenDialog,
-      child: child,
+      router: this,
+      match: match,
+      child: buildMatch(context, match),
     );
   }
 
@@ -565,11 +560,64 @@ class _AdaptiveRouterDelegate extends RouterDelegate<AdaptiveRouteMatchList>
 
   @override
   Future<bool> popRoute() async {
-    final navigator = router.navigatorKey.currentState;
-    if (navigator != null && await navigator.maybePop()) {
+    final navs = _currentNavigators();
+    if (navs.isNotEmpty && await navs.first.maybePop()) {
+      final top = router._current.last;
+      final hostNav = top == null
+          ? null
+          : router._hostRoutes[top.pageKey]?.navigator;
+      // 2 栏栏内 Navigator 只有一页，maybePop 只消化 LocalHistoryEntry，
+      // 还要把自适应栈再弹一层。
+      if (router.canPop() &&
+          identical(navs.first, hostNav) &&
+          hostNav != router.navigatorKey.currentState) {
+        final host = top == null ? null : router._hostRoutes[top.pageKey];
+        if (host is! _ExitGuard &&
+            host != null &&
+            !host.willHandlePopInternally) {
+          await router.maybePop();
+        }
+      }
       return true;
     }
-    return router.maybePop();
+    if (router.canPop()) {
+      await router.maybePop();
+      return true;
+    }
+    for (final nav in navs.skip(1)) {
+      if (await nav.maybePop()) return true;
+    }
+    final top = router._current.last;
+    return top?.route.onExit != null && !await router._allowExit(top!);
+  }
+
+  /// 栈顶页所在 Navigator → … → 根 Navigator；被上层 pageless 路由压住的内层不问。
+  ///
+  /// 不能用 [Navigator.maybeOf]：3.47 起它在 Navigator 自己的 context 上返回自身。
+  List<NavigatorState> _currentNavigators() {
+    final root = router.navigatorKey.currentState;
+    if (root == null) return const <NavigatorState>[];
+    final top = router._current.last;
+    final chain = <NavigatorState>[];
+    NavigatorState? nav =
+        (top == null ? null : router._hostRoutes[top.pageKey]?.navigator) ??
+        root;
+    final seen = <NavigatorState>{};
+    while (nav != null && seen.add(nav)) {
+      chain.add(nav);
+      if (nav == root) break;
+      nav = nav.context.findAncestorStateOfType<NavigatorState>();
+    }
+    if (chain.isEmpty || chain.last != root) {
+      chain.add(root);
+    }
+    var start = 0;
+    for (var i = 0; i < chain.length - 1; i++) {
+      if (ModalRoute.of(chain[i].context)?.isCurrent == false) {
+        start = i + 1;
+      }
+    }
+    return chain.sublist(start);
   }
 
   @override
@@ -653,41 +701,153 @@ class _ShellPage extends StatelessWidget {
   }
 }
 
-class _AdaptiveTransitionPage<T> extends Page<T> {
-  const _AdaptiveTransitionPage({
+/// 声明式页：Material 过场或自定义 [AdaptiveRoute.transitionsBuilder]。
+class _AdaptivePage<T> extends Page<T> {
+  const _AdaptivePage({
+    required this.router,
+    required this.match,
     required this.child,
-    required this.transitionsBuilder,
-    required this.transitionDuration,
-    this.opaque = true,
-    this.barrierColor,
-    this.barrierDismissible = false,
-    this.fullscreenDialog = false,
     super.key,
     super.name,
     super.arguments,
-    super.canPop,
-    super.onPopInvoked,
   });
 
+  final AdaptiveRouter router;
+  final AdaptiveRouteMatch match;
   final Widget child;
-  final AdaptiveTransitionsBuilder transitionsBuilder;
-  final Duration transitionDuration;
-  final bool opaque;
-  final Color? barrierColor;
-  final bool barrierDismissible;
-  final bool fullscreenDialog;
 
   @override
   Route<T> createRoute(BuildContext context) {
-    return PageRouteBuilder<T>(
-      settings: this,
-      fullscreenDialog: fullscreenDialog,
-      opaque: opaque,
-      barrierColor: barrierColor,
-      barrierDismissible: barrierDismissible,
-      transitionDuration: transitionDuration,
-      pageBuilder: (context, animation, secondaryAnimation) => child,
-      transitionsBuilder: transitionsBuilder,
-    );
+    if (match.route.transitionsBuilder != null) {
+      return _AdaptiveTransitionRoute<T>(page: this);
+    }
+    return _AdaptiveMaterialRoute<T>(page: this);
   }
+}
+
+/// 页面路由的 onExit 守卫：先让页内 PopScope 表态，再由 onExit 否决，二者互不覆盖。
+mixin _ExitGuard<T> on ModalRoute<T> {
+  AdaptiveRouter get router;
+  AdaptiveRouteMatch get match;
+
+  /// 不含 onExit 否决的 disposition；doNotPop 即页内 PopScope 否决。
+  RoutePopDisposition get scopeDisposition => super.popDisposition;
+
+  @override
+  RoutePopDisposition get popDisposition {
+    final inner = super.popDisposition;
+    return match.route.onExit != null && inner == RoutePopDisposition.pop
+        ? RoutePopDisposition.doNotPop
+        : inner;
+  }
+
+  @override
+  void onPopInvokedWithResult(bool didPop, T? result) {
+    super.onPopInvokedWithResult(didPop, result);
+    if (didPop) {
+      router.handleRemovedPageKey(match.pageKey, result);
+    } else if (match.route.onExit != null &&
+        scopeDisposition != RoutePopDisposition.doNotPop) {
+      unawaited(router._exitThenPop(match, result));
+    }
+  }
+}
+
+/// 与 Flutter 私有 `_PageBasedMaterialPageRoute` 对齐的 Material 页路由。
+class _AdaptiveMaterialRoute<T> extends PageRoute<T>
+    with MaterialRouteTransitionMixin<T>, _ExitGuard<T> {
+  _AdaptiveMaterialRoute({required _AdaptivePage<T> page})
+    : super(
+        settings: page,
+        fullscreenDialog: page.match.route.fullscreenDialog,
+      );
+
+  _AdaptivePage<T> get _page => settings as _AdaptivePage<T>;
+
+  @override
+  AdaptiveRouter get router => _page.router;
+
+  @override
+  AdaptiveRouteMatch get match => _page.match;
+
+  @override
+  Widget buildContent(BuildContext context) => _page.child;
+
+  @override
+  bool get maintainState => true;
+}
+
+/// 自定义过场的页路由。
+class _AdaptiveTransitionRoute<T> extends PageRouteBuilder<T>
+    with _ExitGuard<T> {
+  _AdaptiveTransitionRoute({required _AdaptivePage<T> page})
+    : super(
+        settings: page,
+        fullscreenDialog: page.match.route.fullscreenDialog,
+        opaque: page.match.route.opaque,
+        barrierColor: page.match.route.barrierColor,
+        barrierDismissible: page.match.route.barrierDismissible,
+        transitionDuration:
+            page.match.route.transitionDuration ??
+            const Duration(milliseconds: 300),
+        pageBuilder: (context, animation, secondaryAnimation) => page.child,
+        transitionsBuilder: page.match.route.transitionsBuilder!,
+      );
+
+  _AdaptivePage<T> get _page => settings as _AdaptivePage<T>;
+
+  @override
+  AdaptiveRouter get router => _page.router;
+
+  @override
+  AdaptiveRouteMatch get match => _page.match;
+}
+
+/// 记下本页所在 [ModalRoute]，供路由器询问 PopScope / 走 Navigator 链。
+class _PageHost extends StatefulWidget {
+  const _PageHost({
+    required this.router,
+    required this.pageKey,
+    required this.child,
+  });
+
+  final AdaptiveRouter router;
+  final LocalKey pageKey;
+  final Widget child;
+
+  @override
+  State<_PageHost> createState() => _PageHostState();
+}
+
+class _PageHostState extends State<_PageHost> {
+  ModalRoute<dynamic>? _route;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (_route == route) return;
+    _unbind();
+    _route = route;
+    if (route != null) {
+      widget.router._hostRoutes[widget.pageKey] = route;
+    }
+  }
+
+  @override
+  void dispose() {
+    _unbind();
+    super.dispose();
+  }
+
+  void _unbind() {
+    if (_route == null) return;
+    if (widget.router._hostRoutes[widget.pageKey] == _route) {
+      widget.router._hostRoutes.remove(widget.pageKey);
+    }
+    _route = null;
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

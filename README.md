@@ -128,7 +128,7 @@ All names and signatures match [`NavigatorState`](https://api.flutter.dev/flutte
 | `pushNamedAndRemoveUntil` | Pop while the predicate is false, then `pushNamed`. `(_) => false` rebuilds from the URL (deep link, login return, reset tab).                                                                                                                                                                                                                           |
 | `popAndPushNamed`         | `pop` then `pushNamed`.                                                                                                                                                                                                                                                                                                                                  |
 | `pop`                     | Pop immediately. **Does not** call `onExit`.                                                                                                                                                                                                                                                                                                             |
-| `maybePop`                | Asks the top route's `onExit`. AppBar back, system back, browser back, and Escape use this.                                                                                                                                                                                                                                                              |
+| `maybePop`                | Asks the top page's `PopScope` first, then the route's `onExit`. AppBar back, system back, browser back, and Escape use this. At the bottom of the stack `maybePop` is a no-op; system back asks the bottom route's `onExit` before the app exits. |
 | `popUntil`                | Pop until the predicate is true, not past the branch root.                                                                                                                                                                                                                                                                                               |
 | `canPop`                  | Overlay present, or current branch depth > 1.                                                                                                                                                                                                                                                                                                            |
 
@@ -137,6 +137,10 @@ Tab switches are not a Navigator verb. Use `AdaptiveShellState.goBranch(index, {
 Helpers: `namedLocation(name, pathParameters:, queryParameters:)` builds a location for the `*Named` verbs; `refresh()` re-runs redirect after auth changes.
 
 `pushNamed` returns a `Future` completed by `pop(result)`.
+
+### Confirm before exit
+
+Put `PopScope(canPop: false)` in the shell `builder` (or a tab root page). System back then calls `onPopInvokedWithResult(false)` so you can show a dialog and `SystemNavigator.pop()`. Use `showDialog(useRootNavigator: false)` so the dialog shares the shell navigator with `PopScope` — a root-navigator dialog would make the next Android back exit the app. Works with Android predictive back. See [`example/lib/shell/app_shell.dart`](example/lib/shell/app_shell.dart). Escape at the root does not trigger this.
 
 ## Reading state
 
@@ -221,7 +225,7 @@ Breakpoints (window width, not device type):
 | Settings          | `redirect` to `/login?from=`, `pushNamedAndRemoveUntil` return, `refresh()` on sign-out, theme / sash, `errorBuilder` 404                                                                | [`features/settings`](example/lib/features/settings/settings_pages.dart)                                     |
 | Playground        | Every Navigator verb, no-context `router.pushNamed`, custom `transitionsBuilder`, `showDialog` / sheet `useRootNavigator` contrast, Escape                                               | [`features/playground`](example/lib/features/playground/playground_page.dart)                                |
 | Onboarding / auth | App starts on `/onboarding` (log in / register / enter home), login ↔ register via `pushReplacementNamed`, `?from=` return, `pushNamedAndRemoveUntil` into the shell                     | [`features/auth`](example/lib/features/auth/auth_pages.dart)                                                 |
-| Shell / frame     | compact `NavigationBar` vs rail, width presets                                                                                                                                           | [`app_shell.dart`](example/lib/shell/app_shell.dart), [`demo_frame.dart`](example/lib/frame/demo_frame.dart) |
+| Shell / frame     | compact `NavigationBar` vs rail, width presets, system-back exit confirm                                                                                                         | [`app_shell.dart`](example/lib/shell/app_shell.dart), [`demo_frame.dart`](example/lib/frame/demo_frame.dart) |
 
 ```bash
 cd example && flutter run -d chrome
@@ -259,7 +263,7 @@ There is no compatibility shim. See [CHANGELOG](CHANGELOG.md).
 
 - Crossing the 840 breakpoint **rebuilds** page `State` (Navigator tree ↔ viewport tree). Keep durable state in the route URL, a signal, or a host store.
 - Pane overlays are **clipped**. Dialogs, menus, and sheets inside a column should use the root overlay: `useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`.
-- `onExit` runs for `maybePop`, system back, and browser back. `pop` / `pushReplacementNamed` / `pushNamedAndRemoveUntil` run immediately, like `Navigator`.
+- `onExit` runs for `maybePop`, system back, and browser back, after the top page's `PopScope`. At the bottom of the stack, system back asks the route's `onExit` before the app exits. `pop` / `pushReplacementNamed` / `pushNamedAndRemoveUntil` run immediately, like `Navigator`.
 - Web keeps hash URLs. The platform's initial route wins over `initialLocation` when it is not `/`.
 - One `AdaptiveShellRoute`, top-level only. No nested shells, no `restorable*`, no `context.pushNamed` extensions.
 

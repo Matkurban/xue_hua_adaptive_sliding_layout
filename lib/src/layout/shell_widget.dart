@@ -136,7 +136,12 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
                   if (_shell.escapePops)
                     const SingleActivator(LogicalKeyboardKey.escape): _onEscape,
                 },
-                child: Focus(autofocus: true, child: chrome),
+                child: Focus(
+                  autofocus: true,
+                  // 壳页带上 PopEntry，根 Navigator 换上壳时不会发出
+                  // canHandlePop: false 盖掉壳内 PopScope。onPop 不设，返回仍走 popRoute。
+                  child: NavigatorPopHandler(child: chrome),
+                ),
               ),
             );
           },

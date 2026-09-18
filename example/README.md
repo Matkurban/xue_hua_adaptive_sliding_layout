@@ -1,6 +1,6 @@
 # Example
 
-Host demo for [`xue_hua_adaptive_sliding_layout`](../README.md) 3.0 ([中文](../README.zh-CN.md)).
+Host demo for [`xue_hua_adaptive_sliding_layout`](../README.md) 3.1 ([中文](../README.zh-CN.md)).
 
 **[Live web demo](https://matkurban.github.io/xue_hua_adaptive_sliding_layout/)** — the top bar pins Phone / Foldable / Tablet / Desktop widths so a desktop visitor can see every breakpoint without resizing the window.
 
@@ -14,7 +14,7 @@ flutter test
 flutter build web --release
 ```
 
-`MaterialApp.router` lives in [`lib/main.dart`](lib/main.dart). [`DemoFrame`](lib/frame/demo_frame.dart) wraps the router output. [`AppShell`](lib/shell/app_shell.dart) uses `NavigationBar` under 600px and `NavigationRail` otherwise; tapping the current tab calls `goBranch(i, initialLocation: true)`.
+`MaterialApp.router` lives in [`lib/main.dart`](lib/main.dart). [`DemoFrame`](lib/frame/demo_frame.dart) wraps the router output. [`AppShell`](lib/shell/app_shell.dart) uses `NavigationBar` under 600px and `NavigationRail` otherwise; tapping the current tab calls `goBranch(i, initialLocation: true)`. System back at a tab root shows an exit-confirm dialog.
 
 ## Scenarios
 
@@ -31,4 +31,4 @@ Each page subtitle names the API it demonstrates.
 
 On phones every page below a branch root hides the `NavigationBar` (`hidesBottomBarWhenPushed`, the package default); desktop keeps two panes.
 
-Tests in `test/` pump the same router at 400 and 1200 width (onboarding / login / register, deep stack, replace, `onExit`, login round-trip, 404, overlay, hidden bottom bar, cross-branch `pushNamed`, branch memory, `setNewRoutePath`, sash drag). `widget_test.dart` boots the real `DemoApp`.
+Tests in `test/` pump the same router at 400 and 1200 width (onboarding / login / register, deep stack, replace, `onExit`, login round-trip, 404, overlay, hidden bottom bar, cross-branch `pushNamed`, branch memory, `setNewRoutePath`, sash drag, home exit confirm). `widget_test.dart` boots the real `DemoApp`.
