@@ -318,6 +318,82 @@ void main() {
     expect(router.location.value, '/mail/inbox');
   });
 
+  testWidgets('goBranch restores arguments on a previously visited branch', (
+    tester,
+  ) async {
+    await setWidth(tester, 400);
+    final router = AdaptiveRouter(
+      initialLocation: '/mail',
+      routes: [
+        AdaptiveShellRoute(
+          breakpoints: const LayoutBreakpoints(
+            compactMaxWidth: 600,
+            expandedMinWidth: 840,
+          ),
+          builder: (context, shell, child) {
+            return Column(
+              children: [
+                Text('branch-${shell.currentIndex}'),
+                Expanded(child: child),
+              ],
+            );
+          },
+          branches: [
+            AdaptiveBranch(
+              routes: [
+                AdaptiveRoute(
+                  path: '/mail',
+                  builder: (context, state) {
+                    return Scaffold(
+                      body: TextButton(
+                        onPressed: () {
+                          AdaptiveRouter.of(context).pushNamed(
+                            '/mail/detail',
+                            arguments: 'secret-payload',
+                          );
+                        },
+                        child: const Text('open-detail'),
+                      ),
+                    );
+                  },
+                  routes: [
+                    AdaptiveRoute(
+                      path: 'detail',
+                      builder: (context, state) {
+                        return Scaffold(
+                          body: Text(state.arguments! as String),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            AdaptiveBranch(
+              routes: [
+                AdaptiveRoute(
+                  path: '/contacts',
+                  builder: (context, state) =>
+                      const Scaffold(body: Text('page-/contacts')),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-detail'));
+    await tester.pumpAndSettle();
+    expect(find.text('secret-payload'), findsOneWidget);
+    router.goBranch(1);
+    await tester.pumpAndSettle();
+    router.goBranch(0);
+    await tester.pumpAndSettle();
+    expect(find.text('secret-payload'), findsOneWidget);
+  });
+
   testWidgets('breadcrumbsBuilder replaces the default strip', (tester) async {
     await setWidth(tester, 1200);
     final router = _createRouter(

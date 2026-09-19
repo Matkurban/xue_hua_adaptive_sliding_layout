@@ -244,17 +244,29 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     });
   }
 
-  /// 切到 [index] 对应分支。内部等价于按该分支上次 location 重建。
+  /// 切到 [index] 对应分支。已访问过的分支恢复上次栈，否则按 initialLocation 匹配。
   void goBranch(int index, {bool initialLocation = false}) {
     final shellRoute = shell;
     if (shellRoute == null) return;
     if (index < 0 || index >= shellRoute.branches.length) return;
     final branch = shellRoute.branches[index];
+    if (!initialLocation) {
+      final stored = _branchStacks[index];
+      if (stored != null && stored.isNotEmpty) {
+        _setCurrent(
+          _engine.goBranch(
+            _current,
+            location: _branchLocations[index] ?? branch.initialLocation,
+            restored: stored,
+          ),
+        );
+        return;
+      }
+    }
     final loc = initialLocation
         ? branch.initialLocation
         : (_branchLocations[index] ?? branch.initialLocation);
-    final next = _engine.goBranch(_current, location: loc);
-    _setCurrent(next);
+    _setCurrent(_engine.goBranch(_current, location: loc));
   }
 
   /// 解析 URI 并跑顶层 / 路由级 redirect，供 Parser 与 [refresh] 使用。

@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_router.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/match.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/navigation.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/route.dart';
@@ -186,6 +187,25 @@ void main() {
       final stack = engine.goBranch(at('/mail/inbox'), location: '/contacts');
       expect(_locs(stack), ['/contacts']);
       expect(stack.branchIndex, 1);
+    });
+
+    test('restores stored matches including arguments', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final router = AdaptiveRouter(
+        routes: _routes(),
+        initialLocation: '/mail',
+      );
+      await router.applyParsed(router.registry.match(Uri.parse('/mail')));
+      final payload = Object();
+      // Don't await: pushNamed's Future completes on pop, not on the push.
+      router.pushNamed('/mail/inbox/42', arguments: payload);
+      await Future<void>.delayed(Duration.zero);
+      final leaf = router.matches.value.last!;
+      expect(identical(leaf.arguments, payload), isTrue);
+      router.goBranch(1);
+      router.goBranch(0);
+      expect(identical(router.matches.value.last, leaf), isTrue);
+      expect(identical(router.matches.value.last!.arguments, payload), isTrue);
     });
   });
 }

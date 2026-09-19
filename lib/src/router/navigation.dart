@@ -130,12 +130,25 @@ class NavigationEngine {
   /// 有覆盖层或分支深度 > 1。
   bool canPop(AdaptiveRouteMatchList current) => current.canPop;
 
-  /// 切到 [branchIndex]，location 为记住的位置或分支 initialLocation。
+  /// 切到另一分支：丢掉当前覆盖层。
+  ///
+  /// [restored] 非空时直接用那批 match（同一批实例），不再 [RouteRegistry.match]。
   AdaptiveRouteMatchList goBranch(
     AdaptiveRouteMatchList current, {
     required String location,
+    List<AdaptiveRouteMatch>? restored,
     Object? arguments,
   }) {
+    if (restored != null && restored.isNotEmpty) {
+      _disposeOverlays(current);
+      return AdaptiveRouteMatchList(
+        matches: restored,
+        uri: restored.last.uri,
+        shell: current.shell,
+        branchIndex: restored.last.branchIndex,
+        arguments: restored.last.arguments,
+      );
+    }
     final target = registry.match(_parse(location), arguments: arguments);
     if (target.error != null) return target;
     _disposeOverlays(current);
