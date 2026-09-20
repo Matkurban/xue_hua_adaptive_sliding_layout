@@ -17,6 +17,7 @@
 - [从 2.x 迁移](#从-2x-迁移)
 - [从 go_router 迁移](#从-go_router-迁移)
 - [注意点](#注意点)
+- [Package skills](#package-skills)
 
 ## 60 秒快速开始
 
@@ -266,6 +267,21 @@ cd example && flutter test
 - `onExit` 在 `maybePop`、系统返回、浏览器后退时询问，且排在页内 `PopScope` 之后。栈底时系统返回会在退出应用前询问该路由的 `onExit`。`pop` / `pushReplacementNamed` / `pushNamedAndRemoveUntil` 与 Navigator 一样直接执行。
 - Web 保持 hash URL。平台带了非 `/` 的初始路由时，优先于 `initialLocation`。
 - 整棵树只允许一个顶层 `AdaptiveShellRoute`。不做嵌套壳、`restorable*`、`context.pushNamed` 扩展。
+
+## Package skills
+
+本包在 `skills/` 下提供 [agent skills](https://dart.dev/tools/pub/package-skills)。依赖本包后安装，编码助手才会按真实 API 写代码：
+
+```bash
+dart run skills@ get -p xue_hua_adaptive_sliding_layout --all
+```
+
+| Skill | 何时用 |
+| --- | --- |
+| `xue-hua-adaptive-sliding-layout-setup` | `AdaptiveRouter` + `MaterialApp.router` |
+| `xue-hua-adaptive-sliding-layout-routing` | 路由表、`:param`、`redirect`、`onExit` |
+| `xue-hua-adaptive-sliding-layout-navigation` | `pushNamed` / `pop` / `goBranch` |
+| `xue-hua-adaptive-sliding-layout-layout` | 栏位、断点、面包屑 |
 
 ## 测试
 

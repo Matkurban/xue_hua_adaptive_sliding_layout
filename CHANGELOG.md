@@ -1,3 +1,9 @@
+## 3.1.2
+
+### Docs
+
+- Ship Dart [package skills](https://dart.dev/tools/pub/package-skills) under `skills/` (`setup`, `routing`, `navigation`, `layout`) with per-API references transcribed from `lib/`.
+
 ## 3.1.1
 
 ### Fixes

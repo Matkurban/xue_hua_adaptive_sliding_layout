@@ -45,3 +45,6 @@ app.*.map.json
 /android/app/release
 
 pubspec.lock
+
+# dart run skills@ get tracking (example is a consumer, not a skills host)
+.config/dart_skills/

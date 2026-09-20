@@ -17,6 +17,7 @@ It does **not** depend on `go_router`. The host holds the `AdaptiveRouter` insta
 - [Migrating from 2.x](#migrating-from-2x)
 - [Migrating from go_router](#migrating-from-go_router)
 - [Caveats](#caveats)
+- [Package skills](#package-skills)
 
 ## 60-second start
 
@@ -266,6 +267,21 @@ There is no compatibility shim. See [CHANGELOG](CHANGELOG.md).
 - `onExit` runs for `maybePop`, system back, and browser back, after the top page's `PopScope`. At the bottom of the stack, system back asks the route's `onExit` before the app exits. `pop` / `pushReplacementNamed` / `pushNamedAndRemoveUntil` run immediately, like `Navigator`.
 - Web keeps hash URLs. The platform's initial route wins over `initialLocation` when it is not `/`.
 - One `AdaptiveShellRoute`, top-level only. No nested shells, no `restorable*`, no `context.pushNamed` extensions.
+
+## Package skills
+
+This package ships [agent skills](https://dart.dev/tools/pub/package-skills) under `skills/`. After you depend on it, install them so coding agents use the real APIs:
+
+```bash
+dart run skills@ get -p xue_hua_adaptive_sliding_layout --all
+```
+
+| Skill | When |
+| --- | --- |
+| `xue-hua-adaptive-sliding-layout-setup` | `AdaptiveRouter` + `MaterialApp.router` |
+| `xue-hua-adaptive-sliding-layout-routing` | Route table, `:param`, `redirect`, `onExit` |
+| `xue-hua-adaptive-sliding-layout-navigation` | `pushNamed` / `pop` / `goBranch` |
+| `xue-hua-adaptive-sliding-layout-layout` | Panes, breakpoints, breadcrumbs |
 
 ## Tests
 
