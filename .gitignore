@@ -32,3 +32,4 @@ migrate_working_dir/
 pubspec.lock
 .cursor/
 .codegraph/
+.config/
