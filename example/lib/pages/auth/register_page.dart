@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/router/router_names.dart';
+import 'package:xue_hua_adaptive_sliding_layout_example/services/app_setting_services.dart';
 
 class RegisterPage extends StatelessWidget {
   const new({super.key});
@@ -9,22 +10,18 @@ class RegisterPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final AdaptiveRouter router = AdaptiveRouter.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text('Register Page')),
+      appBar: AppBar(
+        leading: BackButton(onPressed: () => router.maybePop()),
+        title: Text('Register Page'),
+      ),
       body: Center(
         child: Column(
           spacing: 12,
           mainAxisAlignment: .center,
           children: [
-            FilledButton(
-              onPressed: () {
-                router.pushNamedAndRemoveUntil(RouterNames.home, (_) => false);
-              },
-              child: Text('注册'),
-            ),
+            FilledButton(onPressed: () => _enter(context), child: Text('注册')),
             TextButton(
-              onPressed: () {
-                router.pushReplacementNamed(RouterNames.login);
-              },
+              onPressed: () => _swap(context, RouterNames.login),
               child: Text('已有账号？去登录'),
             ),
           ],
@@ -32,4 +29,22 @@ class RegisterPage extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 注册成功后回到 [from]，没有则进入首页。
+void _enter(BuildContext context) {
+  AppSettingServices.instance.signedIn.value = true;
+  final router = AdaptiveRouter.of(context);
+  final from = AdaptiveRouteState.of(context).queryParameters['from'];
+  router.pushNamedAndRemoveUntil(from ?? RouterNames.home, (_) => false);
+}
+
+/// 登录和注册对跳，保留原来的 from。
+void _swap(BuildContext context, String path) {
+  final router = AdaptiveRouter.of(context);
+  final from = AdaptiveRouteState.of(context).queryParameters['from'];
+  final location = from == null
+      ? path
+      : '$path?from=${Uri.encodeComponent(from)}';
+  router.pushReplacementNamed(location);
 }
