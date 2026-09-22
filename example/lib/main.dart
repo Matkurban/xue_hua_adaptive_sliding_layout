@@ -1,8 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:xue_hua_adaptive_sliding_layout_example/features/settings/settings_pages.dart';
-import 'package:xue_hua_adaptive_sliding_layout_example/frame/demo_frame.dart';
-import 'package:xue_hua_adaptive_sliding_layout_example/router.dart';
+import 'package:xue_hua_adaptive_sliding_layout_example/pages/size_preset_screen.dart';
+import 'package:xue_hua_adaptive_sliding_layout_example/router/router_pages.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/theme/app_theme.dart';
 
 void main() {
@@ -18,12 +17,16 @@ class DemoApp extends StatelessWidget {
       builder: (context) {
         return MaterialApp.router(
           title: 'Adaptive Sliding Layout',
+          debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
-          themeMode: demoThemeMode.value,
-          routerConfig: appRouter,
+          themeMode: ThemeMode.light,
+          routerConfig: RouterPages.router,
           builder: (context, child) {
-            return DemoFrame(child: child ?? const SizedBox.shrink());
+            return SizePresetScreen(
+              context: context,
+              child: child ?? const SizedBox.shrink(),
+            );
           },
         );
       },

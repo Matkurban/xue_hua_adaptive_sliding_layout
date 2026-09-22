@@ -20,7 +20,7 @@ abstract final class AppTheme {
   // The FlexColorScheme defined light mode ThemeData.
   static ThemeData light = FlexThemeData.light(
     // Using FlexColorScheme built-in FlexScheme enum based colors
-    scheme: FlexScheme.shadBlue,
+    scheme: FlexScheme.shadGreen,
     // None seed generated ColorScheme style of Fixed colors.
     fixedColorStyle: FlexFixedColorStyle.seeded,
     // Surface color adjustments.
@@ -89,7 +89,7 @@ abstract final class AppTheme {
   // The FlexColorScheme defined dark mode ThemeData.
   static ThemeData dark = FlexThemeData.dark(
     // Using FlexColorScheme built-in FlexScheme enum based colors.
-    scheme: FlexScheme.shadBlue,
+    scheme: FlexScheme.shadGreen,
     // None seed generated ColorScheme style of Fixed colors.
     fixedColorStyle: FlexFixedColorStyle.seeded,
     // Component theme configurations for dark mode.

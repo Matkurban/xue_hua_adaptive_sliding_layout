@@ -17,10 +17,10 @@ class AppShell extends StatelessWidget {
   final Widget child;
 
   static const _destinations = <({IconData icon, String label})>[
-    (icon: Icons.mail_outlined, label: 'Mail'),
-    (icon: Icons.people_outlined, label: 'Contacts'),
-    (icon: Icons.settings_outlined, label: 'Settings'),
-    (icon: Icons.science_outlined, label: 'Playground'),
+    (icon: Icons.mail_outlined, label: 'Home'),
+    (icon: Icons.people_outlined, label: 'Shopping'),
+    (icon: Icons.settings_outlined, label: 'Contacts'),
+    (icon: Icons.science_outlined, label: 'Mine'),
   ];
 
   void _select(int index) {
