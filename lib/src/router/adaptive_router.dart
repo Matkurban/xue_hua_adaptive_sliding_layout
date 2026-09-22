@@ -193,16 +193,27 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   }
 
   /// 与 [Navigator.pop] 同名：不询问 [AdaptiveRoute.onExit]。
+  ///
+  /// 栈顶页上若有 dialog、sheet 或 menu，只关掉那一层，页面栈不动。
   void pop<T extends Object?>([T? result]) {
+    final popup = _popupNavigator();
+    if (popup != null) {
+      popup.pop<T>(result);
+      return;
+    }
     if (!_current.canPop) return;
     _setCurrent(_engine.pop(_current, result));
   }
 
   /// 与 [Navigator.maybePop] 同名：先问栈顶页内 [PopScope]，再问 [AdaptiveRoute.onExit]。
   ///
+  /// 栈顶页上若有 dialog、sheet 或 menu，改为询问那一层（含其 [PopScope]），
+  /// 不再问页面的 [AdaptiveRoute.onExit]。
   /// AppBar 返回、系统返回、浏览器后退、Escape 都走这里。
   /// 栈底（[canPop] 为 false）时返回 false，不弹退出确认——那是系统返回 / popRoute 的事。
   Future<bool> maybePop<T extends Object?>([T? result]) async {
+    final popup = _popupNavigator();
+    if (popup != null) return popup.maybePop<T>(result);
     if (!_current.canPop) return false;
     final top = _current.last!;
     final route = _hostRoutes[top.pageKey];
@@ -228,8 +239,51 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   }
 
   /// 与 [Navigator.popUntil] 同名：弹到 [predicate] 为 true 或不能再弹。
+  ///
+  /// 先关掉盖住页面的 dialog、sheet、menu，再按 [predicate] 弹页面。
   void popUntil(AdaptiveRoutePredicate predicate) {
+    _dismissPopups();
     _setCurrent(_engine.popUntil(_current, predicate));
+  }
+
+  /// 盖住栈顶页的 pageless 路由（dialog、sheet、menu）所在的 [NavigatorState]。
+  ///
+  /// 没有这种弹层时返回 null。栏内 local history 不算弹层，因为它不会让页面路由
+  /// 失去 [ModalRoute.isCurrent]。
+  NavigatorState? _popupNavigator() {
+    final top = _current.last;
+    final host = top == null ? null : _hostRoutes[top.pageKey];
+    if (host != null && !host.isCurrent) {
+      final nav = host.navigator;
+      if (nav != null && nav.canPop()) return nav;
+    }
+    var nav = host?.navigator ?? navigatorKey.currentState;
+    final seen = <NavigatorState>{};
+    while (nav != null && seen.add(nav)) {
+      final parent = ModalRoute.of(nav.context);
+      if (parent == null) break;
+      if (!parent.isCurrent) {
+        final parentNav = parent.navigator;
+        if (parentNav == null) break;
+        final pageIsCurrent = _hostRoutes.values.any(
+          (route) => identical(route.navigator, parentNav) && route.isCurrent,
+        );
+        if (!pageIsCurrent && parentNav.canPop()) return parentNav;
+      }
+      nav = parent.navigator;
+    }
+    return null;
+  }
+
+  /// 逐个关掉盖住页面的弹层，页面栈不动。
+  ///
+  /// ponytail: 最多 32 层。再多说明 [Navigator.pop] 没拆掉路由，停下来避免空转。
+  void _dismissPopups() {
+    for (var i = 0; i < 32; i++) {
+      final popup = _popupNavigator();
+      if (popup == null) return;
+      popup.pop<Object?>();
+    }
   }
 
   /// 与 [Navigator.canPop] 同名。

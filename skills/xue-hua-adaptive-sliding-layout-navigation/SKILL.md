@@ -17,17 +17,17 @@ API: [references/verbs.md](references/verbs.md), [references/predicate.md](refer
 
 ## Guidelines
 
-* Take the router with `AdaptiveRouter.of(context)` or hold the host instance. There are no `context.go` / `context.pushNamed` / `context.pop` extensions.
-* Build a location from a table name with `router.namedLocation('thread', pathParameters: {'folder': 'inbox', 'threadId': '42'}, queryParameters: {'ref': 'push'})`. Unknown name or missing path param throws `ArgumentError`.
-* `pushNamed` returns a `Future` completed by `pop(result)` (or dispose) of that **imperative** leaf. URL-derived matches have no completer; the future completes with `null`.
-* `arguments` is the opaque object on `AdaptiveRouteState.arguments` (not go_router `extra`).
-* Imperative `*Named` verbs run `resolve` first (top-level + per-route redirect) when `navigatorKey.currentContext` is available. If resolve ends in an empty error list, the original `routeName` is used.
-* `pop` does **not** call `onExit`. `maybePop` asks the top page’s `PopScope` first, then `onExit`. AppBar back, system back, browser back, and Escape use `maybePop`. At the bottom of the stack `maybePop` returns `false` without an exit dialog — that dialog is `popRoute` / a shell `PopScope`.
-* `pushReplacementNamed`, `pushNamedAndRemoveUntil`, and `popAndPushNamed` run immediately (no `onExit`), like `Navigator`.
-* `popUntil` / `pushNamedAndRemoveUntil` never pop the branch root (`canPop` is false there). Predicate `(_) => false` rebuilds from the URL (deep link, login return, reset tab).
-* Tab switches are not a Navigator verb. Use `AdaptiveShellState.goBranch(index, {initialLocation})` or `AdaptiveRouter.goBranch`. Tapping the **current** tab with `initialLocation: true` returns to `AdaptiveBranch.initialLocation`.
-* `goBranch` back to a visited tab restores the stored stack (`arguments`, `pageKey`, title signal, completer) instead of rematching the URL (3.1.1).
-* A location that does not start with `/` is parsed as `'/$routeName'`.
+- Take the router with `AdaptiveRouter.of(context)` or hold the host instance. There are no `context.go` / `context.pushNamed` / `context.pop` extensions.
+- Build a location from a table name with `router.namedLocation('thread', pathParameters: {'folder': 'inbox', 'threadId': '42'}, queryParameters: {'ref': 'push'})`. Unknown name or missing path param throws `ArgumentError`.
+- `pushNamed` returns a `Future` completed by `pop(result)` (or dispose) of that **imperative** leaf. URL-derived matches have no completer; the future completes with `null`.
+- `arguments` is the opaque object on `AdaptiveRouteState.arguments` (not go_router `extra`).
+- Imperative `*Named` verbs run `resolve` first (top-level + per-route redirect) when `navigatorKey.currentContext` is available. If resolve ends in an empty error list, the original `routeName` is used.
+- `pop` does **not** call `onExit`. If a dialog, sheet, or menu covers the page, `pop` and `maybePop` close that route and leave the page stack. Otherwise `maybePop` asks the top page’s `PopScope` first, then `onExit`. AppBar back, system back, browser back, and Escape use `maybePop`. At the bottom of the stack `maybePop` returns `false` without an exit dialog — that dialog is `popRoute` / a shell `PopScope`.
+- `pushReplacementNamed`, `pushNamedAndRemoveUntil`, and `popAndPushNamed` run immediately (no `onExit`), like `Navigator`.
+- `popUntil` / `pushNamedAndRemoveUntil` never pop the branch root (`canPop` is false there). Predicate `(_) => false` rebuilds from the URL (deep link, login return, reset tab).
+- Tab switches are not a Navigator verb. Use `AdaptiveShellState.goBranch(index, {initialLocation})` or `AdaptiveRouter.goBranch`. Tapping the **current** tab with `initialLocation: true` returns to `AdaptiveBranch.initialLocation`.
+- `goBranch` back to a visited tab restores the stored stack (`arguments`, `pageKey`, title signal, completer) instead of rematching the URL (3.1.1).
+- A location that does not start with `/` is parsed as `'/$routeName'`.
 
 ### `pushNamed` stack rules
 

@@ -1,3 +1,9 @@
+## 3.1.3
+
+### Fixes
+
+- `pop`, `maybePop`, and `popUntil` close a covering dialog, sheet, or menu before changing the page stack. A pane local-history back entry is not treated as a popup.
+
 ## 3.1.2
 
 ### Docs

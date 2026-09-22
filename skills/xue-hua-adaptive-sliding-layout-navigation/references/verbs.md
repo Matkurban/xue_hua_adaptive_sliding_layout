@@ -97,9 +97,9 @@ Redirect, then `pop` if `canPop` (passing `result`), else keep current; then `pu
 void pop<T extends Object?>([T? result])
 ```
 
-No-op if `!canPop`. Otherwise removes the top overlay or the top branch page, completes that match’s completer with `result`, writes the previous match’s `uri` as the location.
+If a dialog, sheet, or menu covers the top page, pops that route only and leaves the match stack unchanged. Otherwise a no-op if `!canPop`. When the stack can pop, removes the top overlay or the top branch page, completes that match’s completer with `result`, and writes the previous match’s `uri` as the location.
 
-Does **not** ask `PopScope` or `onExit`.
+Does **not** ask `PopScope` or `onExit`. A pane’s local-history back entry is not a popup.
 
 ## `maybePop`
 
@@ -109,13 +109,14 @@ Future<bool> maybePop<T extends Object?>([T? result])
 
 Consultative pop. Used by AppBar back, system back (via `popRoute`), browser back, and Escape (`escapePops`).
 
-1. If `!canPop`, return `false` (no exit dialog).
-2. If the top page’s hosted `ModalRoute` is not current, return `false`.
-3. Read `popDisposition` **without** the route’s `onExit` override (`scopeDisposition` on the package’s page route). If `doNotPop` (page `PopScope`), call `onPopInvokedWithResult(false, result)` and return `false`.
-4. Else call `onExit` if present. If it returns `false`, or the top match changed while awaiting, return `false`.
-5. Else pop with `result` and return `true`.
+1. If a dialog, sheet, or menu covers the top page, `maybePop` that route (its `PopScope` still applies) and return. Do not ask the page `onExit`.
+2. If `!canPop`, return `false` (no exit dialog).
+3. If the top page’s hosted `ModalRoute` is not current, return `false`.
+4. Read `popDisposition` **without** the route’s `onExit` override (`scopeDisposition` on the package’s page route). If `doNotPop` (page `PopScope`), call `onPopInvokedWithResult(false, result)` and return `false`.
+5. Else call `onExit` if present. If it returns `false`, or the top match changed while awaiting, return `false`.
+6. Else pop with `result` and return `true`.
 
-If `onExit` is null, step 4 allows the pop.
+If `onExit` is null, step 5 allows the pop.
 
 At stack bottom, **system** back (`RouterDelegate.popRoute`) may still ask the bottom route’s `onExit` before the app exits. `maybePop` itself does not.
 
@@ -125,7 +126,7 @@ At stack bottom, **system** back (`RouterDelegate.popRoute`) may still ask the b
 void popUntil(AdaptiveRoutePredicate predicate)
 ```
 
-Repeated `pop` while `canPop && (last == null || !predicate(last))`. Does not call `onExit`. Does not pop the branch root.
+First pops covering dialogs, sheets, and menus. Then repeated `pop` while `canPop && (last == null || !predicate(last))`. Does not call `onExit`. Does not pop the branch root.
 
 ## `canPop`
 
