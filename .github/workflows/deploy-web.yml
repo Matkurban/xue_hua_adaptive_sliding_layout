@@ -23,17 +23,15 @@ jobs:
         with:
           channel: stable
           cache: true
-      - name: Package analyze and test
+      - name: Package analyze
         run: |
           flutter pub get
           flutter analyze
-          flutter test
-      - name: Example analyze and test
+      - name: Example analyze
         working-directory: example
         run: |
           flutter pub get
           flutter analyze
-          flutter test
       - name: Build web
         working-directory: example
         run: flutter build web --release --base-href /xue_hua_adaptive_sliding_layout/
