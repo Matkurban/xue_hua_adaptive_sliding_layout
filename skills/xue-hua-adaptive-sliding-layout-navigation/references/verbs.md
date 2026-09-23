@@ -111,12 +111,11 @@ Consultative pop. Used by AppBar back, system back (via `popRoute`), browser bac
 
 1. If a dialog, sheet, or menu covers the top page (outermost navigator first: root → shell → pane), `maybePop` that route (its `PopScope` still applies) and return. Do not ask the page `onExit`.
 2. If `!canPop`, return `false` (no exit dialog).
-3. If the top page’s hosted `ModalRoute` is not current, return `false`.
-4. Read `popDisposition` **without** the route’s `onExit` override (`scopeDisposition` on the package’s page route). If `doNotPop` (page `PopScope`), call `onPopInvokedWithResult(false, result)` and return `false`.
-5. Else call `onExit` if present. If it returns `false`, or the top match changed while awaiting, return `false`.
-6. Else pop with `result` and return `true`.
+3. Read `popDisposition` **without** the route’s `onExit` override (`scopeDisposition` on the package’s page route). If `doNotPop` (page `PopScope`), call `onPopInvokedWithResult(false, result)` and return `false`. The host need not be `isCurrent` (two-column pane `LocalHistoryEntry` onRemove).
+4. Else call `onExit` if present. If it returns `false`, or the top match changed while awaiting, return `false`.
+5. Else pop with `result` and return `true`.
 
-If `onExit` is null, step 5 allows the pop.
+If `onExit` is null, step 4 allows the pop.
 
 At stack bottom, **system** back (`RouterDelegate.popRoute`) may still ask the bottom route’s `onExit` before the app exits. `maybePop` itself does not.
 
@@ -144,7 +143,7 @@ With one sheet per pane, the context you pass decides which sheet closes.
 Future<bool> maybePopFrom<T extends Object?>(BuildContext context, [T? result])
 ```
 
-Same layer resolution as `popFrom`, consultative: a popup is closed with `NavigatorState.maybePop` (its own `PopScope` applies); the top page goes through steps 2–6 of `maybePop`; a non-top uncovered page returns `false`; outside pages it is `maybePop(result)`. Returns whether something was popped (or handled).
+Same layer resolution as `popFrom`, consultative: a popup is closed with `NavigatorState.maybePop` (its own `PopScope` applies); the top page goes through steps 2–5 of `maybePop`; a non-top uncovered page returns `false`; outside pages it is `maybePop(result)`. Returns whether something was popped (or handled).
 
 ## `popUntil`
 

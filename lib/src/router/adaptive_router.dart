@@ -214,8 +214,6 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   /// 栈底（[canPop] 为 false）时返回 false，不弹退出确认——那是系统返回 / popRoute 的事。
   Future<bool> maybePop<T extends Object?>([T? result]) {
     final popup = _popupNavigator();
-    // ignore: avoid_print
-    print('maybePop popup=$popup canPop=${_current.canPop} loc=${location.value}');
     if (popup != null) return popup.maybePop<T>(result);
     return _maybePopPage(result);
   }
@@ -263,16 +261,14 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   }
 
   /// 栈顶页的询问路径：栈底 → false；页内 [PopScope] 否决 → false；再问 onExit，通过则出栈。
+  ///
+  /// 不问 [ModalRoute.isCurrent]：2 栏栏内 [LocalHistoryEntry] 的 onRemove 调用
+  /// [maybePop] 时，该 pageless 路由可能已经不是 current，但页面还在自适应栈顶。
   Future<bool> _maybePopPage(Object? result) async {
     if (!_current.canPop) return false;
     final top = _current.last!;
     final route = _hostRoutes[top.pageKey];
-    // ignore: avoid_print
-    print(
-      '_maybePopPage top=${top.matchedLocation} route=$route isCurrent=${route?.isCurrent} onExit=${top.route.onExit != null}',
-    );
     if (route != null) {
-      if (!route.isCurrent) return false;
       final disposition = route is _ExitGuard
           ? route.scopeDisposition
           : route.popDisposition;

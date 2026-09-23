@@ -7,7 +7,7 @@
 ### Fixes
 
 - Stacked popups now close outermost first (root → shell → pane): a root dialog shown above a pane sheet is closed by `maybePop` / Escape before the sheet.
-- System back in a two-column layout no longer dismisses an `onExit` confirm dialog: the pane `LocalHistoryEntry` already calls `maybePop`, so `popRoute` no longer pops a second time.
+- System back in a two-column layout no longer dismisses an `onExit` confirm dialog: `popRoute` no longer pops a second time after the pane `LocalHistoryEntry`, and `maybePop` still asks `onExit` when that pageless host is not `isCurrent`.
 
 ### Docs
 

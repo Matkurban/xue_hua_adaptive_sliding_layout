@@ -872,17 +872,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('open-inbox'));
     await tester.pumpAndSettle();
-    var handledValue = false;
-    tester.binding.handlePopRoute().then((value) => handledValue = value);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    // ignore: avoid_print
-    print(
-      'loc=${router.location.value} dialog=${find.byKey(const Key('exit-dialog')).evaluate().length} handled=$handledValue',
-    );
+    expect(await tester.binding.handlePopRoute(), isTrue);
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('exit-dialog')), findsOneWidget);
     expect(router.location.value, '/mail/inbox');
-    expect(handledValue, isTrue);
   });
 
   testWidgets('root onExit true lets the app exit', (tester) async {
