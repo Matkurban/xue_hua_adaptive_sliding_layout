@@ -194,29 +194,83 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
 
   /// 与 [Navigator.pop] 同名：不询问 [AdaptiveRoute.onExit]。
   ///
-  /// 栈顶页上若有 dialog、sheet 或 menu，只关掉那一层，页面栈不动。
+  /// 栈顶页上若有 dialog、sheet 或 menu（栏内、壳层或根），只关掉那一层，页面栈不动。
+  /// 只看栈顶那一栏：双栏时另一栏的栏内弹层用 [popFrom] 关。
   void pop<T extends Object?>([T? result]) {
     final popup = _popupNavigator();
     if (popup != null) {
       popup.pop<T>(result);
       return;
     }
-    if (!_current.canPop) return;
-    _setCurrent(_engine.pop(_current, result));
+    _popPage(result);
   }
 
   /// 与 [Navigator.maybePop] 同名：先问栈顶页内 [PopScope]，再问 [AdaptiveRoute.onExit]。
   ///
   /// 栈顶页上若有 dialog、sheet 或 menu，改为询问那一层（含其 [PopScope]），
-  /// 不再问页面的 [AdaptiveRoute.onExit]。
+  /// 不再问页面的 [AdaptiveRoute.onExit]。只看栈顶那一栏：双栏时另一栏的栏内弹层
+  /// 用 [maybePopFrom] 关。
   /// AppBar 返回、系统返回、浏览器后退、Escape 都走这里。
   /// 栈底（[canPop] 为 false）时返回 false，不弹退出确认——那是系统返回 / popRoute 的事。
-  Future<bool> maybePop<T extends Object?>([T? result]) async {
+  Future<bool> maybePop<T extends Object?>([T? result]) {
     final popup = _popupNavigator();
+    // ignore: avoid_print
+    print('maybePop popup=$popup canPop=${_current.canPop} loc=${location.value}');
     if (popup != null) return popup.maybePop<T>(result);
+    return _maybePopPage(result);
+  }
+
+  /// 与 [pop] 一样不问 [PopScope] / [AdaptiveRoute.onExit]，但只动 [context] 所在的那一层。
+  ///
+  /// - context 在 dialog / sheet / menu 里：关掉它所在 Navigator 的栈顶（通常就是它自己）。
+  /// - context 在某页里且该页被弹层盖住：关掉盖住它的弹层（栏内 → 壳层 → 根，外层优先）。
+  /// - context 在栈顶页里且没被盖住：弹出该页。
+  /// - context 在非栈顶页里且没被盖住：不动。
+  /// - context 不在任何页面 / 弹层里（壳层 chrome、壳外）：等同 [pop]。
+  ///
+  /// 双栏时左右两栏各开了一个 sheet，传哪个 context 就关哪个。
+  void popFrom<T extends Object?>(BuildContext context, [T? result]) {
+    switch (_layerOf(context)) {
+      case _PopupLayer(:final navigator):
+        navigator.pop<T>(result);
+      case _TopPageLayer():
+        _popPage(result);
+      case _GlobalLayer():
+        pop<T>(result);
+      case _IdleLayer():
+        break;
+    }
+  }
+
+  /// [popFrom] 的询问版：弹层走它自己的 [PopScope]；页面走 [PopScope] → [AdaptiveRoute.onExit]。
+  /// 返回是否真的弹了。
+  Future<bool> maybePopFrom<T extends Object?>(
+    BuildContext context, [
+    T? result,
+  ]) {
+    return switch (_layerOf(context)) {
+      _PopupLayer(:final navigator) => navigator.maybePop<T>(result),
+      _TopPageLayer() => _maybePopPage(result),
+      _GlobalLayer() => maybePop<T>(result),
+      _IdleLayer() => Future<bool>.value(false),
+    };
+  }
+
+  /// 直接弹出栈顶页，不问 [PopScope] / onExit；栈底时不动。
+  void _popPage(Object? result) {
+    if (!_current.canPop) return;
+    _setCurrent(_engine.pop(_current, result));
+  }
+
+  /// 栈顶页的询问路径：栈底 → false；页内 [PopScope] 否决 → false；再问 onExit，通过则出栈。
+  Future<bool> _maybePopPage(Object? result) async {
     if (!_current.canPop) return false;
     final top = _current.last!;
     final route = _hostRoutes[top.pageKey];
+    // ignore: avoid_print
+    print(
+      '_maybePopPage top=${top.matchedLocation} route=$route isCurrent=${route?.isCurrent} onExit=${top.route.onExit != null}',
+    );
     if (route != null) {
       if (!route.isCurrent) return false;
       final disposition = route is _ExitGuard
@@ -230,6 +284,25 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     return _exitThenPop(top, result);
   }
 
+  /// [context] 落在哪一层，供 [popFrom] / [maybePopFrom] 决定动什么。
+  _Layer _layerOf(BuildContext context) {
+    final route = ModalRoute.of(context);
+    if (route == null) return const _GlobalLayer();
+    if (!_hostRoutes.containsValue(route)) {
+      // 托管页面之外：pageless 的是 dialog / sheet / menu，带 Page 的是壳层容器页。
+      final nav = route.navigator;
+      if (route.settings is Page || nav == null) return const _GlobalLayer();
+      return _PopupLayer(nav);
+    }
+    final popup = _popupOver(route);
+    if (popup != null) return _PopupLayer(popup);
+    final top = _current.last;
+    if (top != null && identical(_hostRoutes[top.pageKey], route)) {
+      return const _TopPageLayer();
+    }
+    return const _IdleLayer();
+  }
+
   /// PopScope 已放行后：询问 onExit，通过且栈顶未变则出栈。
   Future<bool> _exitThenPop(AdaptiveRouteMatch top, Object? result) async {
     if (!await _allowExit(top)) return false;
@@ -240,39 +313,45 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
 
   /// 与 [Navigator.popUntil] 同名：弹到 [predicate] 为 true 或不能再弹。
   ///
-  /// 先关掉盖住页面的 dialog、sheet、menu，再按 [predicate] 弹页面。
+  /// 先关掉盖住栈顶页的 dialog、sheet、menu，再按 [predicate] 弹页面。
   void popUntil(AdaptiveRoutePredicate predicate) {
     _dismissPopups();
     _setCurrent(_engine.popUntil(_current, predicate));
   }
 
-  /// 盖住栈顶页的 pageless 路由（dialog、sheet、menu）所在的 [NavigatorState]。
+  /// 盖住栈顶页的 pageless 路由（dialog、sheet、menu）所在的 [NavigatorState]；没有则 null。
   ///
-  /// 没有这种弹层时返回 null。栏内 local history 不算弹层，因为它不会让页面路由
-  /// 失去 [ModalRoute.isCurrent]。
+  /// 只看栈顶页那一栏及其祖先（壳层、根）；双栏时另一栏的栏内弹层由 [popFrom] /
+  /// [maybePopFrom] 处理。
   NavigatorState? _popupNavigator() {
     final top = _current.last;
     final host = top == null ? null : _hostRoutes[top.pageKey];
-    if (host != null && !host.isCurrent) {
-      final nav = host.navigator;
-      if (nav != null && nav.canPop()) return nav;
-    }
-    var nav = host?.navigator ?? navigatorKey.currentState;
+    return host == null ? null : _popupOver(host);
+  }
+
+  /// 盖住 [page] 的弹层所在 Navigator：先祖先链（根、壳层，外层优先，因为外层弹层
+  /// 盖住一切），再 [page] 自己的 Navigator。栏内 local history 不算弹层，因为它不会
+  /// 让页面路由失去 [ModalRoute.isCurrent]。
+  NavigatorState? _popupOver(ModalRoute<dynamic> page) {
+    NavigatorState? found;
+    var nav = page.navigator;
     final seen = <NavigatorState>{};
     while (nav != null && seen.add(nav)) {
       final parent = ModalRoute.of(nav.context);
       if (parent == null) break;
-      if (!parent.isCurrent) {
-        final parentNav = parent.navigator;
-        if (parentNav == null) break;
-        final pageIsCurrent = _hostRoutes.values.any(
-          (route) => identical(route.navigator, parentNav) && route.isCurrent,
-        );
-        if (!pageIsCurrent && parentNav.canPop()) return parentNav;
-      }
+      if (_coveredByPopup(parent)) found = parent.navigator;
       nav = parent.navigator;
     }
-    return null;
+    return found ?? (_coveredByPopup(page) ? page.navigator : null);
+  }
+
+  /// [route] 本该在其 Navigator 顶上却被压住，且压住它的不是本路由器托管的页面。
+  bool _coveredByPopup(ModalRoute<dynamic> route) {
+    final nav = route.navigator;
+    if (nav == null || route.isCurrent || !nav.canPop()) return false;
+    return !_hostRoutes.values.any(
+      (page) => identical(page.navigator, nav) && page.isCurrent,
+    );
   }
 
   /// 逐个关掉盖住页面的弹层，页面栈不动。
@@ -628,22 +707,9 @@ class _AdaptiveRouterDelegate extends RouterDelegate<AdaptiveRouteMatchList>
   Future<bool> popRoute() async {
     final navs = _currentNavigators();
     if (navs.isNotEmpty && await navs.first.maybePop()) {
-      final top = router._current.last;
-      final hostNav = top == null
-          ? null
-          : router._hostRoutes[top.pageKey]?.navigator;
-      // 2 栏栏内 Navigator 只有一页，maybePop 只消化 LocalHistoryEntry，
-      // 还要把自适应栈再弹一层。
-      if (router.canPop() &&
-          identical(navs.first, hostNav) &&
-          hostNav != router.navigatorKey.currentState) {
-        final host = top == null ? null : router._hostRoutes[top.pageKey];
-        if (host is! _ExitGuard &&
-            host != null &&
-            !host.willHandlePopInternally) {
-          await router.maybePop();
-        }
-      }
+      // 2 栏栏内 Navigator 只有一页：maybePop 只消化 LocalHistoryEntry，
+      // 其 onRemove 已经调用 router.maybePop()（含 onExit）。这里不再补弹，
+      // 否则 onExit 刚弹出的确认框会被立刻关掉。
       return true;
     }
     if (router.canPop()) {
@@ -789,6 +855,33 @@ class _AdaptivePage<T> extends Page<T> {
     }
     return _AdaptiveMaterialRoute<T>(page: this);
   }
+}
+
+/// [AdaptiveRouter.popFrom] / [AdaptiveRouter.maybePopFrom] 对 context 的落点。
+sealed class _Layer {
+  const _Layer();
+}
+
+/// 要关的弹层所在 Navigator。
+final class _PopupLayer extends _Layer {
+  const _PopupLayer(this.navigator);
+
+  final NavigatorState navigator;
+}
+
+/// context 在栈顶页里且没被盖住：走页面路径。
+final class _TopPageLayer extends _Layer {
+  const _TopPageLayer();
+}
+
+/// context 在非栈顶页里且没被盖住：无事可做。
+final class _IdleLayer extends _Layer {
+  const _IdleLayer();
+}
+
+/// context 不在托管页面 / 弹层里（壳层 chrome、壳外）：回落到全局动词。
+final class _GlobalLayer extends _Layer {
+  const _GlobalLayer();
 }
 
 /// 页面路由的 onExit 守卫：先让页内 PopScope 表态，再由 onExit 否决，二者互不覆盖。

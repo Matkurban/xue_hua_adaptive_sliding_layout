@@ -123,16 +123,42 @@ AdaptiveRouter _createRouter({
   );
 }
 
-/// 在收件箱页上打开对话框。[root] 为 true 时挂到根 Navigator。
-Future<void> _openInboxDialog(WidgetTester tester, {required bool root}) async {
+/// 在显示 [on] 文本的页上打开对话框。[root] 为 true 时挂到根 Navigator，
+/// 否则挂到该页最近的 Navigator（双栏下即栏内 Navigator）。
+Future<void> _openDialog(
+  WidgetTester tester, {
+  String on = 'page-/mail/inbox',
+  required bool root,
+  Key key = const Key('test-dialog'),
+}) async {
   showDialog<void>(
-    context: tester.element(find.text('page-/mail/inbox')),
+    context: tester.element(find.text(on)),
     useRootNavigator: root,
-    builder: (context) =>
-        const AlertDialog(key: Key('test-dialog'), title: Text('Dialog')),
+    builder: (context) => AlertDialog(key: key, title: const Text('Dialog')),
   );
   await tester.pumpAndSettle();
+  expect(find.byKey(key), findsOneWidget);
+}
+
+/// 双栏：左栏 `/mail` 开栏内对话框后再推入右栏 `/mail/inbox`——用户报告的场景。
+Future<AdaptiveRouter> _pumpLeftDialogThenInbox(
+  WidgetTester tester, {
+  bool root = false,
+}) async {
+  tester.view.physicalSize = const Size(1200, 800);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  final router = _createRouter();
+  await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+  await tester.pumpAndSettle();
+  await _openDialog(tester, on: 'page-/mail', root: root);
+  router.pushNamed('/mail/inbox');
+  await tester.pumpAndSettle();
+  expect(find.text('page-/mail'), findsOneWidget);
+  expect(find.text('page-/mail/inbox'), findsOneWidget);
   expect(find.byKey(const Key('test-dialog')), findsOneWidget);
+  return router;
 }
 
 void main() {
@@ -587,13 +613,13 @@ void main() {
     await tester.tap(find.text('open-inbox'));
     await tester.pumpAndSettle();
 
-    await _openInboxDialog(tester, root: false);
+    await _openDialog(tester, root: false);
     router.pop();
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('test-dialog')), findsNothing);
     expect(router.location.value, '/mail/inbox');
 
-    await _openInboxDialog(tester, root: true);
+    await _openDialog(tester, root: true);
     router.pop();
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('test-dialog')), findsNothing);
@@ -616,14 +642,14 @@ void main() {
     expect(find.text('page-/mail'), findsOneWidget);
     expect(find.text('page-/mail/inbox'), findsOneWidget);
 
-    await _openInboxDialog(tester, root: false);
+    await _openDialog(tester, root: false);
     router.pop();
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('test-dialog')), findsNothing);
     expect(router.location.value, '/mail/inbox');
     expect(find.text('page-/mail/inbox'), findsOneWidget);
 
-    await _openInboxDialog(tester, root: true);
+    await _openDialog(tester, root: true);
     router.pop();
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('test-dialog')), findsNothing);
@@ -645,19 +671,218 @@ void main() {
     await tester.tap(find.text('open-inbox'));
     await tester.pumpAndSettle();
 
-    await _openInboxDialog(tester, root: false);
+    await _openDialog(tester, root: false);
     expect(await router.maybePop(), isTrue);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('test-dialog')), findsNothing);
     expect(exits, 0);
     expect(router.location.value, '/mail/inbox');
 
-    await _openInboxDialog(tester, root: true);
+    await _openDialog(tester, root: true);
     expect(await router.maybePop(), isTrue);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('test-dialog')), findsNothing);
     expect(exits, 0);
     expect(router.location.value, '/mail/inbox');
+  });
+
+  testWidgets(
+    'maybePopFrom / popFrom inside a left-pane dialog close only it',
+    (tester) async {
+      final router = await _pumpLeftDialogThenInbox(tester);
+      var dialog = tester.element(find.byKey(const Key('test-dialog')));
+      expect(await router.maybePopFrom(dialog), isTrue);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('test-dialog')), findsNothing);
+      expect(router.location.value, '/mail/inbox');
+      expect(find.text('page-/mail/inbox'), findsOneWidget);
+
+      await _openDialog(tester, on: 'page-/mail', root: false);
+      dialog = tester.element(find.byKey(const Key('test-dialog')));
+      router.popFrom(dialog);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('test-dialog')), findsNothing);
+      expect(router.location.value, '/mail/inbox');
+    },
+  );
+
+  for (final root in [false, true]) {
+    testWidgets(
+      'maybePopFrom on a covered page closes its dialog (root: $root)',
+      (tester) async {
+        final router = await _pumpLeftDialogThenInbox(tester, root: root);
+        final page = tester.element(find.text('page-/mail'));
+        expect(await router.maybePopFrom(page), isTrue);
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('test-dialog')), findsNothing);
+        expect(router.location.value, '/mail/inbox');
+      },
+    );
+  }
+
+  testWidgets('maybePopFrom on the top page pops it and keeps the other '
+      'pane dialog', (tester) async {
+    final router = await _pumpLeftDialogThenInbox(tester);
+    final inbox = tester.element(find.text('page-/mail/inbox'));
+    expect(await router.maybePopFrom(inbox), isTrue);
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail');
+    expect(find.byKey(const Key('test-dialog')), findsOneWidget);
+  });
+
+  testWidgets('one dialog per pane: each maybePopFrom closes its own', (
+    tester,
+  ) async {
+    await setWidth(tester, 1200);
+    final router = _createRouter();
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    const left = Key('left-dialog');
+    const right = Key('right-dialog');
+    await _openDialog(tester, on: 'page-/mail', root: false, key: left);
+    await _openDialog(tester, on: 'page-/mail/inbox', root: false, key: right);
+
+    expect(
+      await router.maybePopFrom(tester.element(find.byKey(right))),
+      isTrue,
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(right), findsNothing);
+    expect(find.byKey(left), findsOneWidget);
+
+    expect(await router.maybePopFrom(tester.element(find.byKey(left))), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.byKey(left), findsNothing);
+    expect(router.location.value, '/mail/inbox');
+  });
+
+  testWidgets('popFrom hands the result to showDialog', (tester) async {
+    await setWidth(tester, 1200);
+    final router = _createRouter();
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    final result = showDialog<String>(
+      context: tester.element(find.text('page-/mail')),
+      useRootNavigator: false,
+      builder: (context) => const AlertDialog(key: Key('test-dialog')),
+    );
+    await tester.pumpAndSettle();
+    router.popFrom(tester.element(find.byKey(const Key('test-dialog'))), 'ok');
+    await tester.pumpAndSettle();
+    expect(await result, 'ok');
+    expect(router.location.value, '/mail');
+  });
+
+  testWidgets('maybePopFrom on the top page honors onExit; popFrom skips it', (
+    tester,
+  ) async {
+    await setWidth(tester, 400);
+    var exits = 0;
+    final router = _createRouter(
+      inboxOnExit: (_, _) async {
+        exits++;
+        return false;
+      },
+    );
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    final inbox = tester.element(find.text('page-/mail/inbox'));
+    expect(await router.maybePopFrom(inbox), isFalse);
+    expect(exits, 1);
+    expect(router.location.value, '/mail/inbox');
+    router.popFrom(inbox);
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail');
+  });
+
+  testWidgets('maybePopFrom outside pages falls back to maybePop', (
+    tester,
+  ) async {
+    await setWidth(tester, 1200);
+    final router = _createRouter();
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    expect(
+      await router.maybePopFrom(tester.element(find.text('cols-2'))),
+      isTrue,
+    );
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail');
+  });
+
+  testWidgets('maybePop only handles the top pane; the left-pane dialog '
+      'stays', (tester) async {
+    final router = await _pumpLeftDialogThenInbox(tester);
+    expect(await router.maybePop(), isTrue);
+    await tester.pumpAndSettle();
+    expect(router.location.value, '/mail');
+    expect(find.byKey(const Key('test-dialog')), findsOneWidget);
+
+    expect(await router.maybePop(), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('test-dialog')), findsNothing);
+    expect(router.location.value, '/mail');
+  });
+
+  testWidgets('maybePop closes a root dialog before a pane dialog', (
+    tester,
+  ) async {
+    await setWidth(tester, 1200);
+    final router = _createRouter();
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    const pane = Key('pane-dialog');
+    const root = Key('root-dialog');
+    await _openDialog(tester, root: false, key: pane);
+    await _openDialog(tester, root: true, key: root);
+
+    expect(await router.maybePop(), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.byKey(root), findsNothing);
+    expect(find.byKey(pane), findsOneWidget);
+
+    expect(await router.maybePop(), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.byKey(pane), findsNothing);
+    expect(router.location.value, '/mail/inbox');
+  });
+
+  testWidgets('system back in expanded leaves the onExit dialog open', (
+    tester,
+  ) async {
+    await setWidth(tester, 1200);
+    final router = _createRouter(
+      inboxOnExit: (context, _) async {
+        final leave = await showDialog<bool>(
+          context: context,
+          builder: (context) => const AlertDialog(key: Key('exit-dialog')),
+        );
+        return leave ?? false;
+      },
+    );
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-inbox'));
+    await tester.pumpAndSettle();
+    var handledValue = false;
+    tester.binding.handlePopRoute().then((value) => handledValue = value);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    // ignore: avoid_print
+    print(
+      'loc=${router.location.value} dialog=${find.byKey(const Key('exit-dialog')).evaluate().length} handled=$handledValue',
+    );
+    expect(find.byKey(const Key('exit-dialog')), findsOneWidget);
+    expect(router.location.value, '/mail/inbox');
+    expect(handledValue, isTrue);
   });
 
   testWidgets('root onExit true lets the app exit', (tester) async {

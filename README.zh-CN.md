@@ -128,8 +128,10 @@ flowchart LR
 | `pushReplacementNamed`    | 只换栈顶。同级替换，右栏原地换内容。                                                                                                                                                                                                                                             |
 | `pushNamedAndRemoveUntil` | 先弹到 predicate 为 true 再 `pushNamed`。`(_) => false` 按 URL 重建（深链、登录回跳、Tab 回根）。                                                                                                                                                                                |
 | `popAndPushNamed`         | 先 `pop` 再 `pushNamed`。                                                                                                                                                                                                                                                        |
-| `pop`                     | 立刻弹出。**不问** `onExit`。                                                                                                                                                                                                                                                    |
-| `maybePop`                | 先问栈顶页内 `PopScope`，再问路由 `onExit`。AppBar 返回、系统返回、浏览器后退、Escape 都走它。栈底时 `maybePop` 是空操作；系统返回会在退出应用前询问底层路由的 `onExit`。                                                                                                                      |
+| `pop`                     | 立刻弹出。**不问** `onExit`。栈顶页上有 dialog / sheet / menu 时只关那一层。                                                                                                                                                                                                     |
+| `maybePop`                | 先问栈顶页内 `PopScope`，再问路由 `onExit`。AppBar 返回、系统返回、浏览器后退、Escape 都走它。栈底时 `maybePop` 是空操作；系统返回会在退出应用前询问底层路由的 `onExit`。无 context，只管**栈顶那一栏**及盖住整体的根 / 壳层弹层。                                                          |
+| `popFrom(context)`        | 只动 `context` 所在那一层：在 dialog / sheet 里就关它；在某页里就关盖住这页的弹层，没有弹层且是栈顶页则弹出该页；非栈顶页不动。**不问** `onExit`。双栏左右各开一个 sheet 时，传哪个 context 关哪个。                                                                                          |
+| `maybePopFrom(context)`   | `popFrom` 的询问版：弹层走自己的 `PopScope`，页面走 `PopScope` → `onExit`。                                                                                                                                                                                                       |
 | `popUntil`                | 弹到 predicate 为 true，不超过分支根。                                                                                                                                                                                                                                           |
 | `canPop`                  | 有覆盖层，或当前分支深度 > 1。                                                                                                                                                                                                                                                   |
 
@@ -264,6 +266,7 @@ cd example && flutter test
 
 - 跨越 840 断点会**重建**页面 `State`（Navigator 树 ↔ 视口树）。持久状态放进 URL、signal 或宿主存储。
 - 栏内 Overlay 会被裁剪。对话框、菜单、底部弹层请走根 Overlay：`useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`。
+- 无 context 的 `pop` / `maybePop`（含 Escape、系统返回）只处理栈顶那一栏和盖住整体的根 / 壳层弹层。双栏时另一栏的栏内 sheet / dialog 不会被它关掉：用 `maybePopFrom(context)`（context 在弹层里或那一页里），或在弹层内直接 `Navigator.pop(context)`。多个弹层叠着时外层先关（根 → 壳层 → 栏内）。
 - `onExit` 在 `maybePop`、系统返回、浏览器后退时询问，且排在页内 `PopScope` 之后。栈底时系统返回会在退出应用前询问该路由的 `onExit`。`pop` / `pushReplacementNamed` / `pushNamedAndRemoveUntil` 与 Navigator 一样直接执行。
 - Web 保持 hash URL。平台带了非 `/` 的初始路由时，优先于 `initialLocation`。
 - 整棵树只允许一个顶层 `AdaptiveShellRoute`。不做嵌套壳、`restorable*`、`context.pushNamed` 扩展。

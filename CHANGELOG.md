@@ -1,3 +1,18 @@
+## 3.2.0
+
+### Features
+
+- `popFrom(context)` / `maybePopFrom(context)`: act only on the layer `context` lives in. Inside a dialog / sheet / menu they close that popup; inside a page they close the popup covering that page, or pop the page when it is the uncovered top page; a non-top page is left alone; outside pages they fall back to `pop` / `maybePop`. With one sheet per pane, the context you pass decides which one closes — for example a left-pane sheet that pushed the right page can dismiss itself with `maybePopFrom(context)` instead of popping the new page.
+
+### Fixes
+
+- Stacked popups now close outermost first (root → shell → pane): a root dialog shown above a pane sheet is closed by `maybePop` / Escape before the sheet.
+- System back in a two-column layout no longer dismisses an `onExit` confirm dialog: the pane `LocalHistoryEntry` already calls `maybePop`, so `popRoute` no longer pops a second time.
+
+### Docs
+
+- Context-free `pop` / `maybePop` (Escape, system back) only handle the top pane and popups covering the whole shell; a pane-local popup in the other pane needs `maybePopFrom(context)` or `Navigator.pop(context)`.
+
 ## 3.1.3
 
 ### Fixes
