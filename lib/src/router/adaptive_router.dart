@@ -3,10 +3,17 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/shell_widget.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/router/match.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/navigation.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/router/route.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/router/route_state.dart';
+
+import 'adaptive_route.dart';
+import 'adaptive_route_base.dart';
+import 'adaptive_route_match.dart';
+import 'adaptive_route_match_list.dart';
+import 'adaptive_route_scope.dart';
+import 'adaptive_route_state.dart';
+import 'adaptive_router_scope.dart';
+import 'adaptive_shell_route.dart';
+import 'route_registry.dart';
 
 /// 自适应多栏路由器：路由表借鉴 go_router，调用 API 与 [NavigatorState] 同名。
 ///
@@ -63,6 +70,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   final RouteRegistry registry;
 
   late NavigationEngine _engine;
+
   late final _AdaptiveRouterDelegate _delegate;
 
   @override
@@ -94,9 +102,12 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   AdaptiveShellRoute? get shell => registry.shell;
 
   late AdaptiveRouteMatchList _current;
+
   bool _ready = false;
+
   final Map<int, List<AdaptiveRouteMatch>> _branchStacks =
       <int, List<AdaptiveRouteMatch>>{};
+
   final Map<int, String> _branchLocations = <int, String>{};
 
   /// 每页当前所在的 [ModalRoute]，供 [maybePop] / [popRoute] 问 PopScope。
@@ -637,23 +648,6 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   }
 }
 
-/// 向子树暴露 [AdaptiveRouter]。
-class AdaptiveRouterScope extends InheritedWidget {
-  /// [router] 为本应用唯一的路由器实例。
-  const AdaptiveRouterScope({
-    super.key,
-    required this.router,
-    required super.child,
-  });
-
-  /// 当前路由器。
-  final AdaptiveRouter router;
-
-  @override
-  bool updateShouldNotify(AdaptiveRouterScope oldWidget) =>
-      router != oldWidget.router;
-}
-
 class _AdaptiveRouteInformationParser
     extends RouteInformationParser<AdaptiveRouteMatchList> {
   _AdaptiveRouteInformationParser(this.router);
@@ -883,6 +877,7 @@ final class _GlobalLayer extends _Layer {
 /// 页面路由的 onExit 守卫：先让页内 PopScope 表态，再由 onExit 否决，二者互不覆盖。
 mixin _ExitGuard<T> on ModalRoute<T> {
   AdaptiveRouter get router;
+
   AdaptiveRouteMatch get match;
 
   /// 不含 onExit 否决的 disposition；doNotPop 即页内 PopScope 否决。

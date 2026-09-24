@@ -5,9 +5,11 @@ import 'package:xue_hua_adaptive_sliding_layout/src/layout/breadcrumbs.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/pane_scope.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/sliding_pane_viewport.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_router.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/router/match.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/router/route.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/router/route_state.dart';
+
+import '../router/adaptive_route_match.dart';
+import '../router/adaptive_shell_route.dart';
+import '../router/adaptive_shell_scope.dart';
+import '../router/adaptive_shell_state.dart';
 
 /// 内部壳：按宽度在 1 栏 [Navigator] 与 2 栏 [SlidingPaneViewport] 之间切换。
 ///
@@ -207,9 +209,7 @@ class _BranchView extends StatelessWidget {
               return SlidingPaneViewport(
                 panes: panes,
                 visibleCount: visibleCount,
-                onPop: () {
-                  router.maybePop();
-                },
+                onPop: router.maybePop,
                 placeholder:
                     branch.placeholder?.call(context) ??
                     shell.placeholder?.call(context),

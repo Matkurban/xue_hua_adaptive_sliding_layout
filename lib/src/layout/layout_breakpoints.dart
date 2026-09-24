@@ -32,6 +32,3 @@ class LayoutBreakpoints {
   /// expanded 为 2，否则 1。
   int visibleColumnCount(double width) => isExpanded(width) ? 2 : 1;
 }
-
-/// 与 2.x [AppBreakpoints] 名称兼容，实现即为 [LayoutBreakpoints]。
-typedef AppBreakpoints = LayoutBreakpoints;

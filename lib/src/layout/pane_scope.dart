@@ -26,7 +26,6 @@ class SlidingPane {
 
 /// 当前栏在滑动栈中的位置。仅双栏栏位内非 null。
 ///
-/// 替代 2.x 的 `inSlidingWindow` / `SlidingPaneScope` / `SlidingPageTitle`：
 /// 用 [maybeOf] 判断是否在栏内；改标题写 [title]；出栈调 [pop]。
 class AdaptivePaneScope extends InheritedWidget {
   /// [index] 为栈下标（0 为根），[depth] 为当前栈深度。

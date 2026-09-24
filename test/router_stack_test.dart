@@ -1,10 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_router.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/router/match.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/navigation.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/router/route.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/router/route_state.dart';
+import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.dart';
 
 Widget _page(BuildContext context, AdaptiveRouteState state) {
   return Text(state.matchedLocation, textDirection: TextDirection.ltr);

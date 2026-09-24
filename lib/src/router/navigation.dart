@@ -1,7 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/router/match.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/utils/match_utils.dart';
+
+import 'adaptive_route_match.dart';
+import 'adaptive_route_match_list.dart';
+import 'route_registry.dart';
 
 /// 纯栈运算：把 Navigator 同名动词作用在 [AdaptiveRouteMatchList] 上。
 ///

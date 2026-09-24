@@ -62,6 +62,7 @@ class AdaptiveBreadcrumbs extends StatelessWidget {
   /// 空标题页不画；最后一项不可点。
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return SignalBuilder(
       builder: (context) {
         final visible = [
@@ -69,54 +70,51 @@ class AdaptiveBreadcrumbs extends StatelessWidget {
             if (pane.title.value.isNotEmpty) pane,
         ];
         if (visible.isEmpty) return const SizedBox.shrink();
-        final colorScheme = Theme.of(context).colorScheme;
-        return Material(
+        return Container(
+          height: height,
           color: backgroundColor ?? colorScheme.surfaceContainerLow,
-          child: SizedBox(
-            height: height,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: padding,
-              itemCount: visible.length,
-              separatorBuilder: (context, index) {
-                return separatorBuilder?.call(context, index) ??
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Icon(
-                        Icons.chevron_right,
-                        size: 16,
-                        color: colorScheme.outline,
-                      ),
-                    );
-              },
-              itemBuilder: (context, index) {
-                final pane = visible[index];
-                final isLast = index == visible.length - 1;
-                final onTap = isLast ? null : () => onSelect(pane);
-                return itemBuilder?.call(context, pane, isLast, onTap) ??
-                    InkWell(
-                      onTap: onTap,
-                      borderRadius: BorderRadius.circular(6),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: Center(
-                          child: Text(
-                            pane.title.value,
-                            style: Theme.of(context).textTheme.labelMedium
-                                ?.copyWith(
-                                  color: isLast
-                                      ? colorScheme.onSurface
-                                      : colorScheme.onSurfaceVariant,
-                                  fontWeight: isLast
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                                ),
-                          ),
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: padding,
+            itemCount: visible.length,
+            separatorBuilder: (context, index) {
+              return separatorBuilder?.call(context, index) ??
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Icon(
+                      Icons.chevron_right,
+                      size: 16,
+                      color: colorScheme.outline,
+                    ),
+                  );
+            },
+            itemBuilder: (context, index) {
+              final pane = visible[index];
+              final isLast = index == visible.length - 1;
+              final onTap = isLast ? null : () => onSelect(pane);
+              return itemBuilder?.call(context, pane, isLast, onTap) ??
+                  InkWell(
+                    onTap: onTap,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Center(
+                        child: Text(
+                          pane.title.value,
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: isLast
+                                    ? colorScheme.onSurface
+                                    : colorScheme.onSurfaceVariant,
+                                fontWeight: isLast
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              ),
                         ),
                       ),
-                    );
-              },
-            ),
+                    ),
+                  );
+            },
           ),
         );
       },
