@@ -1,6 +1,6 @@
 # Router scope
 
-Source: `lib/src/router/adaptive_router.dart`.
+Source: `lib/src/router/adaptive_router_scope.dart`.
 
 ## `AdaptiveRouterScope`
 

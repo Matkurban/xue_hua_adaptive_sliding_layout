@@ -22,5 +22,4 @@ export 'src/router/adaptive_router_scope.dart';
 export 'src/router/adaptive_shell_route.dart';
 export 'src/router/adaptive_shell_scope.dart';
 export 'src/router/adaptive_shell_state.dart';
-export 'src/router/named_route_ref.dart';
 export 'src/router/route_registry.dart';

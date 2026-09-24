@@ -1,11 +1,13 @@
 # Route table types
 
-Source: `lib/src/router/route.dart`. UI-knob **behavior** (sash, breadcrumbs, `paneBuilder`) is in the **layout** skill; signatures and defaults are here.
+UI-knob **behavior** (sash, breadcrumbs, `paneBuilder`) is in the **layout** skill; signatures and defaults are here.
 
 ## `AdaptiveRouteBase`
 
+Source: `lib/src/router/adaptive_route_base.dart`.
+
 ```dart
-sealed class AdaptiveRouteBase {
+abstract class AdaptiveRouteBase {
   const AdaptiveRouteBase();
 }
 ```
@@ -13,6 +15,8 @@ sealed class AdaptiveRouteBase {
 Closed set: `AdaptiveRoute` | `AdaptiveShellRoute`. Top-level `AdaptiveRouter.routes` is `List<AdaptiveRouteBase>`.
 
 ## `AdaptiveRoute`
+
+Source: `lib/src/router/adaptive_route.dart`.
 
 One page. Child `routes` use relative paths. `:param` syntax matches go_router. First match wins.
 
@@ -117,13 +121,13 @@ final bool hidesBottomBarWhenPushed; // default true
 
 Used only when `transitionsBuilder` is non-null (root navigator `PageRouteBuilder`):
 
-| Field | Default | Meaning |
-| --- | --- | --- |
-| `opaque` | `true` | `PageRouteBuilder.opaque`. Set `false` for a transparent photo viewer. |
-| `barrierColor` | `null` | Barrier color. |
-| `barrierDismissible` | `false` | Tap the barrier to pop. |
-| `transitionsBuilder` | `null` | Same signature as `PageRouteBuilder.transitionsBuilder`. Ignored for in-pane pages. |
-| `transitionDuration` | `null` → 300ms | Duration of that custom route. |
+| Field                | Default        | Meaning                                                                             |
+| -------------------- | -------------- | ----------------------------------------------------------------------------------- |
+| `opaque`             | `true`         | `PageRouteBuilder.opaque`. Set `false` for a transparent photo viewer.              |
+| `barrierColor`       | `null`         | Barrier color.                                                                      |
+| `barrierDismissible` | `false`        | Tap the barrier to pop.                                                             |
+| `transitionsBuilder` | `null`         | Same signature as `PageRouteBuilder.transitionsBuilder`. Ignored for in-pane pages. |
+| `transitionDuration` | `null` → 300ms | Duration of that custom route.                                                      |
 
 Without `transitionsBuilder`, root pages use a Material page route (`maintainState: true`). 1-column in-shell transitions use `ThemeData.pageTransitionsTheme`.
 
@@ -154,6 +158,8 @@ final List<AdaptiveRoute> routes;
 Nested routes, matched in list order, consuming leftover path segments.
 
 ## `AdaptiveBranch`
+
+Source: `lib/src/router/adaptive_branch.dart`.
 
 One tab. Paths in `routes` usually start with an absolute `/mail`-style path.
 
@@ -188,6 +194,8 @@ final AdaptivePlaceholderBuilder? placeholder;
 `AdaptiveShellState.goBranch(index, initialLocation: true)` and first visit without a stored stack navigate to `initialLocation`.
 
 ## `AdaptiveShellRoute`
+
+Source: `lib/src/router/adaptive_shell_route.dart`.
 
 Multi-branch chrome. Width picks 1-column `Navigator` vs 2-column `SlidingPaneViewport`.
 
@@ -244,18 +252,18 @@ Default `compactMaxWidth: 600`, `expandedMinWidth: 840`. See the **layout** skil
 
 ### UI knobs (signatures)
 
-| Field | Default | Role |
-| --- | --- | --- |
-| `showBreadcrumbs` | `true` | Draw the strip above the viewport when expanded. |
-| `resizable` | `true` | Show the sash when two columns are visible. |
-| `initialLeftPaneFraction` | `0.5` | Seeds `AdaptiveRouter.leftPaneFraction`. |
-| `minLeftPaneFraction` | `0.3` | Sash clamp lower bound. |
-| `minRightPaneFraction` | `0.3` | Sash clamp; left max is `1 - this`. |
-| `onLeftPaneFractionChanged` | `null` | Called on sash pointer-up **after** the router signal is written. |
-| `breadcrumbsBuilder` | `null` | Replace `AdaptiveBreadcrumbs`. Still gated by `showBreadcrumbs`. |
-| `placeholder` | `null` | Default empty right pane; `AdaptiveBranch.placeholder` wins. |
-| `paneBuilder` | `null` | Wrap each column; `index == panes.length` is the empty right slot. Default: card in 2-col, flat in 1-col. |
-| `resizeHandleBuilder` | `null` | Visual only; 44px hit target stays. |
-| `slideDuration` | 280ms | Column slide. |
-| `slideCurve` | `Curves.easeOutCubic` | Column slide. |
-| `escapePops` | `true` | Escape calls `AdaptiveRouter.maybePop` unless focus is an `EditableTextState`. |
+| Field                       | Default               | Role                                                                                                      |
+| --------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------- |
+| `showBreadcrumbs`           | `true`                | Draw the strip above the viewport when expanded.                                                          |
+| `resizable`                 | `true`                | Show the sash when two columns are visible.                                                               |
+| `initialLeftPaneFraction`   | `0.5`                 | Seeds `AdaptiveRouter.leftPaneFraction`.                                                                  |
+| `minLeftPaneFraction`       | `0.3`                 | Sash clamp lower bound.                                                                                   |
+| `minRightPaneFraction`      | `0.3`                 | Sash clamp; left max is `1 - this`.                                                                       |
+| `onLeftPaneFractionChanged` | `null`                | Called on sash pointer-up **after** the router signal is written.                                         |
+| `breadcrumbsBuilder`        | `null`                | Replace `AdaptiveBreadcrumbs`. Still gated by `showBreadcrumbs`.                                          |
+| `placeholder`               | `null`                | Default empty right pane; `AdaptiveBranch.placeholder` wins.                                              |
+| `paneBuilder`               | `null`                | Wrap each column; `index == panes.length` is the empty right slot. Default: card in 2-col, flat in 1-col. |
+| `resizeHandleBuilder`       | `null`                | Visual only; 44px hit target stays.                                                                       |
+| `slideDuration`             | 280ms                 | Column slide.                                                                                             |
+| `slideCurve`                | `Curves.easeOutCubic` | Column slide.                                                                                             |
+| `escapePops`                | `true`                | Escape calls `AdaptiveRouter.maybePop` unless focus is an `EditableTextState`.                            |

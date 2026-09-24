@@ -1,3 +1,13 @@
+## 3.2.1
+
+### Breaking Changes ⚠️
+
+- `NamedRouteRef` is no longer exported. `RouteRegistry.namedRoutes` is gone. Expand a table name with `AdaptiveRouter.namedLocation`.
+
+### Docs
+
+- Package skills point at the split `lib/src/router` / `lib/src/utils` files. Path helpers (`joinPaths`, `humanizePath`, `PathPattern`) and `NamedRouteRef` are marked internal.
+
 ## 3.2.0
 
 ### Features

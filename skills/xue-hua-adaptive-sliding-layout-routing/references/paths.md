@@ -1,8 +1,10 @@
 # Paths and patterns
 
-Source: `lib/src/router/route.dart`.
+Internal (not exported). Used by `RouteRegistry` / `namedLocation`.
 
 ## `joinPaths`
+
+Source: `lib/src/utils/path_utils.dart`.
 
 ```dart
 String joinPaths(String parent, String child)
@@ -19,6 +21,8 @@ Joins a parent full-path pattern with a child `AdaptiveRoute.path`.
 Used by `RouteRegistry` when compiling `fullPath`.
 
 ## `PathSegment`
+
+Source: `lib/src/router/path_segment.dart`.
 
 One segment of a compiled pattern: either a literal or a `:name` parameter.
 
@@ -48,6 +52,8 @@ bool get isParam => paramName != null;
 
 ## `PathMatch`
 
+Source: `lib/src/router/path_match.dart`.
+
 Result of one `PathPattern.match` call.
 
 ```dart
@@ -63,6 +69,8 @@ const PathMatch({
 | `params` | Parameters extracted **at this layer only** (not ancestors). |
 
 ## `PathPattern`
+
+Source: `lib/src/router/path_pattern.dart`.
 
 Compiles a pattern such as `/mail/:folder/:threadId` and matches by segment.
 

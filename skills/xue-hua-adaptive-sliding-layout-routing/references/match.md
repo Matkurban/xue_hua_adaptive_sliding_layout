@@ -1,10 +1,10 @@
 # Match objects and RouteRegistry
 
-Source: `lib/src/router/match.dart`.
-
 `AdaptiveRoutePredicate` is documented in the **navigation** skill.
 
 ## `AdaptiveRouteMatch`
+
+Source: `lib/src/router/adaptive_route_match.dart`.
 
 One page / pane in the stack.
 
@@ -97,6 +97,8 @@ If `completer` exists and is not completed, `complete(result)`. Then, once, `tit
 
 ## `AdaptiveRouteMatchList`
 
+Source: `lib/src/router/adaptive_route_match_list.dart`.
+
 One navigation result: current branch stack + root overlays.
 
 ### Constructor
@@ -187,6 +189,8 @@ AdaptiveRouteMatchList copyWith({
 
 ## `NamedRouteRef`
 
+Source: `lib/src/router/named_route_ref.dart`. Internal (not exported). Used only by `RouteRegistry`.
+
 Compiled named route.
 
 ```dart
@@ -207,6 +211,8 @@ const NamedRouteRef({
 
 ## `RouteRegistry`
 
+Source: `lib/src/router/route_registry.dart`.
+
 Walks the tree once: registers names, finds the unique shell, matches URIs.
 
 ### Constructor
@@ -225,7 +231,6 @@ Depth-first walk:
 ```dart
 final List<AdaptiveRouteBase> routes;
 AdaptiveShellRoute? get shell;
-Map<String, NamedRouteRef> get namedRoutes; // unmodifiable view
 ```
 
 ### `namedLocation`
@@ -260,9 +265,9 @@ Matching rules:
 
 `matchedLocation` is `'/' + pathSegments.take(consumed).join('/')`, or `'/'` when consumed is 0.
 
-## Public helpers on this library
+## Internal helpers
 
-These are exported from the barrel (same file). Host apps rarely call them; the navigation engine does.
+Not exported. `humanizePath` / `isMatchPrefix` / `reusePrefixMatches` live in `lib/src/utils/match_utils.dart`. The engine uses them from `route_registry.dart` / `navigation.dart`.
 
 ## `humanizePath`
 
@@ -300,14 +305,6 @@ List<AdaptiveRouteMatch> reusePrefixMatches(
 
 For each index in `target`, keep `current[i]` when locations match (and `dispose` the unused `target[i]`); otherwise keep `target[i]`. Prevents title-signal leaks on prefix reuse.
 
-## `disposeDroppedMatches`
+## Dropped-match dispose
 
-```dart
-void disposeDroppedMatches(
-  AdaptiveRouteMatchList oldList,
-  AdaptiveRouteMatchList newList, [
-  Object? result,
-])
-```
-
-`dispose(result)` every match in `oldList` whose `pageKey` is absent from `newList`.
+Lives in `AdaptiveRouter._setCurrent` (`lib/src/router/adaptive_router.dart`). `dispose()` every match in the old list whose `pageKey` is absent from the new list **and** from stored branch stacks. Does not pass a result.

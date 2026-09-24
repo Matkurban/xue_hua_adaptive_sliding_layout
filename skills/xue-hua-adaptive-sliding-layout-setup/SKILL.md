@@ -10,7 +10,7 @@ license: Apache-2.0
 
 # Setup: AdaptiveRouter + MaterialApp.router
 
-Package: `xue_hua_adaptive_sliding_layout` (3.1.x). Import only the barrel:
+Package: `xue_hua_adaptive_sliding_layout` (3.2.x). Import only the barrel:
 
 ```dart
 import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.dart';
@@ -24,16 +24,16 @@ Route table → `xue-hua-adaptive-sliding-layout-routing`. Navigator verbs → `
 
 ## Guidelines
 
-* Hold one `AdaptiveRouter` on the host (top-level final or a widget field). Pass it as `MaterialApp.router(routerConfig: router)`. There is no service locator and no `context.go` / `context.pushNamed` extension.
-* `AdaptiveRouter` implements `RouterConfig<AdaptiveRouteMatchList>`. The constructor builds `routeInformationProvider`, `routeInformationParser`, `routerDelegate`, and `backButtonDispatcher`.
-* From a page, take the instance with `AdaptiveRouter.of(context)`. Use `maybeOf` only when the widget may sit outside the router subtree.
-* Subscribe to `router.location`, `router.matches`, `router.currentBranch`, and `router.leftPaneFraction` with `SignalBuilder` from `signals_flutter`.
-* Call `router.refresh()` after auth (or any other input that top-level / per-route `redirect` reads) changes.
-* Provide `errorBuilder` for unmatched locations and redirect loops (`redirectLimit`, default 5).
-* `routeName` on every `*Named` verb is a **location** (`/mail/inbox`), not `AdaptiveRoute.name`. Build named locations with `router.namedLocation(...)`.
-* The platform `defaultRouteName` wins over `initialLocation` when it is non-empty and not `/`. Web uses the Flutter hash URL strategy (`/#/mail`).
-* One `AdaptiveShellRoute`, top-level only. No nested shells, no `restorable*`, no `push(Route)`.
-* Crossing `expandedMinWidth` (840) rebuilds page `State` (Navigator tree ↔ viewport tree). Keep durable state in the URL, a signal, or a host store.
+- Hold one `AdaptiveRouter` on the host (top-level final or a widget field). Pass it as `MaterialApp.router(routerConfig: router)`. There is no service locator and no `context.go` / `context.pushNamed` extension.
+- `AdaptiveRouter` implements `RouterConfig<AdaptiveRouteMatchList>`. The constructor builds `routeInformationProvider`, `routeInformationParser`, `routerDelegate`, and `backButtonDispatcher`.
+- From a page, take the instance with `AdaptiveRouter.of(context)`. Use `maybeOf` only when the widget may sit outside the router subtree.
+- Subscribe to `router.location`, `router.matches`, `router.currentBranch`, and `router.leftPaneFraction` with `SignalBuilder` from `signals_flutter`.
+- Call `router.refresh()` after auth (or any other input that top-level / per-route `redirect` reads) changes.
+- Provide `errorBuilder` for unmatched locations and redirect loops (`redirectLimit`, default 5).
+- `routeName` on every `*Named` verb is a **location** (`/mail/inbox`), not `AdaptiveRoute.name`. Build named locations with `router.namedLocation(...)`.
+- The platform `defaultRouteName` wins over `initialLocation` when it is non-empty and not `/`. Web uses the Flutter hash URL strategy (`/#/mail`).
+- One `AdaptiveShellRoute`, top-level only. No nested shells, no `restorable*`, no `push(Route)`.
+- Crossing `expandedMinWidth` (840) rebuilds page `State` (Navigator tree ↔ viewport tree). Keep durable state in the URL, a signal, or a host store.
 
 ## Examples
 
@@ -130,25 +130,25 @@ Put `PopScope(canPop: false)` in the **shell builder** (or a tab root). System b
 
 ### Migrate from go_router
 
-| go_router | this package |
-| --- | --- |
-| `GoRoute` | `AdaptiveRoute` |
-| `StatefulShellRoute.indexedStack` | `AdaptiveShellRoute` + `AdaptiveBranch` |
-| `context.go(loc)` | `router.pushNamedAndRemoveUntil(loc, (_) => false)` |
-| `context.push(loc)` | `router.pushNamed(loc)` |
-| `extra` | `arguments` |
-| `GoRouterState` | `AdaptiveRouteState` |
-| `pageBuilder` | `builder` + optional `transitionsBuilder` |
-| `context.go` / `context.pop` extensions | `AdaptiveRouter.of(context)` only |
+| go_router                               | this package                                        |
+| --------------------------------------- | --------------------------------------------------- |
+| `GoRoute`                               | `AdaptiveRoute`                                     |
+| `StatefulShellRoute.indexedStack`       | `AdaptiveShellRoute` + `AdaptiveBranch`             |
+| `context.go(loc)`                       | `router.pushNamedAndRemoveUntil(loc, (_) => false)` |
+| `context.push(loc)`                     | `router.pushNamed(loc)`                             |
+| `extra`                                 | `arguments`                                         |
+| `GoRouterState`                         | `AdaptiveRouteState`                                |
+| `pageBuilder`                           | `builder` + optional `transitionsBuilder`           |
+| `context.go` / `context.pop` extensions | `AdaptiveRouter.of(context)` only                   |
 
 ### Migrate from 2.x
 
-| 2.x | 3.x |
-| --- | --- |
-| `SlidingShell` + `MultiColumnScaffold` + `AdaptiveNavigator` | one `AdaptiveRouter` + `MaterialApp.router` |
-| `extra` | `arguments` |
-| `inSlidingWindow(context)` | `AdaptivePaneScope.maybeOf(context) != null` |
-| `SlidingPageTitle.report` | `AdaptivePaneScope.maybeOf(context)?.title.value = …` |
-| `SlidingActions.pop` | `AdaptiveRouter.of(context).maybePop()` |
+| 2.x                                                          | 3.x                                                   |
+| ------------------------------------------------------------ | ----------------------------------------------------- |
+| `SlidingShell` + `MultiColumnScaffold` + `AdaptiveNavigator` | one `AdaptiveRouter` + `MaterialApp.router`           |
+| `extra`                                                      | `arguments`                                           |
+| `inSlidingWindow(context)`                                   | `AdaptivePaneScope.maybeOf(context) != null`          |
+| `SlidingPageTitle.report`                                    | `AdaptivePaneScope.maybeOf(context)?.title.value = …` |
+| `SlidingActions.pop`                                         | `AdaptiveRouter.of(context).maybePop()`               |
 
 No compatibility shim.

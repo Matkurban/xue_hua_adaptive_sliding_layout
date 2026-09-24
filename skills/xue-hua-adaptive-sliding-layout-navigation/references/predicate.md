@@ -1,6 +1,6 @@
 # Route predicate
 
-Source: `lib/src/router/match.dart`.
+Source: `lib/src/router/adaptive_route_match.dart`.
 
 ## `AdaptiveRoutePredicate`
 

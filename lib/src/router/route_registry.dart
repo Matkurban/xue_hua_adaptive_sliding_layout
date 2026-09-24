@@ -29,9 +29,6 @@ class RouteRegistry {
   /// 顶层唯一壳；没有壳则为 null。
   AdaptiveShellRoute? get shell => _shell;
 
-  /// 已登记的命名路由。
-  Map<String, NamedRouteRef> get namedRoutes => Map.unmodifiable(_named);
-
   /// 深度优先登记命名路由，并断言只有一个顶层壳。
   void _walk(
     Iterable<AdaptiveRouteBase> nodes, {

@@ -1,8 +1,10 @@
 # AdaptiveShellState and AdaptiveShellScope
 
-Source: `lib/src/router/route_state.dart`. Built each layout by the internal shell from `LayoutBuilder` + router signals.
+Built each layout by the internal shell from `LayoutBuilder` + router signals.
 
 ## `AdaptiveShellState`
+
+Source: `lib/src/router/adaptive_shell_state.dart`.
 
 Argument of `AdaptiveShellRoute.builder`. Also `AdaptiveShellScope.of(context)` under that chrome.
 
@@ -30,14 +32,14 @@ The built-in shell passes:
 
 ### Fields
 
-| Field | Meaning |
-| --- | --- |
-| `currentIndex` | Selected `AdaptiveBranch` index. |
-| `branchCount` | `branches.length`. |
-| `width` | Shell `LayoutBuilder` width. |
-| `breakpoints` | This shell’s bands. |
+| Field              | Meaning                                                                                                                           |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `currentIndex`     | Selected `AdaptiveBranch` index.                                                                                                  |
+| `branchCount`      | `branches.length`.                                                                                                                |
+| `width`            | Shell `LayoutBuilder` width.                                                                                                      |
+| `breakpoints`      | This shell’s bands.                                                                                                               |
 | `leftPaneFraction` | Shared sash fraction signal. Written on sash pointer-up. During drag the viewport updates locally and does not write this signal. |
-| `goBranch` | Switch tab. `initialLocation: true` ignores the stored stack and goes to `AdaptiveBranch.initialLocation`. |
+| `goBranch`         | Switch tab. `initialLocation: true` ignores the stored stack and goes to `AdaptiveBranch.initialLocation`.                        |
 
 ### Width getters
 
@@ -51,6 +53,8 @@ int get visibleColumnCount => breakpoints.visibleColumnCount(width);
 Use `isCompact` for a `NavigationBar`, `isMedium` / `isExpanded` for a rail. `visibleColumnCount` is 2 only when expanded.
 
 ## `AdaptiveShellScope`
+
+Source: `lib/src/router/adaptive_shell_scope.dart`.
 
 `InheritedWidget` wrapping the shell builder’s output.
 
