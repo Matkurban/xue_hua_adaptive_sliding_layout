@@ -1,3 +1,13 @@
+## 3.3.1
+
+### Requirements
+
+- Minimum Dart SDK is `^3.13.0`. Minimum Flutter SDK is `>=3.47.0`.
+
+### Publishing
+
+- Pub.dev topics: `flutter`, `navigation`, `routing`, `layout`, `adaptive-layout`.
+
 ## 3.3.0
 
 ### Features
