@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/model/enums/size_preset.dart';
@@ -18,6 +19,10 @@ class SizePresetScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final Size screenSize = MediaQuery.sizeOf(context);
+    if (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS) {
+      return child;
+    }
     return Material(
       child: Scaffold(
         backgroundColor: theme.inputDecorationTheme.fillColor,

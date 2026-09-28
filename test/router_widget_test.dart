@@ -47,6 +47,7 @@ AdaptiveRouter _createRouter({
   bool shellPopScope = false,
   List<bool>? popInvoked,
   AdaptiveBreadcrumbsBuilder? breadcrumbsBuilder,
+  bool shellBar = false,
 }) {
   Widget maybePopScope(Widget child) {
     if (!inboxPopScope && !shellPopScope) return child;
@@ -85,6 +86,22 @@ AdaptiveRouter _createRouter({
               Expanded(child: child),
             ],
           );
+          if (shellBar && shell.isCompact) {
+            built = AdaptiveShellChrome(
+              bottomNavigationBar: (context) => NavigationBar(
+                key: Key('shell-bar'),
+                selectedIndex: 0,
+                destinations: [
+                  NavigationDestination(icon: Icon(Icons.mail), label: 'mail'),
+                  NavigationDestination(
+                    icon: Icon(Icons.contacts),
+                    label: 'contacts',
+                  ),
+                ],
+              ),
+              child: built,
+            );
+          }
           if (shellPopScope) built = maybePopScope(built);
           return built;
         },
@@ -187,6 +204,51 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('cols-1'), findsOneWidget);
   });
+
+  testWidgets(
+    'compact sheet covers the shell bar when useRootNavigator is false',
+    (tester) async {
+      await setWidth(tester, 400);
+      final router = _createRouter(shellBar: true);
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      final bar = find.byKey(const Key('shell-bar'));
+      final page = find.ancestor(
+        of: find.text('page-/mail'),
+        matching: find.byType(Scaffold),
+      );
+      expect(bar.hitTestable(), findsOneWidget);
+      expect(page, findsOneWidget);
+      expect(
+        tester.getRect(page).bottom,
+        lessThanOrEqualTo(tester.getRect(bar).top + 1),
+      );
+
+      showModalBottomSheet<void>(
+        context: tester.element(find.text('page-/mail')),
+        useRootNavigator: false,
+        builder: (context) => const SizedBox(
+          key: Key('sheet'),
+          width: double.infinity,
+          height: 200,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final sheetRect = tester.getRect(find.byKey(const Key('sheet')));
+      final barRect = tester.getRect(bar);
+      expect(sheetRect.overlaps(barRect), isTrue);
+      expect(sheetRect.bottom, closeTo(800, 1));
+      expect(bar.hitTestable(), findsNothing);
+
+      Navigator.of(tester.element(find.byKey(const Key('sheet')))).pop();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('sheet')), findsNothing);
+      expect(bar.hitTestable(), findsOneWidget);
+      expect(find.text('page-/mail'), findsOneWidget);
+    },
+  );
 
   testWidgets('compact push hides the shell chrome by default', (tester) async {
     await setWidth(tester, 400);

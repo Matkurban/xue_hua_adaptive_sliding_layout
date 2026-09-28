@@ -77,7 +77,7 @@ Future<T?> pushNamedAndRemoveUntil<T extends Object?>(
 
 Redirect, `popUntil` until `predicate` is true or `canPop` is false, then `pushNamed`. Does not call `onExit`.
 
-`predicate: (_) => false` pops to the branch root (or overlay-only root) and then pushes — go_router `context.go` / deep link / login return / reset tab.
+`predicate: (_) => false` pops to the branch root (or overlay-only root) and then pushes — deep link, login return, or reset tab.
 
 ## `popAndPushNamed`
 

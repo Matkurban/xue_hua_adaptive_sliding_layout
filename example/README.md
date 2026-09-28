@@ -29,6 +29,6 @@ Each page subtitle names the API it demonstrates.
 | Onboarding `/onboarding → /login \| /register` | app starts here; log in / register / enter home, login ↔ register `pushReplacementNamed` keeps `?from=`, `pushNamedAndRemoveUntil` into the shell |
 | Top-level | `/` redirect to `/onboarding`, `/login`, `/register`, `/photo/:id`, unknown path |
 
-On phones every page below a branch root hides the `NavigationBar` (`hidesBottomBarWhenPushed`, the package default); desktop keeps two panes.
+On phones every page below a branch root hides the `NavigationBar` (`hidesBottomBarWhenPushed`, the package default); desktop keeps two panes. The compact bar is `AdaptiveShellChrome`, so a sheet opened with `useRootNavigator: false` covers it.
 
 Tests in `test/` pump the same router at 400 and 1200 width (onboarding / login / register, deep stack, replace, `onExit`, login round-trip, 404, overlay, hidden bottom bar, cross-branch `pushNamed`, branch memory, `setNewRoutePath`, sash drag, home exit confirm). `widget_test.dart` boots the real `DemoApp`.

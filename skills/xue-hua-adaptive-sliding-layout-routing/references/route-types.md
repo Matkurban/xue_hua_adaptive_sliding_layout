@@ -18,7 +18,7 @@ Closed set: `AdaptiveRoute` | `AdaptiveShellRoute`. Top-level `AdaptiveRouter.ro
 
 Source: `lib/src/router/adaptive_route.dart`.
 
-One page. Child `routes` use relative paths. `:param` syntax matches go_router. First match wins.
+One page. Child `routes` use relative paths. `:param` is one path segment. First match wins.
 
 ### Constructor
 
@@ -89,7 +89,7 @@ To change the title later (async subject, locale): `AdaptivePaneScope.maybeOf(co
 final bool fullscreen; // default false
 ```
 
-Root `Navigator` at every width, normal page transition. Same idea as go_router `parentNavigatorKey: rootNavigatorKey`.
+Root `Navigator` at every width, normal page transition.
 
 ### `fullscreenDialog`
 
@@ -116,6 +116,8 @@ final bool hidesBottomBarWhenPushed; // default true
 **Compact only** (width `< compactMaxWidth`, usually a bottom bar): this page and every page above it go on the cover navigator, hiding the host chrome. Same name/meaning as iOS `hidesBottomBarWhenPushed`.
 
 `false` keeps the page inside the branch navigator (bar stays). Medium rail and expanded two-pane layout ignore this. Branch **root** pages and `onRootNavigator` pages ignore this.
+
+This flag does not affect bottom sheets. A tab-root sheet covers the bar when the shell builder uses `AdaptiveShellChrome` and `showModalBottomSheet(..., useRootNavigator: false)`.
 
 ### Overlay / transition fields
 

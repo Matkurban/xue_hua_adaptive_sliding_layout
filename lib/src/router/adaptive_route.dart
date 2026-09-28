@@ -32,7 +32,7 @@ typedef AdaptiveTransitionsBuilder =
       Widget child,
     );
 
-/// 一张页面路由。子 [routes] 的 path 为相对路径，`:param` 语法与 go_router 相同。
+/// 一张页面路由。子 [routes] 的 path 为相对路径，`:param` 表示一个路径段。
 ///
 /// [builder] 与 [redirect] 至少提供一个。顺序优先：列表里先写的先匹配。
 class AdaptiveRoute extends AdaptiveRouteBase {
@@ -74,8 +74,6 @@ class AdaptiveRoute extends AdaptiveRouteBase {
   final AdaptiveTitleBuilder? title;
 
   /// 为 true 时在任何宽度都叠在根 Navigator 上，不进入滑动栏（登录、照片）。
-  ///
-  /// 等价于 go_router 的 `parentNavigatorKey: rootNavigatorKey`。
   final bool fullscreen;
 
   /// Material 全屏对话框（[MaterialPage.fullscreenDialog]：上滑、关闭图标）。
@@ -93,8 +91,7 @@ class AdaptiveRoute extends AdaptiveRouteBase {
   /// 与 iOS `UIViewController.hidesBottomBarWhenPushed` 同名同义。
   /// 设 false 则本页留在 chrome 内的分支 Navigator 里，底栏保留。
   /// medium 的 rail 与 expanded 双栏不受影响；分支根页与 [onRootNavigator]
-  /// 的页忽略本值。相当于只在手机上给本路由加 go_router 的
-  /// `parentNavigatorKey: rootNavigatorKey`。
+  /// 的页忽略本值。
   final bool hidesBottomBarWhenPushed;
 
   /// 有 [transitionsBuilder] 时传给 [PageRouteBuilder.opaque]。默认不透明。

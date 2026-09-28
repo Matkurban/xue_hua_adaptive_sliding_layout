@@ -1,3 +1,17 @@
+## 3.3.0
+
+### Features
+
+- `AdaptiveShellChrome`: on compact, the bottom bar is a child of the branch page route. `bottomNavigationBar` is a `WidgetBuilder` (each page builds its own bar). `showModalBottomSheet` / `showDialog` with `useRootNavigator: false` then covers the bar. `Scaffold.bottomNavigationBar` stays outside that navigator, so a nested sheet cannot cover it. `hidesBottomBarWhenPushed` is unchanged: it only hides the bar when a page is pushed.
+
+### Example
+
+- `AppShell` compact chrome uses `AdaptiveShellChrome`.
+
+### Docs
+
+- READMEs (English and 中文) and package skills show `AdaptiveShellChrome` for the compact bar.
+
 ## 3.2.1
 
 ### Breaking Changes ⚠️
@@ -46,7 +60,7 @@
 ### Fixes
 
 - Page `PopScope` is honored on AppBar back, system back, Escape, and `maybePop` (it used to be overridden by `onExit` / skipped by nested Navigators).
-- System back no longer exits the app after an `onExit` or exit-dialog "Stay". At the bottom of the stack, the route's `onExit` can still block exit (go_router parity).
+- System back no longer exits the app after an `onExit` or exit-dialog "Stay". At the bottom of the stack, the route's `onExit` can still block exit.
 - System back right after entering the shell still reaches a shell `PopScope` (the root Navigator's `canHandlePop: false` no longer wins).
 
 ### Example
@@ -59,16 +73,16 @@
 
 - Replaced the 2.x host-assembled toolkit (`SlidingShell`, `AdaptiveNavigator`, `AdaptiveNavigatorFallback`, `MultiColumnScaffold`, `SlidingWindowController`, title scraping) with a single declarative router: **`AdaptiveRouter`**.
 - Navigation verbs match **`NavigatorState`** names and signatures (`pushNamed`, `pushReplacementNamed`, `pushNamedAndRemoveUntil`, `popAndPushNamed`, `pop`, `maybePop`, `popUntil`, `canPop`). There are no `context.go` / `context.pop` extensions.
-- `routeName` is a location string (`/mail/inbox/42`). `arguments` replaces 2.x / go_router `extra`.
+- `routeName` is a location string (`/mail/inbox/42`). `arguments` replaces 2.x `extra`.
 - One route table is the source of truth: URL → match list → 1-column `Navigator` or 2-column `SlidingPaneViewport`. `openAfter` / `openSecondary` / `from:` / `handlesRoute` / `buildPage` / fallback are gone.
 - `fullscreen: true` routes stack on the root Navigator (login, photo). `AdaptivePaneScope` replaces `inSlidingWindow` + `SlidingPaneScope` + `SlidingPageTitle`.
 - No compatibility layer. Migrate hosts to `MaterialApp.router(routerConfig: router)`.
 
 ### Features
 
-- go_router-style route tree (`AdaptiveRoute` / `AdaptiveShellRoute` / `AdaptiveBranch`) with `:param` paths, `redirect`, `onExit`, `namedLocation`, and `errorBuilder`.
+- Declarative route tree (`AdaptiveRoute` / `AdaptiveShellRoute` / `AdaptiveBranch`) with `:param` paths, `redirect`, `onExit`, `namedLocation`, and `errorBuilder`.
 - Configurable `LayoutBreakpoints` (defaults 600 / 840). Sliding viewport, sash, keep-alive, breadcrumbs, and Escape are kept.
-- UI knobs on the viewport / breadcrumbs / shell / overlay: `paneBuilder`, `resizeHandleBuilder`, `slideDuration`, `breadcrumbsBuilder`, `escapePops`, `fullscreenDialog`, `opaque`, `barrierColor`, `barrierDismissible`. Defaults keep the original look. `fullscreenDialog: true` stacks on the root Navigator (covers the shell / bottom bar), matching go_router's `parentNavigatorKey` idiom.
+- UI knobs on the viewport / breadcrumbs / shell / overlay: `paneBuilder`, `resizeHandleBuilder`, `slideDuration`, `breadcrumbsBuilder`, `escapePops`, `fullscreenDialog`, `opaque`, `barrierColor`, `barrierDismissible`. Defaults keep the original look. `fullscreenDialog: true` stacks on the root Navigator (covers the shell / bottom bar).
 - `AdaptiveRoute.hidesBottomBarWhenPushed` (default `true`): on compact widths a pushed page covers the host bottom bar, like iOS; medium / expanded are unchanged. Set `false` per route to keep the bar.
 - `AdaptiveRouter` implements `RouterConfig<AdaptiveRouteMatchList>`. `AdaptiveRouteMatch.name` exposes the route table name.
 - Example app covers Mail / Contacts / Settings / Playground, plus a DemoFrame width preset for the web demo.

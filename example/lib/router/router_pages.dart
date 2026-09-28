@@ -194,7 +194,6 @@ sealed class RouterPages {
                   AdaptiveRoute(
                     path: 'theme',
                     title: (_) => '主题',
-                    hidesBottomBarWhenPushed: false,
                     builder: (context, state) => const ThemePage(),
                   ),
                   AdaptiveRoute(

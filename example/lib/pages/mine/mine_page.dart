@@ -58,6 +58,22 @@ class MinePage extends StatelessWidget {
                   onPressed: () => router.pushNamed(RouterNames.about),
                   child: const Text('关于'),
                 ),
+                FilledButton.tonal(
+                  onPressed: () {
+                    showModalBottomSheet<void>(
+                      context: context,
+                      useRootNavigator: false,
+                      builder: (context) {
+                        return const SizedBox(
+                          width: double.infinity,
+                          height: 240,
+                          child: Center(child: Text('useRootNavigator: false')),
+                        );
+                      },
+                    );
+                  },
+                  child: const Text('底部弹层'),
+                ),
               ],
             ),
           ),

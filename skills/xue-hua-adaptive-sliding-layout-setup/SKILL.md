@@ -3,14 +3,14 @@ name: xue-hua-adaptive-sliding-layout-setup
 description: >-
   Wire xue_hua_adaptive_sliding_layout into a Flutter app: AdaptiveRouter
   constructor, MaterialApp.router, of/maybeOf, location/matches signals,
-  top-level redirect, errorBuilder, refresh, and 2.x / go_router migration.
-  Use when adding the package, creating the router, or replacing go_router.
+  top-level redirect, errorBuilder, refresh, and 2.x migration.
+  Use when adding the package or creating the router.
 license: Apache-2.0
 ---
 
 # Setup: AdaptiveRouter + MaterialApp.router
 
-Package: `xue_hua_adaptive_sliding_layout` (3.2.x). Import only the barrel:
+Package: `xue_hua_adaptive_sliding_layout` (3.3.x). Import only the barrel:
 
 ```dart
 import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.dart';
@@ -49,18 +49,17 @@ final router = AdaptiveRouter(
   routes: [
     AdaptiveShellRoute(
       builder: (context, shell, child) {
-        return Scaffold(
-          body: child,
-          bottomNavigationBar: shell.isCompact
-              ? NavigationBar(
-                  selectedIndex: shell.currentIndex,
-                  onDestinationSelected: shell.goBranch,
-                  destinations: const [
-                    NavigationDestination(icon: Icon(Icons.mail), label: 'Mail'),
-                    NavigationDestination(icon: Icon(Icons.people), label: 'Contacts'),
-                  ],
-                )
-              : null,
+        if (!shell.isCompact) return Scaffold(body: child);
+        return AdaptiveShellChrome(
+          bottomNavigationBar: (context) => NavigationBar(
+            selectedIndex: shell.currentIndex,
+            onDestinationSelected: shell.goBranch,
+            destinations: const [
+              NavigationDestination(icon: Icon(Icons.mail), label: 'Mail'),
+              NavigationDestination(icon: Icon(Icons.people), label: 'Contacts'),
+            ],
+          ),
+          child: child,
         );
       },
       branches: [

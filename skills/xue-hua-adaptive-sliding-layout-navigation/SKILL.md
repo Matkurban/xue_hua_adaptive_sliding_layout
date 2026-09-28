@@ -5,8 +5,7 @@ description: >-
   pushReplacementNamed, pushNamedAndRemoveUntil, popAndPushNamed, pop,
   maybePop, popFrom, maybePopFrom, popUntil, canPop, namedLocation,
   goBranch, and arguments futures. Use when navigating, switching tabs,
-  closing a sheet or dialog in a specific pane, confirming exit, or
-  replacing go_router context.go / context.push.
+  closing a sheet or dialog in a specific pane, or confirming exit.
 license: Apache-2.0
 ---
 
@@ -21,7 +20,7 @@ API: [references/verbs.md](references/verbs.md), [references/predicate.md](refer
 - Take the router with `AdaptiveRouter.of(context)` or hold the host instance. There are no `context.go` / `context.pushNamed` / `context.pop` extensions.
 - Build a location from a table name with `router.namedLocation('thread', pathParameters: {'folder': 'inbox', 'threadId': '42'}, queryParameters: {'ref': 'push'})`. Unknown name or missing path param throws `ArgumentError`.
 - `pushNamed` returns a `Future` completed by `pop(result)` (or dispose) of that **imperative** leaf. URL-derived matches have no completer; the future completes with `null`.
-- `arguments` is the opaque object on `AdaptiveRouteState.arguments` (not go_router `extra`).
+- `arguments` is the opaque object on `AdaptiveRouteState.arguments`.
 - Imperative `*Named` verbs run `resolve` first (top-level + per-route redirect) when `navigatorKey.currentContext` is available. If resolve ends in an empty error list, the original `routeName` is used.
 - `pop` does **not** call `onExit`. If a dialog, sheet, or menu covers the **top** page (pane, shell, or root navigator — outermost first), `pop` and `maybePop` close that route and leave the page stack. Otherwise `maybePop` asks the top page’s `PopScope` first, then `onExit`. AppBar back, system back, browser back, and Escape use `maybePop`. At the bottom of the stack `maybePop` returns `false` without an exit dialog — that dialog is `popRoute` / a shell `PopScope`.
 - `pop` / `maybePop` are context-free and only look at the top pane. To close a sheet or dialog in a **specific** pane (e.g. the left pane after it pushed the right page, or when both panes have one open), use `popFrom(context)` / `maybePopFrom(context)` with a context inside that popup or inside that page. Inside the popup itself, plain `Navigator.pop(context)` also works.
@@ -112,7 +111,8 @@ router.pop(result);
 ### Close the sheet that opened the right pane
 
 ```dart
-// Inside a sheet shown from the left pane (useRootNavigator: false):
+// Inside a sheet shown from the left pane (useRootNavigator: false).
+// On compact, the same flag covers the bottom bar when the shell is AdaptiveShellChrome.
 onTap: () {
   final router = AdaptiveRouter.of(context);
   router.pushNamed('/contacts/42');   // opens the right pane

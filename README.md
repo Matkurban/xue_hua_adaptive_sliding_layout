@@ -4,7 +4,7 @@
 
 Declarative adaptive routing for Flutter. **One route table** maps a URL to a page stack and a 1- or 2-column sliding layout. Call sites look like `Navigator`: `AdaptiveRouter.of(context).pushNamed(...)`.
 
-It does **not** depend on `go_router`. The host holds the `AdaptiveRouter` instance — no service locator. Extra dependencies: `signals_flutter`, `material_ui`.
+The host holds the `AdaptiveRouter` instance — no service locator. Extra dependencies: `signals_flutter`, `material_ui`.
 
 - [60-second start](#60-second-start)
 - [URL → stack → panes](#url--stack--panes)
@@ -27,18 +27,17 @@ final router = AdaptiveRouter(
   routes: [
     AdaptiveShellRoute(
       builder: (context, shell, child) {
-        return Scaffold(
-          body: child,
-          bottomNavigationBar: shell.isCompact
-              ? NavigationBar(
-                  selectedIndex: shell.currentIndex,
-                  onDestinationSelected: (i) => shell.goBranch(i),
-                  destinations: const [
-                    NavigationDestination(icon: Icon(Icons.mail), label: 'Mail'),
-                    NavigationDestination(icon: Icon(Icons.people), label: 'Contacts'),
-                  ],
-                )
-              : null,
+        if (!shell.isCompact) return Scaffold(body: child);
+        return AdaptiveShellChrome(
+          bottomNavigationBar: (context) => NavigationBar(
+            selectedIndex: shell.currentIndex,
+            onDestinationSelected: (i) => shell.goBranch(i),
+            destinations: const [
+              NavigationDestination(icon: Icon(Icons.mail), label: 'Mail'),
+              NavigationDestination(icon: Icon(Icons.people), label: 'Contacts'),
+            ],
+          ),
+          child: child,
         );
       },
       branches: [
@@ -107,14 +106,15 @@ Browser back, deep links, and refresh all change the location and take the same 
 | Type                                                          | Role                                                                                                                                                                                                                                                                                                      |
 | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`AdaptiveRouter`](lib/src/router/adaptive_router.dart)       | `RouterConfig<AdaptiveRouteMatchList>`. Verbs + `namedLocation` / `refresh`. Signals: `location`, `matches`, `currentBranch`. `of` / `maybeOf`.                                                                                                                                                           |
-| [`AdaptiveRoute`](lib/src/router/route.dart)                  | One page. `path`, optional `name`, `builder`, `title`, `fullscreen`, `fullscreenDialog`, `hidesBottomBarWhenPushed`, `opaque`, `barrierColor`, `barrierDismissible`, `transitionsBuilder`, `redirect`, `onExit`, nested `routes`. Child paths are relative; `:param` matches go_router. First match wins. |
+| [`AdaptiveRoute`](lib/src/router/route.dart)                  | One page. `path`, optional `name`, `builder`, `title`, `fullscreen`, `fullscreenDialog`, `hidesBottomBarWhenPushed`, `opaque`, `barrierColor`, `barrierDismissible`, `transitionsBuilder`, `redirect`, `onExit`, nested `routes`. Child paths are relative; `:param` is one path segment. First match wins. |
 | [`AdaptiveShellRoute`](lib/src/router/route.dart)             | Tabs + adaptive chrome. One per tree, top-level only. `builder(context, shell, child)`, `branches`, `breakpoints`, sash / breadcrumbs, plus [UI knobs](#customizing-the-ui).                                                                                                                              |
+| [`AdaptiveShellChrome`](lib/src/layout/shell_bar.dart)        | Compact bottom bar. `bottomNavigationBar` is a `WidgetBuilder`. The bar is inside the branch page, so a sheet with `useRootNavigator: false` covers it. Do not also set `Scaffold.bottomNavigationBar`.                                                                                                    |
 | [`AdaptiveBranch`](lib/src/router/route.dart)                 | One tab. `routes`, optional `initialLocation` / `placeholder`.                                                                                                                                                                                                                                            |
 | [`AdaptiveRouteState`](lib/src/router/route_state.dart)       | Builder argument, also `AdaptiveRouteState.of(context)`: `uri`, `matchedLocation`, `fullPath`, `name`, `pathParameters`, `queryParameters`, `arguments`, `error`, `pageKey`.                                                                                                                              |
 | [`AdaptiveShellState`](lib/src/router/route_state.dart)       | Shell builder argument: `currentIndex`, width / breakpoints, `leftPaneFraction`, `goBranch`.                                                                                                                                                                                                              |
 | [`LayoutBreakpoints`](lib/src/layout/layout_breakpoints.dart) | `const` class, defaults `compactMaxWidth: 600`, `expandedMinWidth: 840`.                                                                                                                                                                                                                                  |
 
-`builder` + `transitionsBuilder` replace go_router's `pageBuilder` because wide panes need a `Widget`, not a `Page`.
+`builder` + `transitionsBuilder` supply the page, because wide panes need a `Widget`, not a `Page`.
 
 Top-level `redirect` and per-route `redirect` may return a new location (`FutureOr<String?>`). Loops stop after `redirectLimit` (5) and hit `errorBuilder`.
 
@@ -188,14 +188,14 @@ Use **builders** to replace structure, **value parameters** to tweak numbers. De
 | `AdaptiveShellRoute.breadcrumbsBuilder` | `AdaptiveBreadcrumbs` | Replace the whole strip (`showBreadcrumbs` still gates it) |
 | `escapePops`                            | true                  | Escape calls `maybePop`                                    |
 
-On medium / expanded, nested pages keep the host chrome (same as go_router `ShellRoute`). On compact, pages below the branch root hide the bottom bar by default (`hidesBottomBarWhenPushed`; set `false` to keep it). `fullscreen` / `fullscreenDialog` cover the shell at every width.
+On medium / expanded, nested pages keep the host chrome. On compact, pages below the branch root hide the bottom bar by default (`hidesBottomBarWhenPushed`; set `false` to keep it). That flag is only about pushed pages. A bottom sheet on the tab root covers the bar when the shell uses [`AdaptiveShellChrome`](lib/src/layout/shell_bar.dart) (`useRootNavigator: false`). `Scaffold.bottomNavigationBar` sits outside the branch navigator, so the same sheet leaves the bar visible. `fullscreen` / `fullscreenDialog` cover the shell at every width.
 
 ### Overlay routes (`AdaptiveRoute`)
 
 | Parameter                  | Default | Role                                                                                                            |
 | -------------------------- | ------- | --------------------------------------------------------------------------------------------------------------- |
 | `hidesBottomBarWhenPushed` | true    | Compact only: the pushed page covers the host bottom bar (same name as iOS). Two panes on desktop are untouched |
-| `fullscreen`               | false   | Root Navigator at every width, normal transition (= go_router `parentNavigatorKey: rootNavigatorKey`)           |
+| `fullscreen`               | false   | Root Navigator at every width, normal transition                                                                 |
 | `fullscreenDialog`         | false   | Root Navigator at every width as a Material fullscreen dialog (slide up, close icon)                            |
 | `opaque`                   | true    | With `transitionsBuilder`: transparent photo viewer                                                             |
 | `barrierColor`             | null    | With `transitionsBuilder`                                                                                       |
@@ -265,7 +265,7 @@ There is no compatibility shim. See [CHANGELOG](CHANGELOG.md).
 ## Caveats
 
 - Crossing the 840 breakpoint **rebuilds** page `State` (Navigator tree ↔ viewport tree). Keep durable state in the route URL, a signal, or a host store.
-- Pane overlays are **clipped**. Dialogs, menus, and sheets inside a column should use the root overlay: `useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`.
+- Pane overlays are **clipped**. Dialogs, menus, and sheets inside a column should use the root overlay: `useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`. On compact, a tab-root sheet stays on the nearest navigator and covers the bottom bar only when the shell uses `AdaptiveShellChrome`.
 - Context-free `pop` / `maybePop` (including Escape and system back) only handle the top pane and root / shell popups that cover everything. A pane-local sheet / dialog in the **other** pane is not closed by them: use `maybePopFrom(context)` (with a context inside the popup or inside that page), or `Navigator.pop(context)` from inside the popup. Stacked popups close outermost first (root → shell → pane).
 - `onExit` runs for `maybePop`, system back, and browser back, after the top page's `PopScope`. At the bottom of the stack, system back asks the route's `onExit` before the app exits. `pop` / `pushReplacementNamed` / `pushNamedAndRemoveUntil` run immediately, like `Navigator`.
 - Web keeps hash URLs. The platform's initial route wins over `initialLocation` when it is not `/`.

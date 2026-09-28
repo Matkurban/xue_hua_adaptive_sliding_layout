@@ -15,7 +15,7 @@ import 'adaptive_router_scope.dart';
 import 'adaptive_shell_route.dart';
 import 'route_registry.dart';
 
-/// 自适应多栏路由器：路由表借鉴 go_router，调用 API 与 [NavigatorState] 同名。
+/// 自适应多栏路由器。调用 API 与 [NavigatorState] 同名。
 ///
 /// 交给 [MaterialApp.router] 的 `routerConfig`。页面内用 [of] / [maybeOf]
 /// 取实例再 `pushNamed` / `pop`；也可以直接持有本对象，无需依赖注入。
@@ -479,14 +479,21 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   }
 
   /// 根 Navigator / 1 栏 Navigator 使用的 [Page]。
-  Page<dynamic> pageFor(BuildContext context, AdaptiveRouteMatch match) {
+  ///
+  /// [frame] 只包页面子树，不包之后压上的弹层。compact 底栏用它给页面加底部留白。
+  Page<dynamic> pageFor(
+    BuildContext context,
+    AdaptiveRouteMatch match, {
+    Widget Function(Widget child)? frame,
+  }) {
+    final built = buildMatch(context, match);
     return _AdaptivePage<Object?>(
       key: match.pageKey,
       name: match.matchedLocation,
       arguments: match.arguments,
       router: this,
       match: match,
-      child: buildMatch(context, match),
+      child: frame == null ? built : frame(built),
     );
   }
 

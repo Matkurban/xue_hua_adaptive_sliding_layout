@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/breadcrumbs.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/pane_scope.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/layout/shell_bar.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/sliding_pane_viewport.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_router.dart';
 
@@ -186,9 +187,13 @@ class _BranchView extends StatelessWidget {
   Widget build(BuildContext context) {
     if (matches.isEmpty) return const SizedBox.shrink();
     if (visibleCount < 2) {
+      final frame = adaptiveShellBarFrame(context);
       return Navigator(
         key: navigatorKey,
-        pages: [for (final match in matches) router.pageFor(context, match)],
+        pages: [
+          for (final match in matches)
+            router.pageFor(context, match, frame: frame),
+        ],
         onDidRemovePage: router.handleRemovedPage,
       );
     }

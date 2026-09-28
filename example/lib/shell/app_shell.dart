@@ -77,10 +77,11 @@ class AppShell extends StatelessWidget {
     );
   }
 
+  /// 底栏放在分支页面里面，主页上 `useRootNavigator: false` 的
+  /// sheet / dialog 才能盖住它。不要改回 [Scaffold.bottomNavigationBar]。
   Widget _compact() {
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: NavigationBar(
+    return AdaptiveShellChrome(
+      bottomNavigationBar: (context) => NavigationBar(
         selectedIndex: shell.currentIndex,
         onDestinationSelected: _select,
         destinations: [
@@ -88,6 +89,7 @@ class AppShell extends StatelessWidget {
             NavigationDestination(icon: Icon(item.icon), label: item.label),
         ],
       ),
+      child: child,
     );
   }
 
