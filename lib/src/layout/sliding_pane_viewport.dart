@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/pane_scope.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_shell_route.dart';
 
 /// 水平滑动视口：始终展示栈顶最后 [visibleCount] 栏。
 ///
@@ -24,17 +25,19 @@ class SlidingPaneViewport extends StatefulWidget {
     this.slideDuration = defaultSlideDuration,
     this.slideCurve = defaultSlideCurve,
     this.paneBuilder,
+    required this.resizeHandleWidth,
+    this.resizeHandleMargin,
     this.resizeHandleBuilder,
   });
 
   /// 未指定时左栏占一半视口。
-  static const double defaultLeftPaneFraction = 0.5;
+  static const double defaultLeftPaneFraction = 0.4;
 
   /// 左栏默认最小 30%。
-  static const double defaultMinLeftPaneFraction = 0.3;
+  static const double defaultMinLeftPaneFraction = 0.35;
 
   /// 右栏默认最小 30%。
-  static const double defaultMinRightPaneFraction = 0.3;
+  static const double defaultMinRightPaneFraction = 0.35;
 
   /// 栏位平移动画默认时长。
   static const Duration defaultSlideDuration = Duration(milliseconds: 280);
@@ -88,8 +91,14 @@ class SlidingPaneViewport extends StatefulWidget {
   /// 缺省双栏用卡片、单栏平铺。
   final SlidingPaneFrameBuilder? paneBuilder;
 
+  ///分隔条的宽度
+  final double resizeHandleWidth;
+
+  ///分隔条的外边距，实现显示的是：宽度 - 左右外边距的和
+  final EdgeInsets? resizeHandleMargin;
+
   /// 只换分割条视觉；Listener、光标、44px 命中区仍由包负责。
-  final WidgetBuilder? resizeHandleBuilder;
+  final ResizeHandleWidgetBuilder? resizeHandleBuilder;
 
   /// 把 [fraction] 夹到 [minLeftPaneFraction] 与 `1 - minRightPaneFraction` 之间。
   /// 区间倒置时取中点，避免 NaN。
@@ -123,6 +132,7 @@ class _SlidingPaneViewportState extends State<SlidingPaneViewport> {
 
   /// 是否正在拖分割条。为 true 时忽略外部 [leftPaneFraction] 回写。
   bool _dragging = false;
+  // final FlutterSignal<bool> _dragging = signal(false);
 
   /// 当前拖拽的 pointer id；其它指针忽略。
   int? _activePointer;
@@ -240,13 +250,24 @@ class _SlidingPaneViewportState extends State<SlidingPaneViewport> {
             ),
             if (showHandle)
               Positioned(
-                left: leftPaneWidth - _PaneResizeHandle.hitExtent / 2,
+                left: leftPaneWidth - widget.resizeHandleWidth / 2,
                 top: 0,
                 bottom: 0,
-                width: _PaneResizeHandle.hitExtent,
+                width: widget.resizeHandleWidth,
                 child: _PaneResizeHandle(
                   onPointerDown: _onHandlePointerDown,
+                  resizeHandleWidth: widget.resizeHandleWidth,
+                  resizeHandleMargin: widget.resizeHandleMargin,
+                  isDragging: _dragging,
                   builder: widget.resizeHandleBuilder,
+                ),
+              ),
+
+            if (_dragging)
+              const Positioned.fill(
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.resizeColumn,
+                  child: SizedBox.expand(),
                 ),
               ),
           ],
@@ -256,35 +277,58 @@ class _SlidingPaneViewportState extends State<SlidingPaneViewport> {
   }
 }
 
-/// 双栏中间的拖动手柄：视觉 2px，命中宽度 [hitExtent]。
-class _PaneResizeHandle extends StatelessWidget {
-  const _PaneResizeHandle({required this.onPointerDown, this.builder});
-
-  static const double hitExtent = 44;
+/// 双栏中间的拖动手柄：视觉 2px，命中宽度 [resizeHandleWidth]。
+class _PaneResizeHandle extends StatefulWidget {
+  const _PaneResizeHandle({
+    required this.onPointerDown,
+    this.isDragging = false,
+    this.builder,
+    this.resizeHandleMargin,
+    required this.resizeHandleWidth,
+  });
 
   final ValueChanged<PointerDownEvent> onPointerDown;
-  final WidgetBuilder? builder;
+  final bool isDragging;
+  final ResizeHandleWidgetBuilder? builder;
+  final double resizeHandleWidth;
+  final EdgeInsets? resizeHandleMargin;
+
+  @override
+  State<_PaneResizeHandle> createState() => _PaneResizeHandleState();
+}
+
+class _PaneResizeHandleState extends State<_PaneResizeHandle> {
+  bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.outline.withValues(alpha: 0.55);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // 悬停中 或 拖拽中 均保持高亮色
+    final isActive = _isHovered || widget.isDragging;
+    final handleColor = isActive ? colorScheme.primary : colorScheme.surfaceDim;
+
     return MouseRegion(
       cursor: SystemMouseCursors.resizeColumn,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
       child: Listener(
         key: SlidingPaneViewport.resizeHandleKey,
         behavior: HitTestBehavior.translucent,
-        onPointerDown: onPointerDown,
-        child: SizedBox.expand(
-          child:
-              builder?.call(context) ??
-              Center(
-                child: SizedBox(
-                  width: 2,
-                  height: double.infinity,
-                  child: ColoredBox(color: color),
-                ),
+        onPointerDown: widget.onPointerDown,
+        child:
+            widget.builder?.call(context, isActive) ??
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeInOut,
+              height: double.infinity,
+              width: widget.resizeHandleWidth,
+              margin: widget.resizeHandleMargin,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: handleColor,
               ),
-        ),
+            ),
       ),
     );
   }

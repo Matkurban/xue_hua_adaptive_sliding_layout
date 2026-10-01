@@ -229,6 +229,8 @@ class _BranchView extends StatelessWidget {
                 slideDuration: shell.slideDuration,
                 slideCurve: shell.slideCurve,
                 paneBuilder: shell.paneBuilder,
+                resizeHandleWidth: shell.resizeHandleWidth,
+                resizeHandleMargin: shell.resizeHandleMargin,
                 resizeHandleBuilder: shell.resizeHandleBuilder,
               );
             },

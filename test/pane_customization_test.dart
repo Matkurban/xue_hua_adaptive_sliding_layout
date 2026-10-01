@@ -24,6 +24,7 @@ void main() {
             width: 800,
             height: 600,
             child: SlidingPaneViewport(
+              resizeHandleWidth: 16,
               panes: [_pane('Root')],
               visibleCount: 2,
               paneBuilder: (context, index, child) {
@@ -55,9 +56,10 @@ void main() {
             width: 800,
             height: 600,
             child: SlidingPaneViewport(
+              resizeHandleWidth: 16,
               panes: [_pane('Root'), _pane('A')],
               visibleCount: 2,
-              resizeHandleBuilder: (context) => const ColoredBox(
+              resizeHandleBuilder: (context, isHovered) => const ColoredBox(
                 color: Colors.red,
                 child: Text('custom-handle'),
               ),
@@ -89,6 +91,7 @@ void main() {
             width: 800,
             height: 600,
             child: SlidingPaneViewport(
+              resizeHandleWidth: 16,
               panes: panes,
               visibleCount: 2,
               slideDuration: const Duration(seconds: 1),

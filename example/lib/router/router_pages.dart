@@ -57,16 +57,38 @@ sealed class RouterPages {
         initialLeftPaneFraction: 0.4,
         placeholder: (context) => const EmptyPage(),
         slideDuration: const Duration(milliseconds: 280),
+        // resizeHandleWidth: 16,
+        resizeHandleBuilder: (context, isHovered) {
+          final colorScheme = Theme.of(context).colorScheme;
+          final handleColor = isHovered
+              ? colorScheme.primary
+              : colorScheme.surfaceDim;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeInOut,
+            height: double.infinity,
+            margin: .symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: handleColor,
+            ),
+          );
+        },
         breadcrumbsBuilder: (context, panes, onSelect) {
           return AdaptiveBreadcrumbs(
             panes: panes,
             onSelect: onSelect,
             height: 32,
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+            backgroundColor: Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest,
           );
         },
         paneBuilder: (context, index, child) {
-          return KeyedSubtree(key: const Key('pane-flat'), child: child);
+          return Card(
+            margin: .symmetric(horizontal: 8, vertical: 8),
+            child: KeyedSubtree(key: const Key('pane-flat'), child: child),
+          );
         },
         builder: (context, shell, child) =>
             AppShell(shell: shell, child: child),

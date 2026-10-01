@@ -6,8 +6,10 @@ import 'adaptive_route_base.dart';
 import 'adaptive_route_state.dart';
 
 /// 页面工厂。第二参数是当前匹配快照。
-typedef AdaptiveRouteBuilder =
-    Widget Function(BuildContext context, AdaptiveRouteState state);
+typedef AdaptiveRouteBuilder = Widget Function(
+  BuildContext context,
+  AdaptiveRouteState state,
+);
 
 /// 入栏时的面包屑 / 栏标题。匹配时求值一次，没有 [BuildContext]。
 ///
@@ -16,21 +18,24 @@ typedef AdaptiveRouteBuilder =
 typedef AdaptiveTitleBuilder = String Function(AdaptiveRouteState state);
 
 /// 返回非 null 的 location 则改去那里。可同步或异步。
-typedef AdaptiveRedirect =
-    FutureOr<String?> Function(BuildContext context, AdaptiveRouteState state);
+typedef AdaptiveRedirect = FutureOr<String?> Function(
+  BuildContext context,
+  AdaptiveRouteState state,
+);
 
 /// 返回 false 则取消这次离开（[AdaptiveRouter.maybePop] / 系统返回 / 浏览器后退）。
-typedef AdaptiveOnExit =
-    FutureOr<bool> Function(BuildContext context, AdaptiveRouteState state);
+typedef AdaptiveOnExit = FutureOr<bool> Function(
+  BuildContext context,
+  AdaptiveRouteState state,
+);
 
 /// 自定义过场，签名与 [PageRouteBuilder.transitionsBuilder] 相同。
-typedef AdaptiveTransitionsBuilder =
-    Widget Function(
-      BuildContext context,
-      Animation<double> animation,
-      Animation<double> secondaryAnimation,
-      Widget child,
-    );
+typedef AdaptiveTransitionsBuilder = Widget Function(
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondaryAnimation,
+  Widget child,
+);
 
 /// 一张页面路由。子 [routes] 的 path 为相对路径，`:param` 表示一个路径段。
 ///

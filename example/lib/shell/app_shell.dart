@@ -68,51 +68,48 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _confirmExit(context);
       },
-      child: shell.isCompact ? _compact() : _rail(),
-    );
-  }
-
-  /// 底栏放在分支页面里面，主页上 `useRootNavigator: false` 的
-  /// sheet / dialog 才能盖住它。不要改回 [Scaffold.bottomNavigationBar]。
-  Widget _compact() {
-    return AdaptiveShellChrome(
-      bottomNavigationBar: (context) => NavigationBar(
-        selectedIndex: shell.currentIndex,
-        onDestinationSelected: _select,
-        destinations: [
-          for (final item in _destinations)
-            NavigationDestination(icon: Icon(item.icon), label: item.label),
-        ],
-      ),
-      child: child,
-    );
-  }
-
-  Widget _rail() {
-    return Scaffold(
-      body: Row(
-        children: [
-          NavigationRail(
-            selectedIndex: shell.currentIndex,
-            onDestinationSelected: _select,
-            labelType: NavigationRailLabelType.all,
-            destinations: [
-              for (final item in _destinations)
-                NavigationRailDestination(
-                  icon: Icon(item.icon),
-                  label: Text(item.label),
-                ),
-            ],
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(child: child),
-        ],
-      ),
+      child: shell.isCompact
+          ? AdaptiveShellChrome(
+              bottomNavigationBar: (context) => NavigationBar(
+                selectedIndex: shell.currentIndex,
+                onDestinationSelected: _select,
+                destinations: [
+                  for (final item in _destinations)
+                    NavigationDestination(
+                      icon: Icon(item.icon),
+                      label: item.label,
+                    ),
+                ],
+              ),
+              child: child,
+            )
+          : Scaffold(
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              body: Row(
+                children: [
+                  NavigationRail(
+                    selectedIndex: shell.currentIndex,
+                    onDestinationSelected: _select,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                    labelType: NavigationRailLabelType.all,
+                    destinations: [
+                      for (final item in _destinations)
+                        NavigationRailDestination(
+                          icon: Icon(item.icon),
+                          label: Text(item.label),
+                        ),
+                    ],
+                  ),
+                  Expanded(child: child),
+                ],
+              ),
+            ),
     );
   }
 }

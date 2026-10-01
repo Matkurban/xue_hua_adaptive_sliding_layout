@@ -1,3 +1,23 @@
+## 3.4.0
+
+### Breaking Changes ⚠️
+
+- `resizeHandleBuilder` (on `SlidingPaneViewport` and `AdaptiveShellRoute`) is now a `ResizeHandleWidgetBuilder`: `Widget Function(BuildContext context, bool isHovered)`, replacing `WidgetBuilder`. Update custom builders to accept the new `isHovered` flag.
+- `SlidingPaneViewport.resizeHandleWidth` is a new required constructor parameter. Hosts that only use `AdaptiveShellRoute` are unaffected — it still defaults `resizeHandleWidth` to `4`.
+
+### Features
+
+- `SlidingPaneViewport` / `AdaptiveShellRoute` gained `resizeHandleWidth` (hit-test width) and `resizeHandleMargin`, sizing and insetting the drag handle independently of its hit area.
+- The default resize handle is now a rounded, animated bar that highlights with `colorScheme.primary` on hover or while dragging, instead of a static 2px line. A transparent full-viewport overlay keeps the resize cursor while dragging even if the pointer leaves the handle.
+- Default pane split narrowed: `defaultLeftPaneFraction` 0.5 → 0.4, `defaultMinLeftPaneFraction` / `defaultMinRightPaneFraction` 0.3 → 0.35 (same new defaults on `AdaptiveShellRoute`).
+
+### Example
+
+- `AppShell` compact / expanded chrome merged into a single ternary; the expanded rail and body now tint their background with `colorScheme.surfaceContainerHighest`.
+- `router_pages.dart` demonstrates a custom `resizeHandleBuilder` and wraps each pane in a `Card`.
+- `size_preset_screen.dart` gates the size-preset frame with `LayoutBreakpoints` instead of checking `defaultTargetPlatform`.
+- Bumped `cupertino_icons` to `^2.0.0`.
+
 ## 3.3.1
 
 ### Requirements

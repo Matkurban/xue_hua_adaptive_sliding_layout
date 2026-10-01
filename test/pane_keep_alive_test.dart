@@ -117,7 +117,11 @@ class _KeepAliveHarness extends StatelessWidget {
         child: SizedBox(
           width: 800,
           height: 600,
-          child: SlidingPaneViewport(panes: panes, visibleCount: visibleCount),
+          child: SlidingPaneViewport(
+            resizeHandleWidth: 16,
+            panes: panes,
+            visibleCount: visibleCount,
+          ),
         ),
       ),
     );

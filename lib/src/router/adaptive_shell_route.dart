@@ -9,12 +9,16 @@ import 'adaptive_route_base.dart';
 import 'adaptive_shell_state.dart';
 
 /// 壳层工厂。[child] 为当前分支的栏位 / Navigator。
-typedef AdaptiveShellBuilder =
-    Widget Function(
-      BuildContext context,
-      AdaptiveShellState shell,
-      Widget child,
-    );
+typedef AdaptiveShellBuilder = Widget Function(
+  BuildContext context,
+  AdaptiveShellState shell,
+  Widget child,
+);
+
+typedef ResizeHandleWidgetBuilder = Widget Function(
+  BuildContext context,
+  bool isHovered,
+);
 
 /// 多分支壳：宽度决定 1 栏 Navigator 还是 2 栏滑动视口。
 ///
@@ -27,13 +31,15 @@ class AdaptiveShellRoute extends AdaptiveRouteBase {
     this.breakpoints = const LayoutBreakpoints(),
     this.showBreadcrumbs = true,
     this.resizable = true,
-    this.initialLeftPaneFraction = 0.5,
-    this.minLeftPaneFraction = 0.3,
-    this.minRightPaneFraction = 0.3,
+    this.initialLeftPaneFraction = 0.4,
+    this.minLeftPaneFraction = 0.35,
+    this.minRightPaneFraction = 0.35,
     this.onLeftPaneFractionChanged,
     this.breadcrumbsBuilder,
     this.placeholder,
     this.paneBuilder,
+    this.resizeHandleWidth = 4,
+    this.resizeHandleMargin,
     this.resizeHandleBuilder,
     this.slideDuration = SlidingPaneViewport.defaultSlideDuration,
     this.slideCurve = SlidingPaneViewport.defaultSlideCurve,
@@ -79,8 +85,14 @@ class AdaptiveShellRoute extends AdaptiveRouteBase {
   /// 包每一栏；透传到 [SlidingPaneViewport.paneBuilder]。
   final SlidingPaneFrameBuilder? paneBuilder;
 
+  ///分隔条的宽度
+  final double resizeHandleWidth;
+
+  ///分隔条的外边距，实现显示的是：宽度 - 左右外边距的和
+  final EdgeInsets? resizeHandleMargin;
+
   /// 只换分割条视觉；透传到 [SlidingPaneViewport.resizeHandleBuilder]。
-  final WidgetBuilder? resizeHandleBuilder;
+  final ResizeHandleWidgetBuilder? resizeHandleBuilder;
 
   /// 栏位平移动画时长。
   final Duration slideDuration;

@@ -3,25 +3,25 @@ import 'package:signals_flutter/signals_flutter.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/pane_scope.dart';
 
 /// 自定义单个面包屑。最后一项的 [onTap] 为 null。
-typedef AdaptiveBreadcrumbItemBuilder =
-    Widget Function(
-      BuildContext context,
-      SlidingPane pane,
-      bool isLast,
-      VoidCallback? onTap,
-    );
+typedef AdaptiveBreadcrumbItemBuilder = Widget Function(
+  BuildContext context,
+  SlidingPane pane,
+  bool isLast,
+  VoidCallback? onTap,
+);
 
 /// 自定义面包屑分隔符。[index] 为左侧项下标。
-typedef AdaptiveBreadcrumbSeparatorBuilder =
-    Widget Function(BuildContext context, int index);
+typedef AdaptiveBreadcrumbSeparatorBuilder = Widget Function(
+  BuildContext context,
+  int index,
+);
 
 /// 整条面包屑的替换工厂。仍由壳在 [showBreadcrumbs] 为 true 时调用。
-typedef AdaptiveBreadcrumbsBuilder =
-    Widget Function(
-      BuildContext context,
-      List<SlidingPane> panes,
-      ValueChanged<SlidingPane> onSelect,
-    );
+typedef AdaptiveBreadcrumbsBuilder = Widget Function(
+  BuildContext context,
+  List<SlidingPane> panes,
+  ValueChanged<SlidingPane> onSelect,
+);
 
 /// 画出整栈标题；点击非最后一项则回调 [onSelect]，通常接到
 /// `router.popUntil((m) => m.pageKey == pane.key)`。

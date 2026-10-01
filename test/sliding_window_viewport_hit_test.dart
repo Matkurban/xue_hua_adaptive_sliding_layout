@@ -100,7 +100,11 @@ class _ViewportHarness extends StatelessWidget {
         child: SizedBox(
           width: 800,
           height: 600,
-          child: SlidingPaneViewport(panes: panes, visibleCount: 2),
+          child: SlidingPaneViewport(
+            resizeHandleWidth: 16,
+            panes: panes,
+            visibleCount: 2,
+          ),
         ),
       ),
     );

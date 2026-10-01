@@ -2,8 +2,11 @@ import 'package:flutter/widgets.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 /// 包每一栏（含右侧占位槽）。[index] 为栈下标；等于 `panes.length` 时是占位槽。
-typedef SlidingPaneFrameBuilder =
-    Widget Function(BuildContext context, int index, Widget child);
+typedef SlidingPaneFrameBuilder = Widget Function(
+  BuildContext context,
+  int index,
+  Widget child,
+);
 
 /// 双栏视口中的一栏：key 保活、title 驱动面包屑、child 为栏内页面。
 class SlidingPane {
