@@ -1,3 +1,7 @@
+## 3.4.1
+
+- update `material_ui` version to ^1.6.0
+
 ## 3.4.0
 
 ### Breaking Changes ⚠️
