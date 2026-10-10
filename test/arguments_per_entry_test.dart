@@ -152,7 +152,7 @@ void main() {
     final router = await pumpRouter(tester);
     await pushChatAndSelect(tester, router);
     final context = tester.element(find.text('sel'));
-    final parsed = await router.routeInformationParser!
+    final parsed = await router.routeInformationParser
         .parseRouteInformationWithDependencies(
           RouteInformation(uri: Uri.parse('/c/chat/1')),
           context,
