@@ -55,7 +55,35 @@ class DocContent extends StatelessComponent {
         ]),
       ]),
     ]),
+    DocLayoutDiagram() => _diagram(block),
   };
+
+  Component _diagram(DocLayoutDiagram d) {
+    Component bar(String text) => div(classes: 'ld__bar', [.text(text)]);
+    Component rows(int n) => div(classes: 'ld__rows', [for (var i = 0; i < n; i++) const div(classes: 'ld__row', [])]);
+    return figure(classes: 'layout-diagram', [
+      div(classes: 'ld__frames', [
+        div(classes: 'ld__item', [
+          div(classes: 'ld__frame ld__frame--compact', [
+            div(classes: 'ld__pane', [bar(d.listLabel), rows(5)]),
+          ]),
+          span(classes: 'ld__label', [.text(d.compactLabel)]),
+        ]),
+        div(classes: 'ld__item', [
+          div(classes: 'ld__frame ld__frame--expanded', [
+            div(classes: 'ld__crumbs', [.text('${d.listLabel}  ›  ${d.detailLabel}')]),
+            div(classes: 'ld__columns', [
+              div(classes: 'ld__pane ld__pane--left', [bar(d.listLabel), rows(5)]),
+              const div(classes: 'ld__sash', []),
+              div(classes: 'ld__pane ld__pane--right', [bar(d.detailLabel), rows(3)]),
+            ]),
+          ]),
+          span(classes: 'ld__label', [.text(d.expandedLabel)]),
+        ]),
+      ]),
+      figcaption([InlineMarkdown(d.caption)]),
+    ]);
+  }
 
   Component _heading(int level, String anchor, String text) {
     final children = <Component>[

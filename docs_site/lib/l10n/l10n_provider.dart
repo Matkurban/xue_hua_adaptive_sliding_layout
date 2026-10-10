@@ -91,7 +91,7 @@ class _L10nScope extends InheritedComponent {
   bool updateShouldNotify(_L10nScope oldComponent) => oldComponent.locale != locale;
 }
 
-/// `context.l10n.siteName`, `context.docs.page(DocId.quickStart)` …
+/// `context.l10n.siteName`, `context.docs.page(DocId.introduction)` …
 extension L10nContext on BuildContext {
   AppLocalizations get l10n => _L10nScope.of(this).messages;
   DocRepository get docs => _L10nScope.of(this).docs;

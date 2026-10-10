@@ -38,7 +38,7 @@ router.pop();''';
               p(classes: 'hero__subtitle', [.text(l10n.homeHeroSubtitle)]),
               div(classes: 'hero__actions', [
                 AppLink(
-                  to: AppPaths.doc(DocId.quickStart),
+                  to: AppPaths.doc(DocId.introduction),
                   classes: 'btn btn--primary',
                   child: .text(l10n.homeCtaPrimary),
                 ),

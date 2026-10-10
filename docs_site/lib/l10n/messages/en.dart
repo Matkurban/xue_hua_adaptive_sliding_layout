@@ -43,9 +43,10 @@ class EnMessages extends AppLocalizations {
   @override
   String docGroup(DocGroup group) => switch (group) {
     DocGroup.gettingStarted => 'Getting Started',
-    DocGroup.guides => 'Guides',
-    DocGroup.migration => 'Migration',
+    DocGroup.tutorial => 'Tutorial',
     DocGroup.reference => 'Reference',
+    DocGroup.migration => 'Migration',
+    DocGroup.ai => 'AI',
   };
 
   @override
@@ -112,15 +113,6 @@ class EnMessages extends AppLocalizations {
       title: 'Navigator verbs',
       body: 'pushNamed, pop, maybePop, pushReplacementNamed… with the same names and signatures as NavigatorState.',
     ),
-  ];
-
-  @override
-  String get quickStartStepsTitle => 'Up and running in three steps';
-  @override
-  List<({String title, String body})> get quickStartSteps => const [
-    (title: 'Add', body: 'flutter pub add xue_hua_adaptive_sliding_layout'),
-    (title: 'Declare', body: 'Describe pages and tabs in one AdaptiveRouter table.'),
-    (title: 'Navigate', body: 'AdaptiveRouter.of(context).pushNamed(...) from any page.'),
   ];
 
   @override

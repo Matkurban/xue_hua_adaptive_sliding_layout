@@ -1,23 +1,31 @@
-/// Navigation groups shown in the sidebar tree.
-enum DocGroup { gettingStarted, guides, migration, reference }
+/// Navigation groups shown in the sidebar tree, in reading order.
+enum DocGroup { gettingStarted, tutorial, reference, migration, ai }
 
 /// Every documentation page has a typed identifier. URLs, navigation,
 /// prev/next links and content lookups are all derived from this enum,
 /// so there are no hand-written path strings anywhere else.
+///
+/// The declaration order is the reading order: each tutorial page builds on
+/// the previous one, and the pager follows this order.
 enum DocId {
-  quickStart('quick-start', DocGroup.gettingStarted),
+  introduction('introduction', DocGroup.gettingStarted),
   installation('installation', DocGroup.gettingStarted),
-  urlStackPanes('url-stack-panes', DocGroup.gettingStarted),
-  routeTable('route-table', DocGroup.guides),
-  navigationVerbs('navigation-verbs', DocGroup.guides),
-  readingState('reading-state', DocGroup.guides),
-  customizingUi('customizing-ui', DocGroup.guides),
-  layoutWithoutRouter('layout-without-router', DocGroup.guides),
-  exampleScenarios('example-scenarios', DocGroup.guides),
-  migrating2x('migrating-from-2x', DocGroup.migration),
-  migratingGoRouter('migrating-from-go-router', DocGroup.migration),
+  firstApp('first-app', DocGroup.gettingStarted),
+  nestedRoutes('nested-routes', DocGroup.tutorial),
+  navigation('navigation', DocGroup.tutorial),
+  tabs('tabs', DocGroup.tutorial),
+  twoColumns('two-columns', DocGroup.tutorial),
+  titlesBreadcrumbs('titles-and-breadcrumbs', DocGroup.tutorial),
+  redirectsOnExit('redirects-and-on-exit', DocGroup.tutorial),
+  customizingUi('customizing-ui', DocGroup.tutorial),
+  readingState('reading-state', DocGroup.tutorial),
+  layoutWithoutRouter('layout-without-router', DocGroup.tutorial),
+  routeTable('route-table', DocGroup.reference),
+  navigationVerbs('navigation-verbs', DocGroup.reference),
   caveats('caveats', DocGroup.reference),
-  packageSkills('package-skills', DocGroup.reference);
+  exampleApp('example-app', DocGroup.reference),
+  migratingGoRouter('migrating-from-go-router', DocGroup.migration),
+  skills('skills', DocGroup.ai);
 
   const DocId(this.slug, this.group);
 

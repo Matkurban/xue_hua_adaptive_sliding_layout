@@ -13,7 +13,7 @@ import '../routes/app_paths.dart';
 import '../components/common/app_link.dart';
 
 /// Generic documentation page. [intro] is an optional slot rendered
-/// between the title and the body (used by QuickStartPage).
+/// between the title and the body (optional; no page uses it today).
 class DocDetailPage extends StatelessComponent {
   const DocDetailPage({required this.id, this.intro, super.key});
 

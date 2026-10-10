@@ -57,7 +57,7 @@ button { font: inherit; color: inherit; }
 .site-header__inner { height: 100%; display: flex; align-items: center; gap: 16px; }
 .brand { display: flex; align-items: center; gap: 8px; color: var(--fg); font-weight: 700; white-space: nowrap; }
 .brand:hover { text-decoration: none; }
-.brand__logo { font-size: 22px; color: var(--accent); }
+.brand__logo { width: 24px; height: 24px; display: block; }
 .site-header__nav { display: flex; gap: 4px; margin-left: 16px; }
 .site-header__nav a { padding: 6px 10px; border-radius: 6px; color: var(--fg-muted); font-size: 14px; font-weight: 500; }
 .site-header__nav a:hover, .site-header__nav a.is-active { color: var(--fg); background: var(--bg-soft); text-decoration: none; }
@@ -195,4 +195,22 @@ tr:last-child td { border-bottom: 0; }
 /* Footer */
 .site-footer { border-top: 1px solid var(--border); padding: 24px 0; font-size: 13px; color: var(--fg-muted); }
 .site-footer__inner { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+
+/* Layout diagram (introduction page) */
+.layout-diagram { margin: 24px 0; padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft); }
+.ld__frames { display: flex; gap: 28px; align-items: flex-end; justify-content: center; flex-wrap: wrap; }
+.ld__item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ld__label { font-size: 13px; color: var(--fg-muted); font-weight: 600; }
+.ld__frame { border: 2px solid var(--fg-muted); border-radius: 12px; background: var(--bg-elev); padding: 6px; display: flex; flex-direction: column; gap: 6px; }
+.ld__frame--compact { width: 120px; height: 210px; }
+.ld__frame--expanded { width: 340px; height: 210px; }
+.ld__crumbs { font-size: 11px; color: var(--fg-muted); padding: 3px 8px; border-radius: 6px; background: var(--accent-soft); white-space: nowrap; overflow: hidden; }
+.ld__columns { display: flex; gap: 6px; flex: 1; min-height: 0; }
+.ld__pane { flex: 1; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+.ld__pane--left { flex: 0 0 40%; }
+.ld__sash { width: 4px; border-radius: 4px; background: var(--accent); align-self: center; height: 60%; }
+.ld__bar { font-size: 11px; font-weight: 600; padding: 6px 8px; background: var(--accent); color: var(--accent-fg); }
+.ld__rows { display: flex; flex-direction: column; gap: 6px; padding: 8px; }
+.ld__row { height: 10px; border-radius: 4px; background: var(--border); }
+.layout-diagram figcaption { margin-top: 14px; text-align: center; font-size: 14px; color: var(--fg-muted); }
 ''';

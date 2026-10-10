@@ -59,6 +59,24 @@ final class DocTable extends DocBlock {
   final List<List<String>> rows;
 }
 
+/// A schematic of the two layouts: one column on narrow windows, two sliding
+/// columns (with breadcrumbs and a resize handle) on wide ones. Pure HTML/CSS,
+/// so it renders identically on server and client and follows the theme.
+final class DocLayoutDiagram extends DocBlock {
+  const DocLayoutDiagram({
+    required this.compactLabel,
+    required this.expandedLabel,
+    required this.listLabel,
+    required this.detailLabel,
+    required this.caption,
+  });
+  final String compactLabel;
+  final String expandedLabel;
+  final String listLabel;
+  final String detailLabel;
+  final String caption;
+}
+
 class DocPage {
   const DocPage({required this.id, required this.title, required this.description, required this.blocks});
 

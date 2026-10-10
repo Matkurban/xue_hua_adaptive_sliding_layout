@@ -61,8 +61,6 @@ abstract class AppLocalizations {
   List<({String icon, String title, String body})> get homeFeatures;
 
   // Quick start page
-  String get quickStartStepsTitle;
-  List<({String title, String body})> get quickStartSteps;
 
   // Not found
   String get notFoundTitle;

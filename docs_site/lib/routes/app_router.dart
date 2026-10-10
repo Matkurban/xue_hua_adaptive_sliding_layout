@@ -6,7 +6,6 @@ import '../models/doc_id.dart';
 import '../pages/doc_detail_page.dart';
 import '../pages/home_page.dart';
 import '../pages/not_found_page.dart';
-import '../pages/quick_start_page.dart';
 import 'app_paths.dart';
 
 /// Routes are generated from [DocId], so every doc page is automatically
@@ -20,7 +19,7 @@ class AppRouter extends StatelessComponent {
       redirect: (context, state) {
         final location = state.location;
         if (AppPaths.base == '' && location == AppPaths.docsRoot) {
-          return AppPaths.doc(DocId.quickStart);
+          return AppPaths.doc(DocId.introduction);
         }
         return null;
       },
@@ -33,7 +32,7 @@ class AppRouter extends StatelessComponent {
             for (final id in DocId.values)
               Route(
                 path: AppPaths.doc(id),
-                builder: (context, state) => id == DocId.quickStart ? quickStartPage : DocDetailPage(id: id),
+                builder: (context, state) => DocDetailPage(id: id),
               ),
           ],
         ),

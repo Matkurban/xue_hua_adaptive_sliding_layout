@@ -23,7 +23,12 @@ void main() {
       head: [
         // Must run before first paint to avoid a theme flash.
         script(content: themeBootScript),
-        const link(rel: 'icon', href: 'favicon.ico'),
+        // Every icon is rendered from web/favicon.svg — the same mark as the header logo.
+        const link(rel: 'icon', href: 'favicon.ico', attributes: {'sizes': '16x16 32x32 48x48'}),
+        const link(rel: 'icon', href: 'favicon.svg', type: 'image/svg+xml'),
+        const link(rel: 'icon', href: 'favicon-32x32.png', type: 'image/png', attributes: {'sizes': '32x32'}),
+        const link(rel: 'icon', href: 'favicon-16x16.png', type: 'image/png', attributes: {'sizes': '16x16'}),
+        const link(rel: 'apple-touch-icon', href: 'apple-touch-icon.png'),
         Component.element(tag: 'style', children: [RawText(appCss)]),
       ],
       body: const App(),

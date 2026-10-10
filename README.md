@@ -1,6 +1,5 @@
 # xue_hua_adaptive_sliding_layout
 
-- [中文文档](README.zh-CN.md)
 - **[Documentation](https://matkurban.github.io/xue_hua_adaptive_sliding_layout/docs/)**
 - **[Live demo](https://matkurban.github.io/xue_hua_adaptive_sliding_layout/example/)**
 

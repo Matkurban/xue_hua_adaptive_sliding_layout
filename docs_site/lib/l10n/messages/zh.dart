@@ -43,9 +43,10 @@ class ZhMessages extends AppLocalizations {
   @override
   String docGroup(DocGroup group) => switch (group) {
     DocGroup.gettingStarted => '入门',
-    DocGroup.guides => '指南',
-    DocGroup.migration => '迁移',
+    DocGroup.tutorial => '教程',
     DocGroup.reference => '参考',
+    DocGroup.migration => '迁移',
+    DocGroup.ai => 'AI',
   };
 
   @override
@@ -96,15 +97,6 @@ class ZhMessages extends AppLocalizations {
       title: 'Navigator 同名动词',
       body: 'pushNamed、pop、maybePop、pushReplacementNamed……名称与签名都和 NavigatorState 一致。',
     ),
-  ];
-
-  @override
-  String get quickStartStepsTitle => '三步上手';
-  @override
-  List<({String title, String body})> get quickStartSteps => const [
-    (title: '添加依赖', body: 'flutter pub add xue_hua_adaptive_sliding_layout'),
-    (title: '声明路由', body: '在一个 AdaptiveRouter 中描述页面与 Tab。'),
-    (title: '开始导航', body: '在任意页面调用 AdaptiveRouter.of(context).pushNamed(...)。'),
   ];
 
   @override

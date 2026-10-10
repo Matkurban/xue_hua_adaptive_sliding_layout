@@ -43,7 +43,7 @@ class Header extends StatelessComponent {
             to: AppPaths.home,
             classes: 'brand',
             children: [
-              const span(classes: 'brand__logo', attributes: {'aria-hidden': 'true'}, [.text('❄')]),
+              const img(classes: 'brand__logo', src: 'favicon.svg', alt: '', width: 24, height: 24),
               span(classes: 'brand__name', [.text(l10n.siteName)]),
             ],
           ),
@@ -57,7 +57,7 @@ class Header extends StatelessComponent {
                 child: .text(l10n.navHome),
               ),
               AppLink(
-                to: AppPaths.doc(DocId.quickStart),
+                to: AppPaths.doc(DocId.introduction),
                 classes: inDocs ? 'is-active' : null,
                 child: .text(l10n.navDocs),
               ),
