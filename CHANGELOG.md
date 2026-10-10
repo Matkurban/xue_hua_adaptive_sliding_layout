@@ -1,3 +1,12 @@
+## 3.4.3
+
+### Bug Fixes
+
+- Every page entry now keeps its own `arguments` through every rebuild path:
+  - URL-derived matches (system / browser route sync via `setNewRoutePath`, `refresh()` redirects, branch switches without a saved stack, initial stacks of unvisited branches) get back the arguments last carried by the same location while it is still on a stack, instead of `null`.
+  - `RouteRegistry.match` assigns `arguments` only to the target (leaf) match; intermediate pages derived from the URL no longer receive the leaf page's arguments (e.g. a chat page receiving the forward page's arguments on a cross-branch push).
+- `pop` after a layout change no longer looks up ancestors of an unmounted Navigator.
+
 ## 3.4.2
 
 ### Bug Fixes

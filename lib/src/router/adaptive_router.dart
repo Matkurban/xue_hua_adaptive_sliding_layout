@@ -110,6 +110,13 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
 
   final Map<int, String> _branchLocations = <int, String>{};
 
+  /// 栈上每页（按 matchedLocation）最近一次携带的 arguments。
+  ///
+  /// 页面的 arguments 永远跟着它自己的 match 走；但按 URL 重新推导出来的 match（系统 /
+  /// 浏览器 URL、[refresh] 重定向、未保存栈的分支切换、未访问分支的初始栈）没有参数，
+  /// 这里用同一位置上次的参数补回，避免重建时拿到 null。只保留仍在某个栈里的位置。
+  final Map<String, Object> _argumentsByLocation = <String, Object>{};
+
   /// 每页当前所在的 [ModalRoute]，供 [maybePop] / [popRoute] 问 PopScope。
   final Map<LocalKey, ModalRoute<dynamic>> _hostRoutes =
       <LocalKey, ModalRoute<dynamic>>{};
@@ -344,6 +351,8 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     var nav = page.navigator;
     final seen = <NavigatorState>{};
     while (nav != null && seen.add(nav)) {
+      // 布局切换后旧 Navigator 可能已卸载，不能再向上查祖先。
+      if (!nav.mounted) break;
       final parent = ModalRoute.of(nav.context);
       if (parent == null) break;
       if (_coveredByPopup(parent)) found = parent.navigator;
@@ -475,9 +484,11 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     if (shellRoute == null || index >= shellRoute.branches.length) {
       return const <AdaptiveRouteMatch>[];
     }
-    return registry
-        .match(Uri.parse(shellRoute.branches[index].initialLocation))
-        .branchMatches;
+    return _restoreArguments(
+      registry
+          .match(Uri.parse(shellRoute.branches[index].initialLocation))
+          .branchMatches,
+    );
   }
 
   /// 把 match 建成带 [AdaptiveRouteScope] 的页面子树。
@@ -579,7 +590,48 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     _setCurrent(configuration);
   }
 
+  /// 给缺少 arguments 的 match 补回同一位置记住的参数；都不缺时原样返回。
+  List<AdaptiveRouteMatch> _restoreArguments(List<AdaptiveRouteMatch> matches) {
+    if (!matches.any(
+      (m) =>
+          m.arguments == null &&
+          _argumentsByLocation.containsKey(m.matchedLocation),
+    )) {
+      return matches;
+    }
+    return [
+      for (final m in matches)
+        if (m.arguments == null &&
+            _argumentsByLocation.containsKey(m.matchedLocation))
+          m.copyWith(arguments: _argumentsByLocation[m.matchedLocation])
+        else
+          m,
+    ];
+  }
+
+  /// 记住当前所有栈里每页的 arguments，并清掉已不在任何栈里的位置。
+  void _rememberArguments() {
+    final live = <String>{};
+    void visit(Iterable<AdaptiveRouteMatch> matches) {
+      for (final m in matches) {
+        live.add(m.matchedLocation);
+        final args = m.arguments;
+        if (args != null) _argumentsByLocation[m.matchedLocation] = args;
+      }
+    }
+
+    visit(_current.matches);
+    for (final stack in _branchStacks.values) {
+      visit(stack);
+    }
+    _argumentsByLocation.removeWhere((location, _) => !live.contains(location));
+  }
+
   void _setCurrent(AdaptiveRouteMatchList next) {
+    final restored = _restoreArguments(next.matches);
+    if (!identical(restored, next.matches)) {
+      next = next.copyWith(matches: restored);
+    }
     final old = _current;
     if (old.branchIndex != null &&
         old.branchIndex != next.branchIndex &&
@@ -602,6 +654,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
       }
     }
     _current = next;
+    _rememberArguments();
     _ready = true;
     location.value = _loc(next.uri);
     matches.value = next;

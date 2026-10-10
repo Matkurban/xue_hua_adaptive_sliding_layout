@@ -184,16 +184,26 @@ class RouteRegistry {
     final fullPath = joinPaths(parentFullPath, route.path);
     final matchedLocation = _matchedLocation(pathSegments, consumedEnd);
     final query = uri.queryParameters;
+    // arguments 只属于目标页（叶子）；中间页按 URL 推导，不能拿叶子的参数。
+    final isLeaf = consumedEnd == pathSegments.length;
+    final ownArguments = isLeaf ? arguments : null;
     final match = AdaptiveRouteMatch(
       route: route,
       matchedLocation: matchedLocation,
       fullPath: fullPath,
       pathParameters: merged,
       queryParameters: query,
-      arguments: arguments,
+      arguments: ownArguments,
       pageKey: ValueKey<String>(matchedLocation),
       title: signal(
-        _titleFor(route, matchedLocation, fullPath, merged, query, arguments),
+        _titleFor(
+          route,
+          matchedLocation,
+          fullPath,
+          merged,
+          query,
+          ownArguments,
+        ),
       ),
       branchIndex: route.onRootNavigator ? null : branchIndex,
     );
