@@ -1,6 +1,8 @@
 # xue_hua_adaptive_sliding_layout
 
-[中文文档](README.zh-CN.md) · **[Live demo](https://matkurban.github.io/xue_hua_adaptive_sliding_layout/)**
+- [中文文档](README.zh-CN.md)
+- **[Documentation](https://matkurban.github.io/xue_hua_adaptive_sliding_layout/docs/)**
+- **[Live demo](https://matkurban.github.io/xue_hua_adaptive_sliding_layout/example/)**
 
 Declarative adaptive routing for Flutter. **One route table** maps a URL to a page stack and a 1- or 2-column sliding layout. Call sites look like `Navigator`: `AdaptiveRouter.of(context).pushNamed(...)`.
 
@@ -81,7 +83,7 @@ router.pushNamed(
 router.pop();
 ```
 
-Copy the full table from [`example/lib/router.dart`](example/lib/router.dart).
+Copy the full table from [`example/lib/router/router_pages.dart`](example/lib/router/router_pages.dart).
 
 ## URL → stack → panes
 
@@ -106,12 +108,12 @@ Browser back, deep links, and refresh all change the location and take the same 
 | Type                                                          | Role                                                                                                                                                                                                                                                                                                      |
 | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`AdaptiveRouter`](lib/src/router/adaptive_router.dart)       | `RouterConfig<AdaptiveRouteMatchList>`. Verbs + `namedLocation` / `refresh`. Signals: `location`, `matches`, `currentBranch`. `of` / `maybeOf`.                                                                                                                                                           |
-| [`AdaptiveRoute`](lib/src/router/route.dart)                  | One page. `path`, optional `name`, `builder`, `title`, `fullscreen`, `fullscreenDialog`, `hidesBottomBarWhenPushed`, `opaque`, `barrierColor`, `barrierDismissible`, `transitionsBuilder`, `redirect`, `onExit`, nested `routes`. Child paths are relative; `:param` is one path segment. First match wins. |
-| [`AdaptiveShellRoute`](lib/src/router/route.dart)             | Tabs + adaptive chrome. One per tree, top-level only. `builder(context, shell, child)`, `branches`, `breakpoints`, sash / breadcrumbs, plus [UI knobs](#customizing-the-ui).                                                                                                                              |
+| [`AdaptiveRoute`](lib/src/router/adaptive_route.dart)                  | One page. `path`, optional `name`, `builder`, `title`, `fullscreen`, `fullscreenDialog`, `hidesBottomBarWhenPushed`, `opaque`, `barrierColor`, `barrierDismissible`, `transitionsBuilder`, `redirect`, `onExit`, nested `routes`. Child paths are relative; `:param` is one path segment. First match wins. |
+| [`AdaptiveShellRoute`](lib/src/router/adaptive_shell_route.dart)             | Tabs + adaptive chrome. One per tree, top-level only. `builder(context, shell, child)`, `branches`, `breakpoints`, sash / breadcrumbs, plus [UI knobs](#customizing-the-ui).                                                                                                                              |
 | [`AdaptiveShellChrome`](lib/src/layout/shell_bar.dart)        | Compact bottom bar. `bottomNavigationBar` is a `WidgetBuilder`. The bar is inside the branch page, so a sheet with `useRootNavigator: false` covers it. Do not also set `Scaffold.bottomNavigationBar`.                                                                                                    |
-| [`AdaptiveBranch`](lib/src/router/route.dart)                 | One tab. `routes`, optional `initialLocation` / `placeholder`.                                                                                                                                                                                                                                            |
-| [`AdaptiveRouteState`](lib/src/router/route_state.dart)       | Builder argument, also `AdaptiveRouteState.of(context)`: `uri`, `matchedLocation`, `fullPath`, `name`, `pathParameters`, `queryParameters`, `arguments`, `error`, `pageKey`.                                                                                                                              |
-| [`AdaptiveShellState`](lib/src/router/route_state.dart)       | Shell builder argument: `currentIndex`, width / breakpoints, `leftPaneFraction`, `goBranch`.                                                                                                                                                                                                              |
+| [`AdaptiveBranch`](lib/src/router/adaptive_branch.dart)                 | One tab. `routes`, optional `initialLocation` / `placeholder`.                                                                                                                                                                                                                                            |
+| [`AdaptiveRouteState`](lib/src/router/adaptive_route_state.dart)       | Builder argument, also `AdaptiveRouteState.of(context)`: `uri`, `matchedLocation`, `fullPath`, `name`, `pathParameters`, `queryParameters`, `arguments`, `error`, `pageKey`.                                                                                                                              |
+| [`AdaptiveShellState`](lib/src/router/adaptive_shell_state.dart)       | Shell builder argument: `currentIndex`, width / breakpoints, `leftPaneFraction`, `goBranch`.                                                                                                                                                                                                              |
 | [`LayoutBreakpoints`](lib/src/layout/layout_breakpoints.dart) | `const` class, defaults `compactMaxWidth: 600`, `expandedMinWidth: 840`.                                                                                                                                                                                                                                  |
 
 `builder` + `transitionsBuilder` supply the page, because wide panes need a `Widget`, not a `Page`.
@@ -173,7 +175,9 @@ Use **builders** to replace structure, **value parameters** to tweak numbers. De
 | `slideDuration`       | 280ms                   | Column slide                                                           |
 | `slideCurve`          | `Curves.easeOutCubic`   | Column slide                                                           |
 | `paneBuilder`         | 2-col card / 1-col flat | Wrap each column. `index == panes.length` is the empty right slot      |
-| `resizeHandleBuilder` | 2px `outline` line      | Visual only; hit target stays 44px                                     |
+| `resizeHandleBuilder` | rounded animated bar | `Widget Function(BuildContext context, bool isHovered)` (since 3.4.0); highlights with `colorScheme.primary` on hover / drag |
+| `resizeHandleWidth` | 4 on `AdaptiveShellRoute` | Hit-test width; required on `SlidingPaneViewport` (since 3.4.0) |
+| `resizeHandleMargin` | — | Insets the handle independently of its hit area |
 | `placeholder`         | outline icon            | Shell-level empty right pane; `AdaptiveBranch.placeholder` wins if set |
 
 ### Breadcrumbs
@@ -201,7 +205,7 @@ On medium / expanded, nested pages keep the host chrome. On compact, pages below
 | `barrierColor`             | null    | With `transitionsBuilder`                                                                                       |
 | `barrierDismissible`       | false   | Tap the barrier to pop                                                                                          |
 
-See [`example/lib/router.dart`](example/lib/router.dart) for card/flat `paneBuilder`, a 40px breadcrumb strip, and a translucent `/photo/:id` overlay.
+See [`example/lib/router/router_pages.dart`](example/lib/router/router_pages.dart) for a `Card` `paneBuilder`, a 32px breadcrumb strip via `breadcrumbsBuilder`, a custom `resizeHandleBuilder`, and a translucent `/home/:id/preview` overlay.
 
 ## Layout without a router
 
@@ -219,16 +223,17 @@ Breakpoints (window width, not device type):
 
 ## Example scenarios
 
-[`example/`](example/) is the integration template. On the web demo, the top bar pins Phone 412 / Foldable 700 / Tablet 1024 / Desktop so you do not have to resize the window.
+[`example/`](example/) is the integration template. On the web demo, the top bar pins Phone 480 / Foldable 720 / Tablet 1023 / Desktop so you do not have to resize the window.
 
-| Area              | What it shows                                                                                                                                                                            | Files                                                                                                        |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Mail              | 4-deep stack, sash, breadcrumbs `popUntil`, `pushReplacementNamed` folder swap, `pushNamed` vs stack-on-top, async pane title, `arguments` + `?ref=`, reply keep-alive, fullscreen photo | [`features/mail`](example/lib/features/mail/mail_pages.dart)                                                 |
-| Contacts          | `?q=` as URL state, `namedLocation`, `await pushNamed<bool>` + `pop(true)`, `onExit` dialog (`maybePop` vs `pop`), avatar → photo                                                        | [`features/contacts`](example/lib/features/contacts/contact_pages.dart)                                      |
-| Settings          | `redirect` to `/login?from=`, `pushNamedAndRemoveUntil` return, `refresh()` on sign-out, theme / sash, `errorBuilder` 404                                                                | [`features/settings`](example/lib/features/settings/settings_pages.dart)                                     |
-| Playground        | Every Navigator verb, no-context `router.pushNamed`, custom `transitionsBuilder`, `showDialog` / sheet `useRootNavigator` contrast, Escape                                               | [`features/playground`](example/lib/features/playground/playground_page.dart)                                |
-| Onboarding / auth | App starts on `/onboarding` (log in / register / enter home), login ↔ register via `pushReplacementNamed`, `?from=` return, `pushNamedAndRemoveUntil` into the shell                     | [`features/auth`](example/lib/features/auth/auth_pages.dart)                                                 |
-| Shell / frame     | compact `NavigationBar` vs rail, width presets, system-back exit confirm                                                                                                         | [`app_shell.dart`](example/lib/shell/app_shell.dart), [`demo_frame.dart`](example/lib/frame/demo_frame.dart) |
+| Area | What it shows | Files |
+| --- | --- | --- |
+| Auth | Full-screen `/splash`, `/login`, `/register`; top-level `redirect` sends `/mine/account` to `/login?from=` while signed out | [`pages/auth`](example/lib/pages/auth/) |
+| Home | Product list → `/home/:id` with a `title` resolved from the id; translucent fullscreen `/home/:id/preview` (`opaque: false`, `barrierDismissible`, fade `transitionsBuilder`) | [`pages/home`](example/lib/pages/home/) |
+| Shopping cart | A separate branch with its own stack | [`pages/shopping_cart`](example/lib/pages/shopping_cart/) |
+| Contacts | `/contacts/:id` → `edit`; `onExit` confirm dialog with `useRootNavigator: AdaptivePaneScope.maybeOf(context) != null` | [`pages/contacts`](example/lib/pages/contacts/) |
+| Mine | Nested `theme` / `account`; `about` as `fullscreenDialog` | [`pages/mine`](example/lib/pages/mine/) |
+| Shell / frame | Compact `NavigationBar` in `AdaptiveShellChrome` vs `NavigationRail`, re-tap tab → `goBranch(i, initialLocation: true)`, `PopScope` exit confirm, width presets | [`app_shell.dart`](example/lib/shell/app_shell.dart), [`size_preset_screen.dart`](example/lib/pages/size_preset_screen.dart) |
+| Router | Full route table: breadcrumbs, custom `resizeHandleBuilder`, `Card` panes, `errorBuilder` 404 | [`router_pages.dart`](example/lib/router/router_pages.dart) |
 
 ```bash
 cd example && flutter run -d chrome

@@ -1,4 +1,4 @@
-name: Deploy web demo
+name: Deploy web demo & docs
 
 on:
   push:
@@ -32,12 +32,44 @@ jobs:
         run: |
           flutter pub get
           flutter analyze
-      - name: Build web
+      - name: Build web demo
         working-directory: example
-        run: flutter build web --release --base-href /xue_hua_adaptive_sliding_layout/
+        run: flutter build web --release --base-href /xue_hua_adaptive_sliding_layout/example/
+      # Jaspr documentation site -> /xue_hua_adaptive_sliding_layout/docs/
+      - name: Docs analyze
+        working-directory: docs_site
+        run: |
+          dart pub get
+          dart analyze
+      - name: Build docs
+        working-directory: docs_site
+        run: |
+          dart pub global activate jaspr_cli 0.23.5
+          dart pub global run jaspr_cli:jaspr build --dart-define=SITE_BASE=/xue_hua_adaptive_sliding_layout/docs
+      # Pages layout: /example/ (Flutter), /docs/ (Jaspr), / -> redirect to /docs/
+      - name: Assemble Pages artifact
+        run: |
+          rm -rf _site docs_site/build/jaspr/packages docs_site/build/jaspr/.dart_tool docs_site/build/jaspr/.build.manifest
+          mkdir -p _site/example _site/docs
+          cp -R example/build/web/. _site/example/
+          cp -R docs_site/build/jaspr/. _site/docs/
+          cat > _site/index.html <<'HTML'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <title>xue_hua_adaptive_sliding_layout</title>
+            <meta http-equiv="refresh" content="0; url=docs/">
+            <link rel="canonical" href="https://matkurban.github.io/xue_hua_adaptive_sliding_layout/docs/">
+            <!-- Old demo deep links (/#/route) go to the demo, everything else to the docs. -->
+            <script>location.replace((location.hash ? 'example/' : 'docs/') + location.hash);</script>
+          </head>
+          <body><a href="docs/">Documentation</a> · <a href="example/">Live demo</a></body>
+          </html>
+          HTML
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: example/build/web
+          path: _site
 
   deploy:
     needs: build

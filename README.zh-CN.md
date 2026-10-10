@@ -1,6 +1,8 @@
 # xue_hua_adaptive_sliding_layout
 
-[English](README.md) · **[在线 Demo](https://matkurban.github.io/xue_hua_adaptive_sliding_layout/)**
+- [English](README.md)
+- **[使用文档](https://matkurban.github.io/xue_hua_adaptive_sliding_layout/docs/)**
+- **[在线 Demo](https://matkurban.github.io/xue_hua_adaptive_sliding_layout/example/)**
 
 面向 Flutter 的声明式自适应路由。**一张路由表**把 URL 映射成页面栈，再按窗口宽度摆成 1 栏 `Navigator` 或 2 栏滑动视口。调用方式与 `Navigator` 相同：`AdaptiveRouter.of(context).pushNamed(...)`。
 
@@ -81,7 +83,7 @@ router.pushNamed(
 router.pop();
 ```
 
-完整路由表可直接照抄 [`example/lib/router.dart`](example/lib/router.dart)。
+完整路由表可直接照抄 [`example/lib/router/router_pages.dart`](example/lib/router/router_pages.dart)。
 
 ## URL → 栈 → 栏位
 
@@ -106,12 +108,12 @@ flowchart LR
 | 类型                                                          | 职责                                                                                                                                                                                                                                                                               |
 | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`AdaptiveRouter`](lib/src/router/adaptive_router.dart)       | `RouterConfig<AdaptiveRouteMatchList>`。动词 + `namedLocation` / `refresh`。只读 signal：`location`、`matches`、`currentBranch`。`of` / `maybeOf`。                                                                                                                                |
-| [`AdaptiveRoute`](lib/src/router/route.dart)                  | 一页。`path`、可选 `name`、`builder`、`title`、`fullscreen`、`fullscreenDialog`、`hidesBottomBarWhenPushed`、`opaque`、`barrierColor`、`barrierDismissible`、`transitionsBuilder`、`redirect`、`onExit`、子 `routes`。子路径为相对路径，`:param` 表示一个路径段。顺序优先匹配。 |
-| [`AdaptiveShellRoute`](lib/src/router/route.dart)             | Tab + 自适应壳。整棵树只允许一个，且必须顶层。`builder(context, shell, child)`、`branches`、`breakpoints`、分割条 / 面包屑，以及 [UI 属性](#自定义-ui)。                                                                                                                           |
+| [`AdaptiveRoute`](lib/src/router/adaptive_route.dart)                  | 一页。`path`、可选 `name`、`builder`、`title`、`fullscreen`、`fullscreenDialog`、`hidesBottomBarWhenPushed`、`opaque`、`barrierColor`、`barrierDismissible`、`transitionsBuilder`、`redirect`、`onExit`、子 `routes`。子路径为相对路径，`:param` 表示一个路径段。顺序优先匹配。 |
+| [`AdaptiveShellRoute`](lib/src/router/adaptive_shell_route.dart)             | Tab + 自适应壳。整棵树只允许一个，且必须顶层。`builder(context, shell, child)`、`branches`、`breakpoints`、分割条 / 面包屑，以及 [UI 属性](#自定义-ui)。                                                                                                                           |
 | [`AdaptiveShellChrome`](lib/src/layout/shell_bar.dart)        | compact 底栏。`bottomNavigationBar` 是 `WidgetBuilder`。底栏在分支页面内部，`useRootNavigator: false` 的 sheet 能盖住它。不要再同时设置 `Scaffold.bottomNavigationBar`。                                                                                                                    |
-| [`AdaptiveBranch`](lib/src/router/route.dart)                 | 一个 Tab。`routes`，可选 `initialLocation` / `placeholder`。                                                                                                                                                                                                                       |
-| [`AdaptiveRouteState`](lib/src/router/route_state.dart)       | builder 参数，也可 `AdaptiveRouteState.of(context)`：`uri`、`matchedLocation`、`fullPath`、`name`、`pathParameters`、`queryParameters`、`arguments`、`error`、`pageKey`。                                                                                                          |
-| [`AdaptiveShellState`](lib/src/router/route_state.dart)       | 壳 builder 参数：`currentIndex`、宽度 / 断点、`leftPaneFraction`、`goBranch`。                                                                                                                                                                                                     |
+| [`AdaptiveBranch`](lib/src/router/adaptive_branch.dart)                 | 一个 Tab。`routes`，可选 `initialLocation` / `placeholder`。                                                                                                                                                                                                                       |
+| [`AdaptiveRouteState`](lib/src/router/adaptive_route_state.dart)       | builder 参数，也可 `AdaptiveRouteState.of(context)`：`uri`、`matchedLocation`、`fullPath`、`name`、`pathParameters`、`queryParameters`、`arguments`、`error`、`pageKey`。                                                                                                          |
+| [`AdaptiveShellState`](lib/src/router/adaptive_shell_state.dart)       | 壳 builder 参数：`currentIndex`、宽度 / 断点、`leftPaneFraction`、`goBranch`。                                                                                                                                                                                                     |
 | [`LayoutBreakpoints`](lib/src/layout/layout_breakpoints.dart) | `const` 类，默认 `compactMaxWidth: 600`、`expandedMinWidth: 840`。                                                                                                                                                                                                                 |
 
 用 `builder + transitionsBuilder` 提供页面，因为宽屏栏位需要的是 Widget，不是 Page。
@@ -173,7 +175,9 @@ UI 订阅用 `SignalBuilder`（见 `signals_flutter`）。
 | `slideDuration`       | 280ms                 | 栏位平移                                        |
 | `slideCurve`          | `Curves.easeOutCubic` | 栏位平移                                        |
 | `paneBuilder`         | 双栏卡片 / 单栏平铺   | 包每一栏。`index == panes.length` 是右侧空槽    |
-| `resizeHandleBuilder` | 2px `outline` 线      | 只换视觉；命中区仍是 44px                       |
+| `resizeHandleBuilder` | 圆角动画条 | `Widget Function(BuildContext context, bool isHovered)`（3.4.0 起）；悬停 / 拖动时以 `colorScheme.primary` 高亮 |
+| `resizeHandleWidth` | `AdaptiveShellRoute` 上为 4 | 点击区域宽度；`SlidingPaneViewport` 上必填（3.4.0 起） |
+| `resizeHandleMargin` | — | 独立于点击区域设置分割条的边距 |
 | `placeholder`         | outline 图标          | 壳级右栏空态；`AdaptiveBranch.placeholder` 优先 |
 
 ### 面包屑
@@ -201,7 +205,7 @@ medium / expanded 下嵌套页保留宿主 chrome；compact 下分支根以下�
 | `barrierColor`             | null  | 配合 `transitionsBuilder`                                                                |
 | `barrierDismissible`       | false | 点屏障弹出                                                                               |
 
-完整例子见 [`example/lib/router.dart`](example/lib/router.dart)：卡片 / 平铺 `paneBuilder`、40px 面包屑、半透明 `/photo/:id`。
+完整例子见 [`example/lib/router/router_pages.dart`](example/lib/router/router_pages.dart)：`Card` 式 `paneBuilder`、通过 `breadcrumbsBuilder` 定制的 32px 面包屑、自定义 `resizeHandleBuilder`，以及半透明的 `/home/:id/preview` 覆盖层。
 
 ## 不用路由只要布局
 
@@ -219,16 +223,17 @@ medium / expanded 下嵌套页保留宿主 chrome；compact 下分支根以下�
 
 ## 示例场景
 
-[`example/`](example/) 是接入模板。网页 Demo 顶部有 Phone 412 / Foldable 700 / Tablet 1024 / Desktop 宽度预设，不用缩放窗口。
+[`example/`](example/) 是接入模板。网页 Demo 顶部有 Phone 480 / Foldable 720 / Tablet 1023 / Desktop 宽度预设，不用缩放窗口。
 
-| 区域        | 演示内容                                                                                                                                                       | 文件                                                                                                         |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Mail        | 4 层深栈、分割条、面包屑 `popUntil`、换文件夹 `pushReplacementNamed`、`pushNamed` 滑入 vs 压栈顶、异步栏标题、`arguments` + `?ref=`、回复 keep-alive、全屏照片 | [`features/mail`](example/lib/features/mail/mail_pages.dart)                                                 |
-| Contacts    | `?q=` 即 URL 状态、`namedLocation`、`await pushNamed<bool>` + `pop(true)`、`onExit`（`maybePop` vs `pop`）、头像 → 照片                                        | [`features/contacts`](example/lib/features/contacts/contact_pages.dart)                                      |
-| Settings    | `redirect` 到 `/login?from=`、登录后 `pushNamedAndRemoveUntil` 回跳、登出 `refresh()`、主题 / 分割比例、`errorBuilder` 404                                     | [`features/settings`](example/lib/features/settings/settings_pages.dart)                                     |
-| Playground  | 每个 Navigator 动词、无 context 的 `router.pushNamed`、自定义过场、对话框 / 底部弹层 `useRootNavigator` 对比、Escape                                           | [`features/playground`](example/lib/features/playground/playground_page.dart)                                |
-| 引导 / 登录 | 启动落在 `/onboarding`（登录 / 注册 / 直接进入主页）、登录 ↔ 注册 `pushReplacementNamed` 互换、`?from=` 回跳、`pushNamedAndRemoveUntil` 进壳                   | [`features/auth`](example/lib/features/auth/auth_pages.dart)                                                 |
-| 壳 / 外框   | compact `NavigationBar` vs rail、宽度预设、系统返回退出确认                                                                                                    | [`app_shell.dart`](example/lib/shell/app_shell.dart)、[`demo_frame.dart`](example/lib/frame/demo_frame.dart) |
+| 模块 | 演示内容 | 文件 |
+| --- | --- | --- |
+| 认证 | 全屏的 `/splash`、`/login`、`/register`；未登录访问 `/mine/account` 时，顶层 `redirect` 跳到 `/login?from=` | [`pages/auth`](example/lib/pages/auth/) |
+| 首页 | 商品列表 → `/home/:id`（`title` 由 id 解析）；半透明全屏 `/home/:id/preview`（`opaque: false`、`barrierDismissible`、淡入 `transitionsBuilder`） | [`pages/home`](example/lib/pages/home/) |
+| 购物车 | 拥有独立栈的单独分支 | [`pages/shopping_cart`](example/lib/pages/shopping_cart/) |
+| 联系人 | `/contacts/:id` → `edit`；`onExit` 确认框，`useRootNavigator: AdaptivePaneScope.maybeOf(context) != null` | [`pages/contacts`](example/lib/pages/contacts/) |
+| 我的 | 嵌套 `theme` / `account`；`about` 以 `fullscreenDialog` 打开 | [`pages/mine`](example/lib/pages/mine/) |
+| 壳 / 外框 | compact 下 `AdaptiveShellChrome` 里的 `NavigationBar` 与宽屏 `NavigationRail`、再点当前 Tab → `goBranch(i, initialLocation: true)`、`PopScope` 退出确认、宽度预设 | [`app_shell.dart`](example/lib/shell/app_shell.dart)、[`size_preset_screen.dart`](example/lib/pages/size_preset_screen.dart) |
+| 路由 | 完整路由表：面包屑、自定义 `resizeHandleBuilder`、`Card` 栏位、`errorBuilder` 404 | [`router_pages.dart`](example/lib/router/router_pages.dart) |
 
 ```bash
 cd example && flutter run -d chrome

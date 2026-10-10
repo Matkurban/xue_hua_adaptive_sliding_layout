@@ -1,0 +1,21 @@
+include: package:lints/recommended.yaml
+
+formatter:
+  page_width: 120
+
+analyzer:
+  exclude:
+    - lib/**.options.dart
+
+plugins:
+  jaspr_lints:
+    version: ^0.7.2
+    diagnostics:
+      sort_children_last: true
+      prefer_html_components: true
+
+linter:
+  rules:
+    - prefer_const_constructors
+    - prefer_final_locals
+    - always_declare_return_types

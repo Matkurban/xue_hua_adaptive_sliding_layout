@@ -2,7 +2,7 @@
 
 Host demo for [`xue_hua_adaptive_sliding_layout`](../README.md) 3.1 ([中文](../README.zh-CN.md)).
 
-**[Live web demo](https://matkurban.github.io/xue_hua_adaptive_sliding_layout/)** — the top bar pins Phone / Foldable / Tablet / Desktop widths so a desktop visitor can see every breakpoint without resizing the window.
+**[Live web demo](https://matkurban.github.io/xue_hua_adaptive_sliding_layout/example/)** — the top bar pins Phone / Foldable / Tablet / Desktop widths so a desktop visitor can see every breakpoint without resizing the window.
 
 This app **is** the integration template: copy [`lib/router.dart`](lib/router.dart).
 
