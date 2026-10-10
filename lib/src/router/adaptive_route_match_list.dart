@@ -76,6 +76,7 @@ class AdaptiveRouteMatchList {
     AdaptiveShellRoute? shell,
     int? branchIndex,
     Object? arguments,
+    bool clearArguments = false,
     Exception? error,
     bool clearError = false,
   }) {
@@ -84,7 +85,7 @@ class AdaptiveRouteMatchList {
       uri: uri ?? this.uri,
       shell: shell ?? this.shell,
       branchIndex: branchIndex ?? this.branchIndex,
-      arguments: arguments ?? this.arguments,
+      arguments: clearArguments ? null : (arguments ?? this.arguments),
       error: clearError ? null : (error ?? this.error),
     );
   }

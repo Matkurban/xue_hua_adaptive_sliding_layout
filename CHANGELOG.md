@@ -1,3 +1,10 @@
+## 3.4.2
+
+### Bug Fixes
+
+- `AdaptiveRouter.refresh()` no longer rebuilds the whole stack from the URL when redirect keeps the current location. Previously every page re-matched with the list-level `arguments`, so intermediate pages (e.g. a chat page under a pushed sub-page) were rebuilt with another page's arguments or `null`. The existing matches (arguments, page keys) are now kept; the stack is only replaced when redirect actually moves elsewhere.
+- `pop` now updates the list-level `arguments` to the new top page instead of keeping the popped page's arguments.
+
 ## 3.4.1
 
 - update `material_ui` version to ^1.6.0

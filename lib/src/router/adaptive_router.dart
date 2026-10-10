@@ -376,10 +376,23 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   bool canPop() => _current.canPop;
 
   /// 重新对当前 URI 跑 redirect（登录态变化后调用）。
+  ///
+  /// redirect 结果仍是当前位置时保留现有栈（同一批 match，各页 arguments 与 pageKey 不变），
+  /// 只有真正被重定向到别处才换栈。否则按 URL 重新匹配会把列表级 arguments 塞给栈里每一页，
+  /// 中间页（例如聊天页）重建时拿到别的页面的参数或 null。
   void refresh() {
     final context = navigatorKey.currentContext;
     if (context == null) return;
-    resolve(context, _current.uri, arguments: _current.arguments).then((next) {
+    final before = _current;
+    resolve(context, before.uri, arguments: before.arguments).then((next) {
+      final unchanged = next.error == null && _sameUri(next.uri, before.uri);
+      if (unchanged || !identical(_current, before)) {
+        // 位置没变，或等待 redirect 期间栈已被其它导航改动：丢弃这次匹配结果。
+        for (final match in next.matches) {
+          match.dispose();
+        }
+        return;
+      }
       _setCurrent(next);
     });
   }

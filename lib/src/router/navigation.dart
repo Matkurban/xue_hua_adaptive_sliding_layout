@@ -206,9 +206,14 @@ class NavigationEngine {
       final uri = restOverlays.isNotEmpty
           ? restOverlays.last.uri
           : (branch.isNotEmpty ? branch.last.uri : Uri.parse('/'));
+      final top = restOverlays.isNotEmpty
+          ? restOverlays.last
+          : (branch.isNotEmpty ? branch.last : null);
       return current.copyWith(
         matches: [...branch, ...restOverlays],
         uri: uri,
+        arguments: top?.arguments,
+        clearArguments: top?.arguments == null,
         clearError: true,
       );
     }
@@ -216,9 +221,12 @@ class NavigationEngine {
     final removed = branch.last;
     removed.dispose(result);
     final rest = branch.sublist(0, branch.length - 1);
+    // 列表级 arguments 跟随新栈顶，避免残留被弹出页的参数（refresh 会用它重新匹配）。
     return current.copyWith(
       matches: rest,
       uri: rest.last.uri,
+      arguments: rest.last.arguments,
+      clearArguments: rest.last.arguments == null,
       clearError: true,
     );
   }
