@@ -1,3 +1,14 @@
+## 3.4.4
+
+### Documentation
+
+- New documentation site: https://matkurban.github.io/xue_hua_adaptive_sliding_layout/docs/ (English / 中文) — a step-by-step tutorial from a first app to tabs, two columns, breadcrumbs, redirects and `onExit`, with complete runnable code for every step, plus API reference, caveats, a go_router migration guide and an example-app walkthrough.
+- The live demo moved to https://matkurban.github.io/xue_hua_adaptive_sliding_layout/example/.
+- `pubspec.yaml`: added `documentation` and `issue_tracker` links; `homepage` now points to the docs.
+- README: fixed outdated links and the example scenarios table; the resize handle section matches the 3.4.0 API.
+
+No code changes.
+
 ## 3.4.3
 
 ### Bug Fixes
