@@ -1,3 +1,9 @@
+## 3.4.5
+
+### Bug Fixes
+
+- Resizing a window across the compact breakpoint (600) no longer drops the current page. With a shell whose chrome changes shape at that width (bottom bar below 600, navigation rail from 600), shrinking the window while a detail page was open (for example `/products/1`) popped it and left the user on `/products`, because the page moves from the branch `Navigator` to the cover `Navigator` and the old one reported it as removed. The router now ignores those removals for the frame in which the breakpoint is crossed, so the URL and page stack stay unchanged in both directions. Added `test/resize_across_compact_test.dart`.
+
 ## 3.4.4
 
 ### Documentation

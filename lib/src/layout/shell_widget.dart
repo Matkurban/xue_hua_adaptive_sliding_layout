@@ -29,6 +29,9 @@ class AdaptiveShellHost extends StatefulWidget {
 class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
   late List<GlobalKey<NavigatorState>> _navKeys;
 
+  /// 上一次 build 时是否 compact；用来发现跨 compact 断点的那一帧。
+  bool? _wasCompact;
+
   AdaptiveRouter get _router => widget.router;
 
   AdaptiveShellRoute get _shell => _router.shell!;
@@ -85,6 +88,12 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
                 : MediaQuery.sizeOf(context).width;
             final columns = _shell.breakpoints.visibleColumnCount(width);
             final compact = _shell.breakpoints.isCompact(width);
+            if (_wasCompact != null && _wasCompact != compact) {
+              // 跨 compact 断点：页面会在分支 Navigator 与 cover Navigator 之间
+              // 搬家，旧 Navigator 会把它们当作“被移除”并回调出栈，这一帧要忽略。
+              _router.beginPageRelocation();
+            }
+            _wasCompact = compact;
             final shellState = AdaptiveShellState(
               currentIndex: _router.currentBranch.value,
               branchCount: _shell.branches.length,

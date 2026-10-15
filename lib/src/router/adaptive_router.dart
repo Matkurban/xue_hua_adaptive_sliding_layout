@@ -526,9 +526,21 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     handleRemovedPageKey(page.key, null);
   }
 
+  bool _relocatingPages = false;
+
+  /// 壳在跨 compact 断点的这一帧里把页面从一个 Navigator 搬到另一个。
+  ///
+  /// 被搬走的页面会被旧 Navigator 当作“移除”并回调 [handleRemovedPageKey]，
+  /// 但这不是用户出栈；帧结束前忽略这些回调，页面栈（URL）保持不变。
+  void beginPageRelocation() {
+    if (_relocatingPages) return;
+    _relocatingPages = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _relocatingPages = false);
+  }
+
   /// 若 [key] 仍在当前栈顶则 pop，避免与 [pop] 双重出栈。
   void handleRemovedPageKey(LocalKey? key, Object? result) {
-    if (key == null) return;
+    if (key == null || _relocatingPages) return;
     final last = _current.last;
     if (last == null || last.pageKey != key) return;
     _setCurrent(_engine.pop(_current, result));
