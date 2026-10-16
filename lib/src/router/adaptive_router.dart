@@ -502,6 +502,21 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     );
   }
 
+  final Map<LocalKey, GlobalKey> _contentKeys = <LocalKey, GlobalKey>{};
+
+  /// 每个页面一个稳定的 [GlobalKey]：跨 840 断点时页面子树在 Navigator 与
+  /// [SlidingPaneViewport] 之间搬家，State 随 key 一起被接管而不是重建。
+  Widget keepAlive(AdaptiveRouteMatch match, Widget child) {
+    _contentKeys.removeWhere(
+      (key, _) => !_current.matches.any((m) => m.pageKey == key),
+    );
+    final key = _contentKeys.putIfAbsent(
+      match.pageKey,
+      () => GlobalKey(debugLabel: 'adaptive-page-${match.pageKey}'),
+    );
+    return KeyedSubtree(key: key, child: child);
+  }
+
   /// 根 Navigator / 1 栏 Navigator 使用的 [Page]。
   ///
   /// [frame] 只包页面子树，不包之后压上的弹层。compact 底栏用它给页面加底部留白。
@@ -509,8 +524,10 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     BuildContext context,
     AdaptiveRouteMatch match, {
     Widget Function(Widget child)? frame,
+    bool keepState = false,
   }) {
-    final built = buildMatch(context, match);
+    final raw = buildMatch(context, match);
+    final built = keepState ? keepAlive(match, raw) : raw;
     return _AdaptivePage<Object?>(
       key: match.pageKey,
       name: match.matchedLocation,
@@ -528,6 +545,12 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
 
   bool _relocatingPages = false;
 
+  /// 壳内 Navigator 的转场代理：跨断点搬家那一帧，旧页面立即移除（不播退出
+  /// 动画）、新页面直接加入，这样同一个 GlobalKey 的子树在同一帧里从旧
+  /// Navigator 交接给新 Navigator，不会两边同时挂载。
+  late final TransitionDelegate<dynamic> relocationDelegate =
+      _RelocationTransitionDelegate(() => _relocatingPages);
+
   /// 壳在跨 compact 断点的这一帧里把页面从一个 Navigator 搬到另一个。
   ///
   /// 被搬走的页面会被旧 Navigator 当作“移除”并回调 [handleRemovedPageKey]，
@@ -535,7 +558,9 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   void beginPageRelocation() {
     if (_relocatingPages) return;
     _relocatingPages = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _relocatingPages = false);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _relocatingPages = false,
+    );
   }
 
   /// 若 [key] 仍在当前栈顶则 pop，避免与 [pop] 双重出栈。
@@ -1085,4 +1110,50 @@ class _PageHostState extends State<_PageHost> {
 
   @override
   Widget build(BuildContext context) => widget.child;
+}
+
+class _RelocationTransitionDelegate extends DefaultTransitionDelegate<dynamic> {
+  _RelocationTransitionDelegate(this._relocating);
+
+  final bool Function() _relocating;
+
+  @override
+  Iterable<RouteTransitionRecord> resolve({
+    required List<RouteTransitionRecord> newPageRouteHistory,
+    required Map<RouteTransitionRecord?, RouteTransitionRecord>
+    locationToExitingPageRoute,
+    required Map<RouteTransitionRecord?, List<RouteTransitionRecord>>
+    pageRouteToPagelessRoutes,
+  }) {
+    if (!_relocating()) {
+      return super.resolve(
+        newPageRouteHistory: newPageRouteHistory,
+        locationToExitingPageRoute: locationToExitingPageRoute,
+        pageRouteToPagelessRoutes: pageRouteToPagelessRoutes,
+      );
+    }
+    final results = <RouteTransitionRecord>[];
+    void exiting(RouteTransitionRecord? location) {
+      final route = locationToExitingPageRoute[location];
+      if (route == null) return;
+      if (route.isWaitingForExitingDecision) {
+        route.markForComplete(route.route.currentResult);
+        for (final pageless in pageRouteToPagelessRoutes[route] ?? const []) {
+          if (pageless.isWaitingForExitingDecision) {
+            pageless.markForComplete(pageless.route.currentResult);
+          }
+        }
+      }
+      results.add(route);
+      exiting(route);
+    }
+
+    exiting(null);
+    for (final route in newPageRouteHistory) {
+      if (route.isWaitingForEnteringDecision) route.markForAdd();
+      results.add(route);
+      exiting(route);
+    }
+    return results;
+  }
 }

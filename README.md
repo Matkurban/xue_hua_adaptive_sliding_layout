@@ -268,7 +268,7 @@ There is no compatibility shim. See [CHANGELOG](CHANGELOG.md).
 
 ## Caveats
 
-- Crossing the 840 breakpoint **rebuilds** page `State` (Navigator tree ↔ viewport tree). Keep durable state in the route URL, a signal, or a host store.
+- Page `State` is **kept** when the window crosses 600 or 840 (Navigator ↔ viewport, branch ↔ cover Navigator). Each page subtree has a stable `GlobalKey` that is handed over in the same frame. Text fields, scroll positions and counters survive. State is still dropped when the page itself leaves the stack. Keep durable data in the URL, a signal, or a store anyway.
 - Pane overlays are **clipped**. Dialogs, menus, and sheets inside a column should use the root overlay: `useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`. On compact, a tab-root sheet stays on the nearest navigator and covers the bottom bar only when the shell uses `AdaptiveShellChrome`.
 - Context-free `pop` / `maybePop` (including Escape and system back) only handle the top pane and root / shell popups that cover everything. A pane-local sheet / dialog in the **other** pane is not closed by them: use `maybePopFrom(context)` (with a context inside the popup or inside that page), or `Navigator.pop(context)` from inside the popup. Stacked popups close outermost first (root → shell → pane).
 - `onExit` runs for `maybePop`, system back, and browser back, after the top page's `PopScope`. At the bottom of the stack, system back asks the route's `onExit` before the app exits. `pop` / `pushReplacementNamed` / `pushNamedAndRemoveUntil` run immediately, like `Navigator`.

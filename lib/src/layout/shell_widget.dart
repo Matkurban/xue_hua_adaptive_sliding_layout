@@ -120,6 +120,7 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
                         ? stacks[i].take(_coverStart(stacks[i])).toList()
                         : stacks[i],
                     visibleCount: columns,
+                    keepState: true,
                   ),
               ],
             );
@@ -137,9 +138,10 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
                 ),
                 if (compact)
                   for (final match in current.skip(_coverStart(current)))
-                    _router.pageFor(context, match),
+                    _router.pageFor(context, match, keepState: true),
               ],
               onDidRemovePage: _router.handleRemovedPage,
+              transitionDelegate: _router.relocationDelegate,
             );
             return AdaptiveShellScope(
               state: shellState,
@@ -172,6 +174,7 @@ class _BranchView extends StatelessWidget {
     required this.branchIndex,
     required this.matches,
     required this.visibleCount,
+    required this.keepState,
   });
 
   final GlobalKey<NavigatorState> navigatorKey;
@@ -181,13 +184,18 @@ class _BranchView extends StatelessWidget {
   final List<AdaptiveRouteMatch> matches;
   final int visibleCount;
 
+  /// 非 compact：页面子树带 GlobalKey，跨 840 断点搬家时保留 State。
+  final bool keepState;
+
   List<SlidingPane> _panes(BuildContext context) {
     return [
       for (final match in matches)
         SlidingPane(
           key: match.pageKey,
           title: match.title,
-          child: router.buildMatch(context, match),
+          child: keepState
+              ? router.keepAlive(match, router.buildMatch(context, match))
+              : router.buildMatch(context, match),
         ),
     ];
   }
@@ -201,9 +209,10 @@ class _BranchView extends StatelessWidget {
         key: navigatorKey,
         pages: [
           for (final match in matches)
-            router.pageFor(context, match, frame: frame),
+            router.pageFor(context, match, frame: frame, keepState: true),
         ],
         onDidRemovePage: router.handleRemovedPage,
+        transitionDelegate: router.relocationDelegate,
       );
     }
     final panes = _panes(context);

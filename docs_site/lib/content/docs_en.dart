@@ -319,7 +319,7 @@ import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.
       ]),
       DocCallout(
         CalloutKind.warning,
-        'Crossing 840 **rebuilds** page `State` (the Navigator tree and the column tree are different widget trees). Keep anything you must not lose in the URL, a signal, or a store — not only in a `State` field.',
+        'Crossing 600 or 840 **keeps** page `State`: each page subtree has a stable `GlobalKey`, so it is handed from the Navigator to the columns (and back) in the same frame. Text fields, scroll positions and counters survive. A page that leaves the stack still loses its `State`, so keep anything you must not lose in the URL, a signal, or a store.',
       ),
       DocParagraph('**Next:** [Titles & breadcrumbs](doc:titles-and-breadcrumbs).'),
     ],
@@ -800,9 +800,9 @@ if (index == shell.currentIndex) {
     title: 'Caveats',
     description: 'Known limits around breakpoints, overlays, pop semantics and the web.',
     blocks: [
-      DocHeading('breakpoint-rebuild', 'Crossing the breakpoint rebuilds state'),
+      DocHeading('breakpoint-rebuild', 'Crossing a breakpoint keeps state'),
       DocParagraph(
-        'Crossing the 840 breakpoint **rebuilds** page `State` (Navigator tree ↔ viewport tree). Keep durable state in the route URL, a signal, or a host store.',
+        'Page `State` is **kept** when the window crosses 600 or 840 (Navigator ↔ viewport, branch ↔ cover Navigator). Page subtrees carry a stable `GlobalKey` and a transition delegate swaps them without an exit animation. It is dropped only when the page leaves the stack. Keep durable data in the URL, a signal, or a store anyway.',
       ),
       DocHeading('overlays', 'Pane overlays are clipped'),
       DocParagraph(

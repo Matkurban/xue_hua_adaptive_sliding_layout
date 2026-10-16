@@ -1,3 +1,14 @@
+## 3.5.0
+
+### Features
+
+- Page `State` now survives crossing **any** breakpoint (600 and 840), in both directions. Text fields, scroll positions, counters and other `State` fields are kept when the window is resized between the single-column `Navigator`, the cover `Navigator` (compact) and the two-column `SlidingPaneViewport`. Each page subtree carries a stable per-page `GlobalKey` owned by the router, and the shell Navigators use a transition delegate that, in the frame a breakpoint is crossed, removes the old route without an exit animation and adds the new one directly, so the key is handed over within one frame instead of being mounted twice. State is still disposed when the page itself leaves the stack.
+- Added `test/state_across_expanded_test.dart` (counter, text, scroll across every width pair, a sweep through all widths, resize during push and pop animations, deep stacks with two panes, multi-branch tabs).
+
+### Documentation
+
+- README, docs site (EN / 中文) and agent skills: the "crossing the breakpoint rebuilds State" caveat is replaced by the new behavior.
+
 ## 3.4.5
 
 ### Bug Fixes

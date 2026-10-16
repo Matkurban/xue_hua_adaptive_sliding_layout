@@ -33,7 +33,7 @@ Route table → `xue-hua-adaptive-sliding-layout-routing`. Navigator verbs → `
 - `routeName` on every `*Named` verb is a **location** (`/mail/inbox`), not `AdaptiveRoute.name`. Build named locations with `router.namedLocation(...)`.
 - The platform `defaultRouteName` wins over `initialLocation` when it is non-empty and not `/`. Web uses the Flutter hash URL strategy (`/#/mail`).
 - One `AdaptiveShellRoute`, top-level only. No nested shells, no `restorable*`, no `push(Route)`.
-- Crossing `expandedMinWidth` (840) rebuilds page `State` (Navigator tree ↔ viewport tree). Keep durable state in the URL, a signal, or a host store.
+- Page `State` is kept when the window crosses 600 or 840 (stable per-page `GlobalKey`). It is dropped only when the page leaves the stack.
 
 ## Examples
 

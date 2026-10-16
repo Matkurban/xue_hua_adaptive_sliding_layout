@@ -63,7 +63,7 @@ int visibleColumnCount(double width) => isExpanded(width) ? 2 : 1;
 | `600–839` | medium | 1 |
 | `≥ 840` | expanded | 2 |
 
-Crossing `expandedMinWidth` rebuilds page `State` (Navigator tree ↔ viewport tree).
+Crossing `compactMaxWidth` or `expandedMinWidth` keeps page `State`: each page subtree has a stable `GlobalKey` and a transition delegate hands it over in one frame.
 
 ## `AppBreakpoints`
 

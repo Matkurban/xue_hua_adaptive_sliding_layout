@@ -17,7 +17,7 @@ API: [references/breakpoints.md](references/breakpoints.md), [references/shell-s
 ## Guidelines
 
 * Breakpoints use **window width**, not device type or orientation. Defaults: compact `< 600`, medium `600–839` (still 1 column), expanded `≥ 840` (2 columns). The viewport is 1 or 2 columns only (`ponytail:` three-plus columns would change `visibleColumnCount` and `SlidingPaneViewport`).
-* Crossing 840 rebuilds page `State` (Navigator tree ↔ viewport tree). Keep durable state in the URL, a signal, or a host store.
+* Page `State` is kept when the window crosses 600 or 840 (stable per-page `GlobalKey`). It is dropped only when the page leaves the stack.
 * `AdaptivePaneScope.maybeOf(context)` is non-null **only** inside a two-column pane. Use it instead of 2.x `inSlidingWindow` / `SlidingPageTitle`. 1-column mode, overlays, and off-shell pages return null.
 * Async / localized titles: `AdaptivePaneScope.maybeOf(context)?.title.value = subject`. `AdaptiveRoute.title` is not re-evaluated on locale change.
 * Pane overlays are **clipped**. Dialogs, menus, and sheets inside a column: `useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`.

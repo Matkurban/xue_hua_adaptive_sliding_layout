@@ -272,7 +272,7 @@ import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.
       ]),
       DocCallout(
         CalloutKind.warning,
-        '跨越 840 会**重建**页面 `State`（Navigator 树和分栏树是两棵不同的 Widget 树）。不能丢的数据请放进 URL、signal 或状态存储，而不只是 `State` 的字段里。',
+        '跨越 600 或 840 时页面 `State` 会**保留**：每个页面子树有稳定的 `GlobalKey`，在同一帧里从 Navigator 交接到分栏（或反向）。输入框文字、滚动位置、计数器都不会丢。页面出栈时 `State` 仍会销毁，所以不能丢的数据依旧请放进 URL、signal 或状态存储。',
       ),
       DocParagraph('**下一步：**[标题与面包屑](doc:titles-and-breadcrumbs)。'),
     ],
@@ -693,8 +693,8 @@ if (index == shell.currentIndex) {
     title: '注意点',
     description: '关于断点、弹层、返回语义与 Web 的已知限制。',
     blocks: [
-      DocHeading('breakpoint-rebuild', '跨越断点会重建 State'),
-      DocParagraph('跨越 840 断点会**重建**页面 `State`（Navigator 树 ↔ 视口树）。需要持久的状态请放进 URL、signal 或宿主的存储中。'),
+      DocHeading('breakpoint-rebuild', '跨越断点会保留 State'),
+      DocParagraph('窗口跨越 600 或 840 断点时，页面 `State` 会**保留**（Navigator ↔ 视口、分支 ↔ cover Navigator）。页面子树带稳定的 `GlobalKey`，转场代理在同一帧里无退出动画地交接。只有页面出栈时才销毁。持久数据依旧建议放进 URL、signal 或存储。'),
       DocHeading('overlays', '栏内弹层会被裁剪'),
       DocParagraph(
         '栏内的对话框、菜单、底部弹层应走根 Overlay：`useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`。compact 下 Tab 根页的 sheet 仍挂在最近的 Navigator 上，只有外壳使用 `AdaptiveShellChrome` 时才会盖住底栏。',
