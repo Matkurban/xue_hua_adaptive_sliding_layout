@@ -1,3 +1,11 @@
+## 3.5.2
+
+### Bug Fixes
+
+- On compact screens, detail pages in the cover Navigator (non-root pages with the default `hidesBottomBarWhenPushed: true`) now keep their `State` when you switch tabs. Previously the cover Navigator only held the current branch's pages, so `goBranch` removed the other branch's detail pages and they were rebuilt (`initState` again, scroll and fields lost) when you came back. Now every branch has a parking Navigator (offstage, no focus, no semantics, no hit testing, no ticker, and it does not send `NavigationNotification`). On a tab switch the pages move between the visible cover Navigator and the parking Navigator in the same frame, using their stable per-page `GlobalKey` and the no-animation transition delegate from 3.5.0, so nothing is unmounted. Back button, system back, `maybePop` and disposal on pop behave as before, and the same handover works across the 600 / 840 breakpoints.
+- The 3.5.1 known limit (cover pages released on tab switch) is gone; `hidesBottomBarWhenPushed: false` is no longer needed for State to survive tab switches.
+- Added `test/cover_pages_branch_switch_test.dart`.
+
 ## 3.5.1
 
 ### Bug Fixes

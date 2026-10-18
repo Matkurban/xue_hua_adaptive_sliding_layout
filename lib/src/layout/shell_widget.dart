@@ -32,6 +32,9 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
   /// 上一次 build 时是否 compact；用来发现跨 compact 断点的那一帧。
   bool? _wasCompact;
 
+  /// 上一次 build 时的当前分支；用来发现切 Tab 的那一帧。
+  int? _lastBranch;
+
   AdaptiveRouter get _router => widget.router;
 
   AdaptiveShellRoute get _shell => _router.shell!;
@@ -124,24 +127,40 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
                   ),
               ],
             );
-            // cover Navigator 常驻包住 chrome：非 compact 时只有 chrome 一页，
-            // 推页或跨断点缩放都不会重建壳。
-            // ponytail: 只挂当前分支的 cover 页，其他分支的深层页在 compact 下
-            // 不保活（底栏被盖住时切不了 Tab）；升级路径是每分支一个透明底页的
-            // Navigator。
+            // chrome Navigator：壳页 + 当前分支盖住底栏的 cover 页（compact）。
+            // 其他分支的 cover 页“停放”在各自常驻的离屏 Navigator 里，页面和
+            // State 都留在树上；切 Tab 时页面在两个 Navigator 之间同一帧交接
+            // （稳定 GlobalKey + 无动画的转场代理），不会销毁重建。
             final current = stacks[shellState.currentIndex];
-            final chrome = Navigator(
-              pages: [
-                MaterialPage<void>(
-                  key: const ValueKey<String>('adaptive-chrome'),
-                  child: _shell.builder(context, shellState, child),
+            if (_lastBranch != null && _lastBranch != shellState.currentIndex) {
+              _router.beginPageRelocation();
+            }
+            _lastBranch = shellState.currentIndex;
+            final chrome = Stack(
+              fit: StackFit.expand,
+              children: [
+                Navigator(
+                  pages: [
+                    MaterialPage<void>(
+                      key: const ValueKey<String>('adaptive-chrome'),
+                      child: _shell.builder(context, shellState, child),
+                    ),
+                    if (compact)
+                      for (final match in current.skip(_coverStart(current)))
+                        _router.pageFor(context, match, keepState: true),
+                  ],
+                  onDidRemovePage: _router.handleRemovedPage,
+                  transitionDelegate: _router.relocationDelegate,
                 ),
-                if (compact)
-                  for (final match in current.skip(_coverStart(current)))
-                    _router.pageFor(context, match, keepState: true),
+                for (var i = 0; i < stacks.length; i++)
+                  _ParkedCovers(
+                    key: ValueKey<int>(i),
+                    router: _router,
+                    pages: compact && i != shellState.currentIndex
+                        ? stacks[i].skip(_coverStart(stacks[i])).toList()
+                        : const <AdaptiveRouteMatch>[],
+                  ),
               ],
-              onDidRemovePage: _router.handleRemovedPage,
-              transitionDelegate: _router.relocationDelegate,
             );
             return AdaptiveShellScope(
               state: shellState,
@@ -255,6 +274,60 @@ class _BranchView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// cover Navigator 的透明底页：[Navigator.pages] 不能为空，所以每个分支的
+/// cover Navigator 常驻这一页，页面清空时它什么也不画（外层 IgnorePointer）。
+class _CoverBasePage extends Page<void> {
+  const _CoverBasePage()
+    : super(key: const ValueKey<String>('adaptive-cover-base'));
+
+  @override
+  Route<void> createRoute(BuildContext context) {
+    return PageRouteBuilder<void>(
+      settings: this,
+      opaque: false,
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
+      pageBuilder: (_, _, _) => const SizedBox.shrink(),
+    );
+  }
+}
+
+/// 非当前分支的 cover 页停放处：离屏、无焦点、无语义、不响应点击，也不向上
+/// 发 NavigationNotification（返回键只看 chrome Navigator）。
+class _ParkedCovers extends StatelessWidget {
+  const _ParkedCovers({super.key, required this.router, required this.pages});
+
+  final AdaptiveRouter router;
+  final List<AdaptiveRouteMatch> pages;
+
+  @override
+  Widget build(BuildContext context) {
+    return Offstage(
+      child: TickerMode(
+        enabled: false,
+        child: ExcludeFocus(
+          child: ExcludeSemantics(
+            child: IgnorePointer(
+              child: NotificationListener<NavigationNotification>(
+                onNotification: (_) => true,
+                child: Navigator(
+                  pages: [
+                    const _CoverBasePage(),
+                    for (final match in pages)
+                      router.pageFor(context, match, keepState: true),
+                  ],
+                  onDidRemovePage: router.handleRemovedPage,
+                  transitionDelegate: router.relocationDelegate,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
