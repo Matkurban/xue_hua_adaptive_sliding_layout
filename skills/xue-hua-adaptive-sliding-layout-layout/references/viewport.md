@@ -30,9 +30,9 @@ const SlidingPaneViewport({
 ## Static defaults and test keys
 
 ```dart
-static const double defaultLeftPaneFraction = 0.5;
-static const double defaultMinLeftPaneFraction = 0.3;
-static const double defaultMinRightPaneFraction = 0.3;
+static const double defaultLeftPaneFraction = 0.4;
+static const double defaultMinLeftPaneFraction = 0.35;
+static const double defaultMinRightPaneFraction = 0.35;
 static const Duration defaultSlideDuration = Duration(milliseconds: 280);
 static const Curve defaultSlideCurve = Curves.easeOutCubic;
 

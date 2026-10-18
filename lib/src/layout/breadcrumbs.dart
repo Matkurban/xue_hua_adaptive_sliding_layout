@@ -70,51 +70,54 @@ class AdaptiveBreadcrumbs extends StatelessWidget {
             if (pane.title.value.isNotEmpty) pane,
         ];
         if (visible.isEmpty) return const SizedBox.shrink();
-        return Container(
-          height: height,
+        // InkWell 需要 Material 祖先；壳不一定在 Scaffold 里，所以这里自带。
+        return Material(
           color: backgroundColor ?? colorScheme.surfaceContainerLow,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: padding,
-            itemCount: visible.length,
-            separatorBuilder: (context, index) {
-              return separatorBuilder?.call(context, index) ??
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Icon(
-                      Icons.chevron_right,
-                      size: 16,
-                      color: colorScheme.outline,
-                    ),
-                  );
-            },
-            itemBuilder: (context, index) {
-              final pane = visible[index];
-              final isLast = index == visible.length - 1;
-              final onTap = isLast ? null : () => onSelect(pane);
-              return itemBuilder?.call(context, pane, isLast, onTap) ??
-                  InkWell(
-                    onTap: onTap,
-                    borderRadius: BorderRadius.circular(6),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: Center(
-                        child: Text(
-                          pane.title.value,
-                          style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(
-                                color: isLast
-                                    ? colorScheme.onSurface
-                                    : colorScheme.onSurfaceVariant,
-                                fontWeight: isLast
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                              ),
+          child: SizedBox(
+            height: height,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: padding,
+              itemCount: visible.length,
+              separatorBuilder: (context, index) {
+                return separatorBuilder?.call(context, index) ??
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(
+                        Icons.chevron_right,
+                        size: 16,
+                        color: colorScheme.outline,
+                      ),
+                    );
+              },
+              itemBuilder: (context, index) {
+                final pane = visible[index];
+                final isLast = index == visible.length - 1;
+                final onTap = isLast ? null : () => onSelect(pane);
+                return itemBuilder?.call(context, pane, isLast, onTap) ??
+                    InkWell(
+                      onTap: onTap,
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Center(
+                          child: Text(
+                            pane.title.value,
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(
+                                  color: isLast
+                                      ? colorScheme.onSurface
+                                      : colorScheme.onSurfaceVariant,
+                                  fontWeight: isLast
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                ),
+                          ),
                         ),
                       ),
-                    ),
-                  );
-            },
+                    );
+              },
+            ),
           ),
         );
       },

@@ -1,3 +1,15 @@
+## 3.5.4
+
+### Bug Fixes
+
+- The default breadcrumb strip works again when the host shell has no `Scaffold` / `Material` above `child`. Since the 3.0 restructuring (`458dd59`) the strip was a plain `Container`, but its items are `InkWell`s, which assert `No Material widget found` on expanded widths (>= 840) unless the host happens to provide a `Material`. The strip now wraps itself in `Material(color: backgroundColor ?? colorScheme.surfaceContainerLow)` + `SizedBox(height)`; the look is unchanged.
+
+### Tests / Documentation
+
+- The whole test suite is green again. Six tests (`pane_resize_test`, `pane_customization_test`) still expected the pre-3.4.0 pane defaults (50 % start, 30 % minimum); they now use 40 % / 35 % (320 / 480 px on an 800 px viewport, clamps at 280 and 520, drag by 80 px gives 400). The other 17 failures were the missing-`Material` bug above.
+- New `test/breadcrumbs_without_material_test.dart`.
+- Stale default values fixed in doc comments and agent skills: `defaultLeftPaneFraction` 0.4, `defaultMinLeftPaneFraction` / `defaultMinRightPaneFraction` 0.35, and the internal fallback of `leftPaneFraction` without a shell (0.5 -> 0.4). README and docs site already stated 40 % / 35 %.
+
 ## 3.5.3
 
 ### Bug Fixes

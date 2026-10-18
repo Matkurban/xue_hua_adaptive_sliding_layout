@@ -41,7 +41,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     location = signal(effective);
     matches = signal(_current);
     currentBranch = signal(0);
-    leftPaneFraction = signal(shell?.initialLeftPaneFraction ?? 0.5);
+    leftPaneFraction = signal(shell?.initialLeftPaneFraction ?? 0.4);
     routeInformationProvider = PlatformRouteInformationProvider(
       initialRouteInformation: RouteInformation(uri: Uri.parse(effective)),
     );

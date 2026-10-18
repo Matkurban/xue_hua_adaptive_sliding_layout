@@ -212,9 +212,9 @@ AdaptiveShellRoute({
   LayoutBreakpoints breakpoints = const LayoutBreakpoints(),
   bool showBreadcrumbs = true,
   bool resizable = true,
-  double initialLeftPaneFraction = 0.5,
-  double minLeftPaneFraction = 0.3,
-  double minRightPaneFraction = 0.3,
+  double initialLeftPaneFraction = 0.4,
+  double minLeftPaneFraction = 0.35,
+  double minRightPaneFraction = 0.35,
   ValueChanged<double>? onLeftPaneFractionChanged,
   AdaptiveBreadcrumbsBuilder? breadcrumbsBuilder,
   AdaptivePlaceholderBuilder? placeholder,
@@ -258,9 +258,9 @@ Default `compactMaxWidth: 600`, `expandedMinWidth: 840`. See the **layout** skil
 | --------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------- |
 | `showBreadcrumbs`           | `true`                | Draw the strip above the viewport when expanded.                                                          |
 | `resizable`                 | `true`                | Show the sash when two columns are visible.                                                               |
-| `initialLeftPaneFraction`   | `0.5`                 | Seeds `AdaptiveRouter.leftPaneFraction`.                                                                  |
-| `minLeftPaneFraction`       | `0.3`                 | Sash clamp lower bound.                                                                                   |
-| `minRightPaneFraction`      | `0.3`                 | Sash clamp; left max is `1 - this`.                                                                       |
+| `initialLeftPaneFraction`   | `0.4`                 | Seeds `AdaptiveRouter.leftPaneFraction`.                                                                  |
+| `minLeftPaneFraction`       | `0.35`                | Sash clamp lower bound.                                                                                   |
+| `minRightPaneFraction`      | `0.35`                | Sash clamp; left max is `1 - this`.                                                                       |
 | `onLeftPaneFractionChanged` | `null`                | Called on sash pointer-up **after** the router signal is written.                                         |
 | `breadcrumbsBuilder`        | `null`                | Replace `AdaptiveBreadcrumbs`. Still gated by `showBreadcrumbs`.                                          |
 | `placeholder`               | `null`                | Default empty right pane; `AdaptiveBranch.placeholder` wins.                                              |

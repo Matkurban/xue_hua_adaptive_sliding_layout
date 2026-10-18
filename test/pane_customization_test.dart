@@ -78,7 +78,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester.getSize(find.byKey(SlidingPaneViewport.visibleLeftPaneKey)).width,
-      480,
+      400,
     );
   });
 

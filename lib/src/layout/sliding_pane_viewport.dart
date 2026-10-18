@@ -30,13 +30,13 @@ class SlidingPaneViewport extends StatefulWidget {
     this.resizeHandleBuilder,
   });
 
-  /// 未指定时左栏占一半视口。
+  /// 未指定时左栏占视口的 40%。
   static const double defaultLeftPaneFraction = 0.4;
 
-  /// 左栏默认最小 30%。
+  /// 左栏默认最小 35%。
   static const double defaultMinLeftPaneFraction = 0.35;
 
-  /// 右栏默认最小 30%。
+  /// 右栏默认最小 35%。
   static const double defaultMinRightPaneFraction = 0.35;
 
   /// 栏位平移动画默认时长。

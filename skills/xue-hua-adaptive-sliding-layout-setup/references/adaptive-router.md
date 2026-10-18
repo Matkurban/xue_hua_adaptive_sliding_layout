@@ -39,7 +39,7 @@ Also constructed (not parameters):
 - `location = signal(effectiveInitial)`
 - `matches = signal(_current)`
 - `currentBranch = signal(0)`
-- `leftPaneFraction = signal(shell?.initialLeftPaneFraction ?? 0.5)`
+- `leftPaneFraction = signal(shell?.initialLeftPaneFraction ?? 0.4)`
 - `PlatformRouteInformationProvider` with that URI
 - `_AdaptiveRouteInformationParser`, `_AdaptiveRouterDelegate`, `RootBackButtonDispatcher`
 
@@ -148,7 +148,7 @@ Starts at `0`. Updated only when the new list has a non-null `branchIndex`.
 late final Signal<double> leftPaneFraction;
 ```
 
-Shared sash fraction across tabs. Initial value is `shell?.initialLeftPaneFraction ?? 0.5`. The viewport writes it on sash pointer-up via `AdaptiveShellRoute.onLeftPaneFractionChanged` when the host wires that (the built-in shell writes this signal).
+Shared sash fraction across tabs. Initial value is `shell?.initialLeftPaneFraction ?? 0.4`. The viewport writes it on sash pointer-up via `AdaptiveShellRoute.onLeftPaneFractionChanged` when the host wires that (the built-in shell writes this signal).
 
 ## `shell`
 
