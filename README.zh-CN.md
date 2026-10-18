@@ -268,7 +268,7 @@ cd example && flutter test
 
 ## 注意点
 
-- 窗口跨越 600 或 840 断点时，页面 `State` 会**保留**（Navigator ↔ 视口、分支 ↔ cover Navigator）。每个页面子树有稳定的 `GlobalKey`，在同一帧里交接。输入框文字、滚动位置、计数器都不会丢。页面本身出栈时 State 仍会销毁。持久数据依旧建议放进 URL、signal 或存储。
+- 窗口跨越 600 或 840 断点时，页面 `State` 会**保留**（Navigator ↔ 视口、分支 ↔ cover Navigator）。每个页面子树有稳定的 `GlobalKey`，在同一帧里交接。输入框文字、滚动位置、计数器都不会丢。页面本身出栈时 State 仍会销毁。持久数据依旧建议放进 URL、signal 或存储。切换 Tab 时，已访问分支的页面同样保留；compact 下 cover Navigator 里的页面（`hidesBottomBarWhenPushed: true`）只属于当前分支。
 - 栏内 Overlay 会被裁剪。对话框、菜单、底部弹层请走根 Overlay：`useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`。compact 上 Tab 根页的 sheet 仍走最近的 Navigator；只有壳层用了 `AdaptiveShellChrome` 时才会盖住底栏。
 - 无 context 的 `pop` / `maybePop`（含 Escape、系统返回）只处理栈顶那一栏和盖住整体的根 / 壳层弹层。双栏时另一栏的栏内 sheet / dialog 不会被它关掉：用 `maybePopFrom(context)`（context 在弹层里或那一页里），或在弹层内直接 `Navigator.pop(context)`。多个弹层叠着时外层先关（根 → 壳层 → 栏内）。
 - `onExit` 在 `maybePop`、系统返回、浏览器后退时询问，且排在页内 `PopScope` 之后。栈底时系统返回会在退出应用前询问该路由的 `onExit`。`pop` / `pushReplacementNamed` / `pushNamedAndRemoveUntil` 与 Navigator 一样直接执行。

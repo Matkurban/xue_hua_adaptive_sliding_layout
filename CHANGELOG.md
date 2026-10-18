@@ -1,3 +1,11 @@
+## 3.5.1
+
+### Bug Fixes
+
+- Switching tabs (`goBranch`) no longer destroys and rebuilds the pages of the target branch. In 3.5.0 the per-page `GlobalKey`s used to keep `State` alive were pruned inside `keepAlive` on every build and kept only for the current stack, so after a tab switch the other branch's keys were already gone and its pages were unmounted and mounted again (`initState` re-ran, scroll offsets and fields were lost). Pruning now happens in `_setCurrent`, next to `match.dispose()`, with the same rule: keys are kept for the current matches and for every stored branch stack; the build path has no side effects. Pages that leave every stack are still disposed.
+- Known limit: pages that sit in the cover Navigator on compact screens (`hidesBottomBarWhenPushed: true`, the default for non-root pages) belong to the current branch only and are still released when you switch tabs. Set `hidesBottomBarWhenPushed: false` on routes whose `State` must survive tab switches.
+- Added `test/branch_switch_keeps_state_test.dart`.
+
 ## 3.5.0
 
 ### Features

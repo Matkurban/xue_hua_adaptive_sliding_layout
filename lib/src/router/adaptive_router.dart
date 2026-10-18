@@ -504,12 +504,10 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
 
   final Map<LocalKey, GlobalKey> _contentKeys = <LocalKey, GlobalKey>{};
 
-  /// 每个页面一个稳定的 [GlobalKey]：跨 840 断点时页面子树在 Navigator 与
+  /// 每个页面一个稳定的 [GlobalKey]：跨断点时页面子树在 Navigator 与
   /// [SlidingPaneViewport] 之间搬家，State 随 key 一起被接管而不是重建。
+  /// 清理在 [_setCurrent] 里做，这里只取或创建。
   Widget keepAlive(AdaptiveRouteMatch match, Widget child) {
-    _contentKeys.removeWhere(
-      (key, _) => !_current.matches.any((m) => m.pageKey == key),
-    );
     final key = _contentKeys.putIfAbsent(
       match.pageKey,
       () => GlobalKey(debugLabel: 'adaptive-page-${match.pageKey}'),
@@ -690,6 +688,9 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
         match.dispose();
       }
     }
+    // 页面保活 key 只在栈变化时清理：当前栈和所有分支快照里的页面保留，
+    // build 路径上不做任何清理，切 Tab 时目标分支的 key 不会丢。
+    _contentKeys.removeWhere((key, _) => !kept.contains(key));
     _current = next;
     _rememberArguments();
     _ready = true;
