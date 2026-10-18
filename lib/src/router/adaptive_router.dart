@@ -475,6 +475,13 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     );
   }
 
+  /// [index] 分支是否打开过（当前分支，或离开时存过栈）。没打开过的分支不建页面。
+  bool hasVisitedBranch(int index) {
+    if (_current.branchIndex == index) return true;
+    final stored = _branchStacks[index];
+    return stored != null && stored.isNotEmpty;
+  }
+
   /// 当前分支应展示的栈；非当前分支用上次快照或 initialLocation。
   List<AdaptiveRouteMatch> stackForBranch(int index) {
     if (_current.branchIndex == index) return _current.branchMatches;

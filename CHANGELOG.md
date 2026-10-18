@@ -1,3 +1,9 @@
+## 3.5.3
+
+### Bug Fixes
+
+- A branch that has never been opened is no longer built. The shell put every branch into the `IndexedStack`, and the page list of a never-visited branch was re-matched from its `initialLocation` on every shell build (fresh `pageKey`s every time), so its root page was created, disposed and created again invisibly on each push, pop, resize or tab change, and again on the first visit. Now such a branch contributes nothing until the first `goBranch` / deep link to it; its root page is then built once and its `State` stays preserved afterwards (3.5.0 - 3.5.2 guarantees unchanged). Added the small helper `AdaptiveRouter.hasVisitedBranch(int)` (public on the class, intended for the shell) and `test/unopened_branch_lazy_test.dart`.
+
 ## 3.5.2
 
 ### Bug Fixes

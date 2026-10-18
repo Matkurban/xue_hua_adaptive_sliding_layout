@@ -105,9 +105,12 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
               leftPaneFraction: _router.leftPaneFraction,
               goBranch: _router.goBranch,
             );
+            // 从没打开过的分支不建页面：它的根页等第一次切过去时才创建，只建一次。
             final stacks = [
               for (var i = 0; i < _shell.branches.length; i++)
-                _router.stackForBranch(i),
+                _router.hasVisitedBranch(i)
+                    ? _router.stackForBranch(i)
+                    : const <AdaptiveRouteMatch>[],
             ];
             final child = IndexedStack(
               index: shellState.currentIndex,
