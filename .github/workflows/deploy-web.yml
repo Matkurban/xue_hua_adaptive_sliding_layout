@@ -1,8 +1,14 @@
 name: Deploy web demo & docs
 
+# Runs only when the package version changes (push to main that edits
+# pubspec.yaml AND changes its `version:` line) or when started by hand.
+# Tags are deliberately not a trigger: the release flow pushes the version
+# commit and its tag together, so one mechanism avoids double runs, and the
+# github-pages environment only allows deployments from main.
 on:
   push:
     branches: [main]
+    paths: [pubspec.yaml]
   workflow_dispatch:
 
 permissions:
@@ -12,10 +18,38 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
+  # Minimal gate: no checkout, two raw file reads, a few seconds.
+  version-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      changed: ${{ steps.cmp.outputs.changed }}
+    steps:
+      - id: cmp
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ "$EVENT" != "push" ] || [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          ver() { curl -fsSL "https://raw.githubusercontent.com/$REPO/$1/pubspec.yaml" | grep -m1 '^version:' || true; }
+          old="$(ver "$BEFORE")"; new="$(ver "$SHA")"
+          echo "before: $old"; echo "after:  $new"
+          if [ -n "$new" ] && [ "$old" = "$new" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: version-check
+    if: needs.version-check.outputs.changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
