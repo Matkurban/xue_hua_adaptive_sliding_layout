@@ -12,12 +12,18 @@ AdaptiveRouter _router() {
         builder: (context, shell, child) {
           if (shell.isCompact) {
             return AdaptiveShellChrome(
-              bottomNavigationBar: (context) => const SizedBox(height: 56, child: Text('bottom-bar')),
+              bottomNavigationBar: (context) =>
+                  const SizedBox(height: 56, child: Text('bottom-bar')),
               child: child,
             );
           }
           return Scaffold(
-            body: Row(children: [const SizedBox(width: 80, child: Text('rail')), Expanded(child: child)]),
+            body: Row(
+              children: [
+                const SizedBox(width: 80, child: Text('rail')),
+                Expanded(child: child),
+              ],
+            ),
           );
         },
         branches: [
@@ -27,12 +33,17 @@ AdaptiveRouter _router() {
                 path: '/products',
                 builder: (context, state) => Scaffold(
                   body: TextButton(
-                    onPressed: () => AdaptiveRouter.of(context).pushNamed('/products/1'),
+                    onPressed: () =>
+                        AdaptiveRouter.of(context).pushNamed('/products/1'),
                     child: const Text('open-detail'),
                   ),
                 ),
                 routes: [
-                  AdaptiveRoute(path: ':id', builder: (context, state) => const Scaffold(body: Text('detail-page'))),
+                  AdaptiveRoute(
+                    path: ':id',
+                    builder: (context, state) =>
+                        const Scaffold(body: Text('detail-page')),
+                  ),
                 ],
               ),
             ],
@@ -46,7 +57,9 @@ AdaptiveRouter _router() {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('shrinking across the compact breakpoint keeps the page stack', (tester) async {
+  testWidgets('shrinking across the compact breakpoint keeps the page stack', (
+    tester,
+  ) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(700, 800);
     addTearDown(tester.view.resetPhysicalSize);

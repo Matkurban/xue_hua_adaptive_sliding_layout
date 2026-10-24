@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:material_ui/material_ui.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/shell_widget.dart';
@@ -500,7 +501,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
 
   /// 把 match 建成带 [AdaptiveRouteScope] 的页面子树。
   Widget buildMatch(BuildContext context, AdaptiveRouteMatch match) {
-    final state = match.toState(_current.uri, error: _current.error);
+    final state = match.toState(match.uri, error: _current.error);
     final built =
         match.route.builder?.call(context, state) ?? const SizedBox.shrink();
     return AdaptiveRouteScope(
@@ -539,6 +540,9 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
       arguments: match.arguments,
       router: this,
       match: match,
+      branchIndex: currentBranch.value,
+      error: _current.error,
+      hasFrame: frame != null,
       child: frame == null ? built : frame(built),
     );
   }
@@ -947,6 +951,9 @@ class _AdaptivePage<T> extends Page<T> {
     required this.router,
     required this.match,
     required this.child,
+    this.branchIndex = 0,
+    this.error,
+    this.hasFrame = false,
     super.key,
     super.name,
     super.arguments,
@@ -955,6 +962,18 @@ class _AdaptivePage<T> extends Page<T> {
   final AdaptiveRouter router;
   final AdaptiveRouteMatch match;
   final Widget child;
+  final int branchIndex;
+  final Exception? error;
+  final bool hasFrame;
+
+  bool shouldRebuild(_AdaptivePage<T> oldPage) {
+    return hasFrame != oldPage.hasFrame ||
+        branchIndex != oldPage.branchIndex ||
+        name != oldPage.name ||
+        !identical(arguments, oldPage.arguments) ||
+        !mapEquals(match.queryParameters, oldPage.match.queryParameters) ||
+        error != oldPage.error;
+  }
 
   @override
   Route<T> createRoute(BuildContext context) {
@@ -992,6 +1011,63 @@ final class _GlobalLayer extends _Layer {
   const _GlobalLayer();
 }
 
+/// 路由动画完成后只把自身 [OverlayEntry.opaque] 设为 true（遮挡下层绘制、命中与语义），
+/// 而向 [NavigatorState] 报告 [opaque] 为 false，避免 [NavigatorState] 把下层路由标为
+/// `offstage = true` 进而导致 `_ModalScopeState` 关闭下层 [TickerMode] 清空页内图标。
+mixin _KeepUnderlyingTickerRoute<T> on PageRoute<T> {
+  AdaptiveRouteMatch get match;
+
+  _AdaptivePage<T>? _lastBuiltPage;
+
+  @override
+  bool get opaque => false;
+
+  void _syncOverlayOpaque(AnimationStatus status) {
+    if (!match.route.opaque || overlayEntries.isEmpty) return;
+    overlayEntries.first.opaque = status == AnimationStatus.completed;
+  }
+
+  @override
+  void install() {
+    final current = settings;
+    if (current is _AdaptivePage<T>) {
+      _lastBuiltPage = current;
+    }
+    super.install();
+    animation?.addStatusListener(_syncOverlayOpaque);
+    if (animation != null) {
+      _syncOverlayOpaque(animation!.status);
+    }
+  }
+
+  @override
+  void didAdd() {
+    super.didAdd();
+    if (animation != null) {
+      _syncOverlayOpaque(animation!.status);
+    }
+  }
+
+  @override
+  void changedExternalState() {
+    final current = settings;
+    if (current is _AdaptivePage<T>) {
+      final previous = _lastBuiltPage;
+      _lastBuiltPage = current;
+      if (previous != null && !current.shouldRebuild(previous)) {
+        return;
+      }
+    }
+    super.changedExternalState();
+  }
+
+  @override
+  void dispose() {
+    animation?.removeStatusListener(_syncOverlayOpaque);
+    super.dispose();
+  }
+}
+
 /// 页面路由的 onExit 守卫：先让页内 PopScope 表态，再由 onExit 否决，二者互不覆盖。
 mixin _ExitGuard<T> on ModalRoute<T> {
   AdaptiveRouter get router;
@@ -1023,7 +1099,10 @@ mixin _ExitGuard<T> on ModalRoute<T> {
 
 /// 与 Flutter 私有 `_PageBasedMaterialPageRoute` 对齐的 Material 页路由。
 class _AdaptiveMaterialRoute<T> extends PageRoute<T>
-    with MaterialRouteTransitionMixin<T>, _ExitGuard<T> {
+    with
+        MaterialRouteTransitionMixin<T>,
+        _ExitGuard<T>,
+        _KeepUnderlyingTickerRoute<T> {
   _AdaptiveMaterialRoute({required _AdaptivePage<T> page})
     : super(
         settings: page,
@@ -1047,7 +1126,7 @@ class _AdaptiveMaterialRoute<T> extends PageRoute<T>
 
 /// 自定义过场的页路由。
 class _AdaptiveTransitionRoute<T> extends PageRouteBuilder<T>
-    with _ExitGuard<T> {
+    with _ExitGuard<T>, _KeepUnderlyingTickerRoute<T> {
   _AdaptiveTransitionRoute({required _AdaptivePage<T> page})
     : super(
         settings: page,
@@ -1069,6 +1148,13 @@ class _AdaptiveTransitionRoute<T> extends PageRouteBuilder<T>
 
   @override
   AdaptiveRouteMatch get match => _page.match;
+
+  @override
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) => _page.child;
 }
 
 /// 记下本页所在 [ModalRoute]，供路由器询问 PopScope / 走 Navigator 链。

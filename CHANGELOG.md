@@ -1,3 +1,10 @@
+## 3.5.5
+
+### Bug Fixes
+
+- Prevent underlying pages from being rebuilt unnecessarily
+- update `material_ui` to `^1.8.0`
+
 ## 3.5.4
 
 ### Bug Fixes

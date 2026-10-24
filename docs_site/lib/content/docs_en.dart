@@ -24,8 +24,7 @@ DocPage page(DocId id) => switch (id) {
         expandedLabel: 'Wide window (≥ 840): two sliding columns',
         listLabel: 'Products',
         detailLabel: 'Coffee mug',
-        caption:
-            'Same URL `/products/1`, same stack `[Products, Coffee mug]`. Narrow: a normal `Navigator` shows the top page. Wide: the last two pages sit side by side, with breadcrumbs and a resize handle.',
+        caption: 'Same URL `/products/1`, same stack `[Products, Coffee mug]`. Narrow: a normal `Navigator` shows the top page. Wide: the last two pages sit side by side, with breadcrumbs and a resize handle.',
       ),
       DocHeading('how', 'How it works in one line'),
       DocCode(CodeLanguage.plain, '''
@@ -368,8 +367,7 @@ AdaptivePaneScope.maybeOf(context)?.title.value = product.name;'''),
   DocId.redirectsOnExit => const DocPage(
     id: DocId.redirectsOnExit,
     title: 'Redirects, Sign-in & onExit',
-    description:
-        'Guard a page behind sign-in with redirect, return the user afterwards, and confirm before leaving unsaved edits.',
+    description: 'Guard a page behind sign-in with redirect, return the user afterwards, and confirm before leaving unsaved edits.',
     blocks: [
       DocCallout(
         CalloutKind.info,

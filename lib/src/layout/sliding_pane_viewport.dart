@@ -545,18 +545,15 @@ class _SlidingPaneFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inner = TickerMode(
-      enabled: ticking,
-      child: ExcludeFocus(
-        excluding: !ticking,
-        child: IgnorePointer(
-          ignoring: !ticking,
-          child: PageStorage(
-            bucket: PageStorage.of(context),
-            child: KeyedSubtree(
-              key: PageStorageKey<LocalKey>(pane.key),
-              child: _PaneNavigator(pane: pane, onPop: onPop),
-            ),
+    final inner = ExcludeFocus(
+      excluding: !ticking,
+      child: IgnorePointer(
+        ignoring: !ticking,
+        child: PageStorage(
+          bucket: PageStorage.of(context),
+          child: KeyedSubtree(
+            key: PageStorageKey<LocalKey>(pane.key),
+            child: _PaneNavigator(pane: pane, onPop: onPop),
           ),
         ),
       ),

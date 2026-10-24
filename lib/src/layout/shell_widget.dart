@@ -310,22 +310,19 @@ class _ParkedCovers extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Offstage(
-      child: TickerMode(
-        enabled: false,
-        child: ExcludeFocus(
-          child: ExcludeSemantics(
-            child: IgnorePointer(
-              child: NotificationListener<NavigationNotification>(
-                onNotification: (_) => true,
-                child: Navigator(
-                  pages: [
-                    const _CoverBasePage(),
-                    for (final match in pages)
-                      router.pageFor(context, match, keepState: true),
-                  ],
-                  onDidRemovePage: router.handleRemovedPage,
-                  transitionDelegate: router.relocationDelegate,
-                ),
+      child: ExcludeFocus(
+        child: ExcludeSemantics(
+          child: IgnorePointer(
+            child: NotificationListener<NavigationNotification>(
+              onNotification: (_) => true,
+              child: Navigator(
+                pages: [
+                  const _CoverBasePage(),
+                  for (final match in pages)
+                    router.pageFor(context, match, keepState: true),
+                ],
+                onDidRemovePage: router.handleRemovedPage,
+                transitionDelegate: router.relocationDelegate,
               ),
             ),
           ),

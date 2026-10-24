@@ -694,7 +694,9 @@ if (index == shell.currentIndex) {
     description: '关于断点、弹层、返回语义与 Web 的已知限制。',
     blocks: [
       DocHeading('breakpoint-rebuild', '跨越断点会保留 State'),
-      DocParagraph('窗口跨越 600 或 840 断点时，页面 `State` 会**保留**（Navigator ↔ 视口、分支 ↔ cover Navigator）。页面子树带稳定的 `GlobalKey`，转场代理在同一帧里无退出动画地交接。只有页面出栈时才销毁。持久数据依旧建议放进 URL、signal 或存储。'),
+      DocParagraph(
+        '窗口跨越 600 或 840 断点时，页面 `State` 会**保留**（Navigator ↔ 视口、分支 ↔ cover Navigator）。页面子树带稳定的 `GlobalKey`，转场代理在同一帧里无退出动画地交接。只有页面出栈时才销毁。持久数据依旧建议放进 URL、signal 或存储。',
+      ),
       DocHeading('overlays', '栏内弹层会被裁剪'),
       DocParagraph(
         '栏内的对话框、菜单、底部弹层应走根 Overlay：`useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`。compact 下 Tab 根页的 sheet 仍挂在最近的 Navigator 上，只有外壳使用 `AdaptiveShellChrome` 时才会盖住底栏。',

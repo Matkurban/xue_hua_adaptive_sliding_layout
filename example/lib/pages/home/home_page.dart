@@ -113,6 +113,7 @@ class _HomePageState extends State<HomePage> {
                       itemCount: products.length,
                       itemBuilder: (context, index) {
                         final product = products[index];
+                        debugPrint('rebuild $index');
                         return Card(
                           clipBehavior: Clip.antiAlias,
                           child: InkWell(

@@ -8,7 +8,8 @@ void main() {
 
   AdaptiveRouter buildRouter() => AdaptiveRouter(
     initialLocation: '/c',
-    redirect: (context, state) => redirectToLogin && state.uri.path != '/login' ? '/login' : null,
+    redirect: (context, state) =>
+        redirectToLogin && state.uri.path != '/login' ? '/login' : null,
     routes: [
       AdaptiveRoute(path: '/login', builder: (_, _) => const Text('login')),
       AdaptiveShellRoute(
@@ -26,7 +27,12 @@ void main() {
                       chatArgs.add(s.arguments);
                       return const Text('chat');
                     },
-                    routes: [AdaptiveRoute(path: 'sel', builder: (_, _) => const Text('sel'))],
+                    routes: [
+                      AdaptiveRoute(
+                        path: 'sel',
+                        builder: (_, _) => const Text('sel'),
+                      ),
+                    ],
                   ),
                 ],
               ),
