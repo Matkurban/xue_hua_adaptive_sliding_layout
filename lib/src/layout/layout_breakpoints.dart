@@ -4,7 +4,7 @@
 /// medium（介于两者之间）仍是单栏 [Navigator]，供宿主区分 rail / bottom bar；
 /// expanded（达到 [expandedMinWidth]）双栏滑动视口。
 ///
-/// `ponytail:` 视口只支持 1 / 2 栏。三栏及以上改 [visibleColumnCount]
+/// 视口支持 1 / 2 栏。三栏及以上改 [visibleColumnCount]
 /// 并让 [SlidingPaneViewport] 按 N 栏布局。
 class LayoutBreakpoints {
   /// [compactMaxWidth] 默认 600，[expandedMinWidth] 默认 840（Material 中档）。

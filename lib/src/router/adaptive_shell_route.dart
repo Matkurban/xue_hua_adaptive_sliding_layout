@@ -22,7 +22,7 @@ typedef ResizeHandleWidgetBuilder = Widget Function(
 
 /// 多分支壳：宽度决定 1 栏 Navigator 还是 2 栏滑动视口。
 ///
-/// `ponytail:` 整棵路由树只允许一个本类型，出现在顶层。嵌套壳需要另开分支模型。
+/// 整棵路由树只允许一个本类型，出现在顶层。嵌套壳需要另开分支模型。
 class AdaptiveShellRoute extends AdaptiveRouteBase {
   /// [builder] 画 rail / bottom bar；[branches] 为各 Tab 的路由树。
   AdaptiveShellRoute({

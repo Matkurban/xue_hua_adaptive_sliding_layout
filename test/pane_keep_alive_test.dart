@@ -69,6 +69,26 @@ void main() {
       await tester.pumpAndSettle();
       expect(_KeepAliveProbe.initCount, 1);
     });
+
+    testWidgets(
+      'offscreen panes exclude semantics while visible panes keep semantics',
+      (tester) async {
+        final handle = tester.ensureSemantics();
+        try {
+          final root = _pane('Root', child: const Text('sem-root'));
+          final a = _pane('A', child: const Text('sem-a'));
+          final b = _pane('B', child: const Text('sem-b'));
+          await tester.pumpWidget(_KeepAliveHarness(panes: [root, a, b]));
+          await tester.pumpAndSettle();
+
+          expect(find.bySemanticsLabel('sem-root'), findsNothing);
+          expect(find.bySemanticsLabel('sem-a'), findsOneWidget);
+          expect(find.bySemanticsLabel('sem-b'), findsOneWidget);
+        } finally {
+          handle.dispose();
+        }
+      },
+    );
   });
 }
 

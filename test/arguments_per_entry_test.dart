@@ -164,4 +164,24 @@ void main() {
     expect(built['chat'], isNotEmpty);
     expect(built['chat']!.every((a) => a == 'chat-args'), isTrue);
   });
+
+  testWidgets('无参页面之上命令式压入同路径有参页面并弹出后，底层无参页面仍保持 null', (tester) async {
+    final router = await pumpRouter(tester);
+    router.pushNamed('/c/chat/1');
+    await tester.pumpAndSettle();
+    expect(router.matches.value.last!.arguments, isNull);
+
+    router.pushNamed('/c/chat/1/sel', arguments: 'sel-args');
+    await tester.pumpAndSettle();
+    router.pushNamed('/c/chat/1', arguments: 'temp-override');
+    await tester.pumpAndSettle();
+    expect(router.matches.value.last!.arguments, 'temp-override');
+
+    router.pop();
+    await tester.pumpAndSettle();
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(router.matches.value.last!.matchedLocation, '/c/chat/1');
+    expect(router.matches.value.last!.arguments, isNull);
+  });
 }

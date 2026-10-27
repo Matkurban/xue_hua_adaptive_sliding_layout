@@ -373,7 +373,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
 
   /// 逐个关掉盖住页面的弹层，页面栈不动。
   ///
-  /// ponytail: 最多 32 层。再多说明 [Navigator.pop] 没拆掉路由，停下来避免空转。
+  /// 最多 32 层。再多说明 [Navigator.pop] 没拆掉路由，停下来避免空转。
   void _dismissPopups() {
     for (var i = 0; i < 32; i++) {
       final popup = _popupNavigator();
@@ -398,9 +398,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
       final unchanged = next.error == null && _sameUri(next.uri, before.uri);
       if (unchanged || !identical(_current, before)) {
         // 位置没变，或等待 redirect 期间栈已被其它导航改动：丢弃这次匹配结果。
-        for (final match in next.matches) {
-          match.dispose();
-        }
+        _disposeMatches(next.matches);
         return;
       }
       _setCurrent(next);
@@ -447,6 +445,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
       final state = _stateFor(matched, current);
       final top = await redirect?.call(context, state);
       if (top != null && !_sameLocation(current, top)) {
+        _disposeMatches(matched.matches);
         current = _parse(top);
         continue;
       }
@@ -466,7 +465,10 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
           break;
         }
       }
-      if (redirected) continue;
+      if (redirected) {
+        _disposeMatches(matched.matches);
+        continue;
+      }
       return matched;
     }
     return AdaptiveRouteMatchList(
@@ -598,6 +600,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
       _parse(routeName),
       arguments: arguments,
     );
+    _disposeMatches(resolved.matches);
     if (resolved.error != null && resolved.matches.isEmpty) {
       return routeName;
     }
@@ -621,6 +624,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
 
   Future<void> applyParsed(AdaptiveRouteMatchList configuration) async {
     if (_ready && _sameUri(_current.uri, configuration.uri)) {
+      _disposeUnkeptMatches(configuration.matches);
       return;
     }
     if (_ready) {
@@ -629,6 +633,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
           if (!_containsKey(configuration, match.pageKey)) match,
       ];
       if (!await _allowExitAll(removing)) {
+        _disposeUnkeptMatches(configuration.matches);
         _delegate.notify();
         return;
       }
@@ -636,41 +641,90 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     _setCurrent(configuration);
   }
 
-  /// 给缺少 arguments 的 match 补回同一位置记住的参数；都不缺时原样返回。
+  /// 给新推导出的缺少 arguments 的 match 补回同一位置记住的参数；
+  /// 已在栈上且原本无参的 match 保持 null，不补参数。
   List<AdaptiveRouteMatch> _restoreArguments(List<AdaptiveRouteMatch> matches) {
-    if (!matches.any(
-      (m) =>
-          m.arguments == null &&
-          _argumentsByLocation.containsKey(m.matchedLocation),
-    )) {
+    final liveNullMatches = <AdaptiveRouteMatch>{
+      for (final m in _current.matches)
+        if (m.arguments == null) m,
+      for (final stack in _branchStacks.values)
+        for (final m in stack)
+          if (m.arguments == null) m,
+    };
+    bool shouldRestore(AdaptiveRouteMatch m) {
+      return m.arguments == null &&
+          !liveNullMatches.contains(m) &&
+          _argumentsByLocation.containsKey(m.matchedLocation);
+    }
+
+    if (!matches.any(shouldRestore)) {
       return matches;
     }
     return [
       for (final m in matches)
-        if (m.arguments == null &&
-            _argumentsByLocation.containsKey(m.matchedLocation))
+        if (shouldRestore(m))
           m.copyWith(arguments: _argumentsByLocation[m.matchedLocation])
         else
           m,
     ];
   }
 
-  /// 记住当前所有栈里每页的 arguments，并清掉已不在任何栈里的位置。
+  /// 记住当前所有栈里每页非空的 arguments，并清掉已无非空参数的栈位置。
   void _rememberArguments() {
-    final live = <String>{};
+    _argumentsByLocation.clear();
     void visit(Iterable<AdaptiveRouteMatch> matches) {
       for (final m in matches) {
-        live.add(m.matchedLocation);
         final args = m.arguments;
         if (args != null) _argumentsByLocation[m.matchedLocation] = args;
       }
     }
 
-    visit(_current.matches);
     for (final stack in _branchStacks.values) {
       visit(stack);
     }
-    _argumentsByLocation.removeWhere((location, _) => !live.contains(location));
+    visit(_current.matches);
+  }
+
+  /// 释放路由器持有的所有 [Signal]、分支栈匹配与代理监听器。
+  void dispose() {
+    final allMatches = <AdaptiveRouteMatch>{
+      ..._current.matches,
+      for (final stack in _branchStacks.values) ...stack,
+    };
+    for (final match in allMatches) {
+      match.dispose();
+    }
+    _branchStacks.clear();
+    _branchLocations.clear();
+    _argumentsByLocation.clear();
+    _hostRoutes.clear();
+    _contentKeys.clear();
+    location.dispose();
+    matches.dispose();
+    currentBranch.dispose();
+    leftPaneFraction.dispose();
+    _delegate.dispose();
+    if (routeInformationProvider is ChangeNotifier) {
+      (routeInformationProvider as ChangeNotifier).dispose();
+    }
+  }
+
+  static void _disposeMatches(Iterable<AdaptiveRouteMatch> matches) {
+    for (final match in matches) {
+      match.dispose();
+    }
+  }
+
+  void _disposeUnkeptMatches(Iterable<AdaptiveRouteMatch> candidates) {
+    final kept = <AdaptiveRouteMatch>{
+      ..._current.matches,
+      for (final stack in _branchStacks.values) ...stack,
+    };
+    for (final match in candidates) {
+      if (!kept.contains(match)) {
+        match.dispose();
+      }
+    }
   }
 
   void _setCurrent(AdaptiveRouteMatchList next) {

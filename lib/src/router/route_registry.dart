@@ -40,14 +40,12 @@ class RouteRegistry {
         case AdaptiveShellRoute():
           if (_shell != null) {
             throw StateError(
-              'ponytail: only one AdaptiveShellRoute is supported; '
+              'Only one AdaptiveShellRoute is supported; '
               'put more tabs in branches instead of nesting shells.',
             );
           }
           if (parentFullPath.isNotEmpty && parentFullPath != '/') {
-            throw StateError(
-              'ponytail: AdaptiveShellRoute must be a top-level route.',
-            );
+            throw StateError('AdaptiveShellRoute must be a top-level route.');
           }
           _shell = node;
           for (var i = 0; i < node.branches.length; i++) {

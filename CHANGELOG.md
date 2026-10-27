@@ -1,3 +1,13 @@
+## 3.5.6
+
+### Bug Fixes & Improvements
+
+- **Offscreen pane semantics isolation**: `_SlidingPaneFrame` now wraps offscreen panes ($i < \text{start}$) in `ExcludeSemantics(excluding: !ticking)` alongside `ExcludeFocus` and `IgnorePointer`, preventing screen readers from traversing panes pushed off the left edge of `SlidingPaneViewport` while keeping `TickerMode` enabled so decoded images never blank out on pop.
+- **Signal lifecycle cleanup during redirects and navigation**: `AdaptiveRouter.resolve`, `_redirected`, and `applyParsed` now dispose intermediate and discarded `AdaptiveRouteMatch` instances (and their `title` signals) whenever a redirect hop occurs, an `onExit` guard vetoes navigation, or a pre-navigation redirect check completes.
+- **Precise `arguments` retention across duplicate-location entries**: `_restoreArguments` no longer overwrites an already-live stack entry whose `arguments` was intentionally `null`, and `_rememberArguments` clears stale entries when a duplicate-location imperative page with arguments is popped back to an argument-less base page.
+- **Dynamic branch-shrink safety**: `AdaptiveShellHost.didUpdateWidget` clamps `currentBranch` into the valid range when the branch list shrinks.
+- **Router disposal**: Added `AdaptiveRouter.dispose()` to release internal signals, stored branch matches, and route delegates cleanly.
+
 ## 3.5.5
 
 ### Bug Fixes

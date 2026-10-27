@@ -132,7 +132,6 @@ class _SlidingPaneViewportState extends State<SlidingPaneViewport> {
 
   /// 是否正在拖分割条。为 true 时忽略外部 [leftPaneFraction] 回写。
   bool _dragging = false;
-  // final FlutterSignal<bool> _dragging = signal(false);
 
   /// 当前拖拽的 pointer id；其它指针忽略。
   int? _activePointer;
@@ -513,7 +512,8 @@ class _SlidingPaneStripState extends State<_SlidingPaneStrip>
   }
 }
 
-/// 单栏：屏外停 ticker / 焦点 / 命中；可见栏包 [AdaptivePaneScope] 与栏内 Navigator。
+/// 单栏：屏外屏蔽语义、焦点与指针命中（保留 TickerMode 避免图片重解析闪白）；
+/// 可见栏包 [AdaptivePaneScope] 与栏内 Navigator。
 class _SlidingPaneFrame extends StatelessWidget {
   const _SlidingPaneFrame({
     required this.pane,
@@ -545,15 +545,18 @@ class _SlidingPaneFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inner = ExcludeFocus(
+    final inner = ExcludeSemantics(
       excluding: !ticking,
-      child: IgnorePointer(
-        ignoring: !ticking,
-        child: PageStorage(
-          bucket: PageStorage.of(context),
-          child: KeyedSubtree(
-            key: PageStorageKey<LocalKey>(pane.key),
-            child: _PaneNavigator(pane: pane, onPop: onPop),
+      child: ExcludeFocus(
+        excluding: !ticking,
+        child: IgnorePointer(
+          ignoring: !ticking,
+          child: PageStorage(
+            bucket: PageStorage.of(context),
+            child: KeyedSubtree(
+              key: PageStorageKey<LocalKey>(pane.key),
+              child: _PaneNavigator(pane: pane, onPop: onPop),
+            ),
           ),
         ),
       ),

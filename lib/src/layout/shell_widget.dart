@@ -58,6 +58,9 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
         (index) =>
             GlobalKey<NavigatorState>(debugLabel: 'adaptive-branch-$index'),
       );
+      if (_router.currentBranch.value >= _shell.branches.length) {
+        _router.currentBranch.value = _shell.branches.length - 1;
+      }
     }
   }
 
