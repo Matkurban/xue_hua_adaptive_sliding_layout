@@ -1058,20 +1058,22 @@ final class _GlobalLayer extends _Layer {
   const _GlobalLayer();
 }
 
-/// 路由动画完成后只把自身 [OverlayEntry.opaque] 设为 true（遮挡下层绘制、命中与语义），
-/// 而向 [NavigatorState] 报告 [opaque] 为 false，避免 [NavigatorState] 把下层路由标为
-/// `offstage = true` 进而导致 `_ModalScopeState` 关闭下层 [TickerMode] 清空页内图标。
+/// 保持 `ModalRoute.opaqueOf(context)` 与 [AdaptiveRoute.opaque] 一致（确保 Android
+/// `FadeForwardsPageTransitionsBuilder` 在压入三级路由时为下层页面包裹不透明的
+/// `ColoredBox(color: ColorScheme.of(context).surface)` 底衬，避免露出黑色底幕闪烁），
+/// 同时始终将自身 [OverlayEntry.opaque] 保持为 `false`，避免 [OverlayState] 关闭下层路由的
+/// [TickerMode] 导致下层页面触发 `didChangeDependencies` 重解析图标闪白。
 mixin _KeepUnderlyingTickerRoute<T> on PageRoute<T> {
   AdaptiveRouteMatch get match;
 
   _AdaptivePage<T>? _lastBuiltPage;
 
   @override
-  bool get opaque => false;
+  bool get opaque => match.route.opaque;
 
-  void _syncOverlayOpaque(AnimationStatus status) {
-    if (!match.route.opaque || overlayEntries.isEmpty) return;
-    overlayEntries.first.opaque = status == AnimationStatus.completed;
+  void _keepOverlayNonOpaque([AnimationStatus? _]) {
+    if (overlayEntries.isEmpty) return;
+    overlayEntries.first.opaque = false;
   }
 
   @override
@@ -1081,18 +1083,21 @@ mixin _KeepUnderlyingTickerRoute<T> on PageRoute<T> {
       _lastBuiltPage = current;
     }
     super.install();
-    animation?.addStatusListener(_syncOverlayOpaque);
-    if (animation != null) {
-      _syncOverlayOpaque(animation!.status);
-    }
+    animation?.addStatusListener(_keepOverlayNonOpaque);
+    _keepOverlayNonOpaque();
   }
 
   @override
   void didAdd() {
     super.didAdd();
-    if (animation != null) {
-      _syncOverlayOpaque(animation!.status);
-    }
+    _keepOverlayNonOpaque();
+  }
+
+  @override
+  TickerFuture didPush() {
+    final future = super.didPush();
+    _keepOverlayNonOpaque();
+    return future;
   }
 
   @override
@@ -1110,7 +1115,7 @@ mixin _KeepUnderlyingTickerRoute<T> on PageRoute<T> {
 
   @override
   void dispose() {
-    animation?.removeStatusListener(_syncOverlayOpaque);
+    animation?.removeStatusListener(_keepOverlayNonOpaque);
     super.dispose();
   }
 }

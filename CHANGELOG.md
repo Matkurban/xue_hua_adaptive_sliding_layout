@@ -1,3 +1,14 @@
+## 3.6.0
+
+### Breaking Changes ⚠️
+
+- **Removed `AdaptiveShellChrome`**: Compact bottom navigation bars no longer require wrapping the shell child in `AdaptiveShellChrome`. Hosts now use a standard `Scaffold(body: child, bottomNavigationBar: NavigationBar(...))` directly in `AdaptiveShellRoute.builder`.
+
+### Bug Fixes & Improvements
+
+- **Native compact popup elevation over `bottomNavigationBar`**: On compact widths (`< compactMaxWidth`), imperative pageless routes pushed from branch pages (such as `showModalBottomSheet`, `showDialog`, and `showMenu` with `useRootNavigator: false`) are automatically routed to the outer shell chrome `Navigator`, covering `Scaffold.bottomNavigationBar` without cloning the bar into each page route.
+- **Eliminated dark semi-transparent flash on nested page transitions**: Fixed `_KeepUnderlyingTickerRoute` where `overlayEntries.first.opaque` (the `ModalBarrier` entry) was set to `true` instead of `overlayEntries.last.opaque` (the page content entry), and where clearing `opaque` during `secondaryAnimation` exposed the black barrier canvas behind the shrinking parent route when pushing a third-level route (e.g., `/contacts` → `/contacts/:id` → `/contacts/:id/edit`). The route content entry (`overlayEntries.last`) now stays opaque once its enter animation completes.
+
 ## 3.5.6
 
 ### Bug Fixes & Improvements
