@@ -87,11 +87,12 @@ AdaptiveRouter _createRouter({
             ],
           );
           if (shellBar && shell.isCompact) {
-            built = AdaptiveShellChrome(
-              bottomNavigationBar: (context) => NavigationBar(
-                key: Key('shell-bar'),
+            built = Scaffold(
+              body: built,
+              bottomNavigationBar: NavigationBar(
+                key: const Key('shell-bar'),
                 selectedIndex: 0,
-                destinations: [
+                destinations: const [
                   NavigationDestination(icon: Icon(Icons.mail), label: 'mail'),
                   NavigationDestination(
                     icon: Icon(Icons.contacts),
@@ -99,7 +100,6 @@ AdaptiveRouter _createRouter({
                   ),
                 ],
               ),
-              child: built,
             );
           }
           if (shellPopScope) built = maybePopScope(built);

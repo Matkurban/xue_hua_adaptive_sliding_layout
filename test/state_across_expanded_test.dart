@@ -74,10 +74,12 @@ AdaptiveRouter _router() => AdaptiveRouter(
   routes: [
     AdaptiveShellRoute(
       builder: (context, shell, child) => shell.isCompact
-          ? AdaptiveShellChrome(
-              bottomNavigationBar: (context) =>
-                  const SizedBox(height: 56, child: Text('bottom-bar')),
-              child: child,
+          ? Scaffold(
+              body: child,
+              bottomNavigationBar: const SizedBox(
+                height: 56,
+                child: Text('bottom-bar'),
+              ),
             )
           : Scaffold(
               body: Row(

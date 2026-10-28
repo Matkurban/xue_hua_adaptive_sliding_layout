@@ -68,13 +68,12 @@ AdaptiveRouter _router() => AdaptiveRouter(
   initialLocation: '/a',
   routes: [
     AdaptiveShellRoute(
-      builder: (context, shell, child) => shell.isCompact
-          ? AdaptiveShellChrome(
-              bottomNavigationBar: (context) =>
-                  const SizedBox(height: 56, child: Text('bar')),
-              child: child,
-            )
-          : Scaffold(body: child),
+      builder: (context, shell, child) => Scaffold(
+        body: child,
+        bottomNavigationBar: shell.isCompact
+            ? const SizedBox(height: 56, child: Text('bar'))
+            : null,
+      ),
       branches: [
         AdaptiveBranch(
           routes: [

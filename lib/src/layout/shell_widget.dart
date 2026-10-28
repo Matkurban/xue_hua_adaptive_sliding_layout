@@ -3,7 +3,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/breadcrumbs.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/pane_scope.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/layout/shell_bar.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/sliding_pane_viewport.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_router.dart';
 
@@ -27,6 +26,9 @@ class AdaptiveShellHost extends StatefulWidget {
 }
 
 class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
+  final GlobalKey<NavigatorState> _chromeNavKey = GlobalKey<NavigatorState>(
+    debugLabel: 'adaptive-chrome-nav',
+  );
   late List<GlobalKey<NavigatorState>> _navKeys;
 
   /// 上一次 build 时是否 compact；用来发现跨 compact 断点的那一帧。
@@ -122,6 +124,7 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
                 for (var i = 0; i < stacks.length; i++)
                   _BranchView(
                     navigatorKey: _navKeys[i],
+                    chromeNavigatorKey: compact ? _chromeNavKey : null,
                     router: _router,
                     shell: _shell,
                     branchIndex: i,
@@ -146,6 +149,7 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
               fit: StackFit.expand,
               children: [
                 Navigator(
+                  key: _chromeNavKey,
                   pages: [
                     MaterialPage<void>(
                       key: const ValueKey<String>('adaptive-chrome'),
@@ -194,6 +198,7 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
 class _BranchView extends StatelessWidget {
   const _BranchView({
     required this.navigatorKey,
+    this.chromeNavigatorKey,
     required this.router,
     required this.shell,
     required this.branchIndex,
@@ -203,6 +208,7 @@ class _BranchView extends StatelessWidget {
   });
 
   final GlobalKey<NavigatorState> navigatorKey;
+  final GlobalKey<NavigatorState>? chromeNavigatorKey;
   final AdaptiveRouter router;
   final AdaptiveShellRoute shell;
   final int branchIndex;
@@ -229,12 +235,12 @@ class _BranchView extends StatelessWidget {
   Widget build(BuildContext context) {
     if (matches.isEmpty) return const SizedBox.shrink();
     if (visibleCount < 2) {
-      final frame = adaptiveShellBarFrame(context);
-      return Navigator(
+      return _BranchNavigator(
         key: navigatorKey,
+        chromeNavigatorKey: chromeNavigatorKey,
         pages: [
           for (final match in matches)
-            router.pageFor(context, match, frame: frame, keepState: true),
+            router.pageFor(context, match, keepState: true),
         ],
         onDidRemovePage: router.handleRemovedPage,
         transitionDelegate: router.relocationDelegate,
@@ -281,6 +287,42 @@ class _BranchView extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// 分支 1 栏 Navigator：compact 下命令式压入的弹层（如 `showModalBottomSheet`、
+/// `showDialog` 且 `useRootNavigator: false`）自动挂到外层 [chromeNavigatorKey]，
+/// 从而盖住宿主 [Scaffold.bottomNavigationBar]。
+class _BranchNavigator extends Navigator {
+  const _BranchNavigator({
+    super.key,
+    this.chromeNavigatorKey,
+    required super.pages,
+    super.onDidRemovePage,
+    required super.transitionDelegate,
+  });
+
+  final GlobalKey<NavigatorState>? chromeNavigatorKey;
+
+  @override
+  NavigatorState createState() => _BranchNavigatorState();
+}
+
+class _BranchNavigatorState extends NavigatorState {
+  NavigatorState? get _chromeNavigator {
+    final w = widget;
+    if (w is! _BranchNavigator) return null;
+    final state = w.chromeNavigatorKey?.currentState;
+    return state != null && state.mounted ? state : null;
+  }
+
+  @override
+  Future<T?> push<T extends Object?>(Route<T> route) {
+    final chrome = _chromeNavigator;
+    if (chrome != null && route.settings is! Page) {
+      return chrome.push<T>(route);
+    }
+    return super.push<T>(route);
   }
 }
 

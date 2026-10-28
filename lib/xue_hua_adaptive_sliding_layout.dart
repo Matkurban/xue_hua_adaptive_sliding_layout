@@ -8,7 +8,6 @@ library;
 export 'src/layout/breadcrumbs.dart';
 export 'src/layout/layout_breakpoints.dart';
 export 'src/layout/pane_scope.dart';
-export 'src/layout/shell_bar.dart' show AdaptiveShellChrome;
 export 'src/layout/sliding_pane_viewport.dart';
 
 export 'src/router/adaptive_branch.dart';

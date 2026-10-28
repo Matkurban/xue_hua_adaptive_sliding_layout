@@ -526,12 +526,9 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   }
 
   /// 根 Navigator / 1 栏 Navigator 使用的 [Page]。
-  ///
-  /// [frame] 只包页面子树，不包之后压上的弹层。compact 底栏用它给页面加底部留白。
   Page<dynamic> pageFor(
     BuildContext context,
     AdaptiveRouteMatch match, {
-    Widget Function(Widget child)? frame,
     bool keepState = false,
   }) {
     final raw = buildMatch(context, match);
@@ -544,8 +541,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
       match: match,
       branchIndex: currentBranch.value,
       error: _current.error,
-      hasFrame: frame != null,
-      child: frame == null ? built : frame(built),
+      child: built,
     );
   }
 
@@ -1007,7 +1003,6 @@ class _AdaptivePage<T> extends Page<T> {
     required this.child,
     this.branchIndex = 0,
     this.error,
-    this.hasFrame = false,
     super.key,
     super.name,
     super.arguments,
@@ -1018,11 +1013,9 @@ class _AdaptivePage<T> extends Page<T> {
   final Widget child;
   final int branchIndex;
   final Exception? error;
-  final bool hasFrame;
 
   bool shouldRebuild(_AdaptivePage<T> oldPage) {
-    return hasFrame != oldPage.hasFrame ||
-        branchIndex != oldPage.branchIndex ||
+    return branchIndex != oldPage.branchIndex ||
         name != oldPage.name ||
         !identical(arguments, oldPage.arguments) ||
         !mapEquals(match.queryParameters, oldPage.match.queryParameters) ||

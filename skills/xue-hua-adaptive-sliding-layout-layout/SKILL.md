@@ -27,7 +27,7 @@ API: [references/breakpoints.md](references/breakpoints.md), [references/shell-s
 * `AdaptiveBranch.placeholder` wins over `AdaptiveShellRoute.placeholder` for the empty right pane.
 * `showBreadcrumbs` gates the strip (expanded). Click a non-last crumb → `router.popUntil((m) => m.pageKey == pane.key)`. Empty titles are omitted; the last crumb is not tappable.
 * Escape calls `maybePop` when `escapePops` is true, unless the primary focus is an `EditableTextState`.
-* On compact, `hidesBottomBarWhenPushed` (default `true`) covers the host bottom bar when a page is pushed. A tab-root sheet covers that bar only if the shell uses `AdaptiveShellChrome` (`bottomNavigationBar` is a `WidgetBuilder`; the bar is inside the page route). `Scaffold.bottomNavigationBar` sits outside the branch navigator, so `useRootNavigator: false` leaves the bar visible. Medium rail and expanded panes keep host chrome. `fullscreen` / `fullscreenDialog` cover the shell at every width.
+* On compact, `hidesBottomBarWhenPushed` (default `true`) covers the host bottom bar when a page is pushed. Dialogs and bottom sheets shown on compact (`useRootNavigator: false`) are routed to the shell chrome navigator and cover `Scaffold.bottomNavigationBar` automatically. Medium rail and expanded panes keep host chrome. `fullscreen` / `fullscreenDialog` cover the shell at every width.
 * Theme colors come from `Theme.of(context)`. 1-column page transitions use `ThemeData.pageTransitionsTheme`.
 * Off-screen panes: ticker / focus / hit-testing disabled; `PageStorage` + pane `key` keep `State` when they slide back.
 
@@ -39,15 +39,15 @@ API: [references/breakpoints.md](references/breakpoints.md), [references/shell-s
 AdaptiveShellRoute(
   builder: (context, shell, child) {
     if (shell.isCompact) {
-      return AdaptiveShellChrome(
-        bottomNavigationBar: (context) => NavigationBar(
+      return Scaffold(
+        body: child,
+        bottomNavigationBar: NavigationBar(
           selectedIndex: shell.currentIndex,
           onDestinationSelected: shell.goBranch,
           destinations: const [
             NavigationDestination(icon: Icon(Icons.mail), label: 'Mail'),
           ],
         ),
-        child: child,
       );
     }
     return Scaffold(
@@ -69,7 +69,7 @@ AdaptiveShellRoute(
 )
 ```
 
-Always put `child` in the content area. On compact, do not also set `Scaffold.bottomNavigationBar`.
+Always put `child` in the content area.
 
 ### Live pane title
 

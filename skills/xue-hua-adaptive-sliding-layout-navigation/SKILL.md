@@ -112,7 +112,7 @@ router.pop(result);
 
 ```dart
 // Inside a sheet shown from the left pane (useRootNavigator: false).
-// On compact, the same flag covers the bottom bar when the shell is AdaptiveShellChrome.
+// On compact, the same flag covers Scaffold.bottomNavigationBar automatically.
 onTap: () {
   final router = AdaptiveRouter.of(context);
   router.pushNamed('/contacts/42');   // opens the right pane

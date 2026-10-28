@@ -28,17 +28,18 @@ final router = AdaptiveRouter(
   routes: [
     AdaptiveShellRoute(
       builder: (context, shell, child) {
-        if (!shell.isCompact) return Scaffold(body: child);
-        return AdaptiveShellChrome(
-          bottomNavigationBar: (context) => NavigationBar(
-            selectedIndex: shell.currentIndex,
-            onDestinationSelected: (i) => shell.goBranch(i),
-            destinations: const [
-              NavigationDestination(icon: Icon(Icons.mail), label: 'Mail'),
-              NavigationDestination(icon: Icon(Icons.people), label: 'Contacts'),
-            ],
-          ),
-          child: child,
+        return Scaffold(
+          body: child,
+          bottomNavigationBar: shell.isCompact
+              ? NavigationBar(
+                  selectedIndex: shell.currentIndex,
+                  onDestinationSelected: (i) => shell.goBranch(i),
+                  destinations: const [
+                    NavigationDestination(icon: Icon(Icons.mail), label: 'Mail'),
+                    NavigationDestination(icon: Icon(Icons.people), label: 'Contacts'),
+                  ],
+                )
+              : null,
         );
       },
       branches: [
@@ -109,7 +110,6 @@ Browser back, deep links, and refresh all change the location and take the same 
 | [`AdaptiveRouter`](lib/src/router/adaptive_router.dart)       | `RouterConfig<AdaptiveRouteMatchList>`. Verbs + `namedLocation` / `refresh`. Signals: `location`, `matches`, `currentBranch`. `of` / `maybeOf`.                                                                                                                                                           |
 | [`AdaptiveRoute`](lib/src/router/adaptive_route.dart)                  | One page. `path`, optional `name`, `builder`, `title`, `fullscreen`, `fullscreenDialog`, `hidesBottomBarWhenPushed`, `opaque`, `barrierColor`, `barrierDismissible`, `transitionsBuilder`, `redirect`, `onExit`, nested `routes`. Child paths are relative; `:param` is one path segment. First match wins. |
 | [`AdaptiveShellRoute`](lib/src/router/adaptive_shell_route.dart)             | Tabs + adaptive chrome. One per tree, top-level only. `builder(context, shell, child)`, `branches`, `breakpoints`, sash / breadcrumbs, plus [UI knobs](#customizing-the-ui).                                                                                                                              |
-| [`AdaptiveShellChrome`](lib/src/layout/shell_bar.dart)        | Compact bottom bar. `bottomNavigationBar` is a `WidgetBuilder`. The bar is inside the branch page, so a sheet with `useRootNavigator: false` covers it. Do not also set `Scaffold.bottomNavigationBar`.                                                                                                    |
 | [`AdaptiveBranch`](lib/src/router/adaptive_branch.dart)                 | One tab. `routes`, optional `initialLocation` / `placeholder`.                                                                                                                                                                                                                                            |
 | [`AdaptiveRouteState`](lib/src/router/adaptive_route_state.dart)       | Builder argument, also `AdaptiveRouteState.of(context)`: `uri`, `matchedLocation`, `fullPath`, `name`, `pathParameters`, `queryParameters`, `arguments`, `error`, `pageKey`.                                                                                                                              |
 | [`AdaptiveShellState`](lib/src/router/adaptive_shell_state.dart)       | Shell builder argument: `currentIndex`, width / breakpoints, `leftPaneFraction`, `goBranch`.                                                                                                                                                                                                              |
@@ -191,7 +191,7 @@ Use **builders** to replace structure, **value parameters** to tweak numbers. De
 | `AdaptiveShellRoute.breadcrumbsBuilder` | `AdaptiveBreadcrumbs` | Replace the whole strip (`showBreadcrumbs` still gates it) |
 | `escapePops`                            | true                  | Escape calls `maybePop`                                    |
 
-On medium / expanded, nested pages keep the host chrome. On compact, pages below the branch root hide the bottom bar by default (`hidesBottomBarWhenPushed`; set `false` to keep it). That flag is only about pushed pages. A bottom sheet on the tab root covers the bar when the shell uses [`AdaptiveShellChrome`](lib/src/layout/shell_bar.dart) (`useRootNavigator: false`). `Scaffold.bottomNavigationBar` sits outside the branch navigator, so the same sheet leaves the bar visible. `fullscreen` / `fullscreenDialog` cover the shell at every width.
+On medium / expanded, nested pages keep the host chrome. On compact, pages below the branch root hide the bottom bar by default (`hidesBottomBarWhenPushed`; set `false` to keep it). Bottom sheets and dialogs shown on compact (`useRootNavigator: false`) are routed to the shell chrome navigator, so they cover `Scaffold.bottomNavigationBar` automatically. `fullscreen` / `fullscreenDialog` cover the shell at every width.
 
 ### Overlay routes (`AdaptiveRoute`)
 
@@ -231,7 +231,7 @@ Breakpoints (window width, not device type):
 | Shopping cart | A separate branch with its own stack | [`pages/shopping_cart`](example/lib/pages/shopping_cart/) |
 | Contacts | `/contacts/:id` → `edit`; `onExit` confirm dialog with `useRootNavigator: AdaptivePaneScope.maybeOf(context) != null` | [`pages/contacts`](example/lib/pages/contacts/) |
 | Mine | Nested `theme` / `account`; `about` as `fullscreenDialog` | [`pages/mine`](example/lib/pages/mine/) |
-| Shell / frame | Compact `NavigationBar` in `AdaptiveShellChrome` vs `NavigationRail`, re-tap tab → `goBranch(i, initialLocation: true)`, `PopScope` exit confirm, width presets | [`app_shell.dart`](example/lib/shell/app_shell.dart), [`size_preset_screen.dart`](example/lib/pages/size_preset_screen.dart) |
+| Shell / frame | Compact `Scaffold(bottomNavigationBar: NavigationBar(...))` vs `NavigationRail`, re-tap tab → `goBranch(i, initialLocation: true)`, `PopScope` exit confirm, width presets | [`app_shell.dart`](example/lib/shell/app_shell.dart), [`size_preset_screen.dart`](example/lib/pages/size_preset_screen.dart) |
 | Router | Full route table: breadcrumbs, custom `resizeHandleBuilder`, `Card` panes, `errorBuilder` 404 | [`router_pages.dart`](example/lib/router/router_pages.dart) |
 
 ```bash
@@ -269,7 +269,7 @@ There is no compatibility shim. See [CHANGELOG](CHANGELOG.md).
 ## Caveats
 
 - Page `State` is **kept** when the window crosses 600 or 840 (Navigator ↔ viewport, branch ↔ cover Navigator). Each page subtree has a stable `GlobalKey` that is handed over in the same frame. Text fields, scroll positions and counters survive. State is still dropped when the page itself leaves the stack. Keep durable data in the URL, a signal, or a store anyway. Tab switches keep the pages of every visited branch too, including detail pages that cover the bottom bar on compact screens. A branch you have not opened yet is not built until its first visit.
-- Pane overlays are **clipped**. Dialogs, menus, and sheets inside a column should use the root overlay: `useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`. On compact, a tab-root sheet stays on the nearest navigator and covers the bottom bar only when the shell uses `AdaptiveShellChrome`.
+- Pane overlays are **clipped**. Dialogs, menus, and sheets inside a column should use the root overlay: `useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`. On compact, a sheet or dialog with `useRootNavigator: false` is routed to the shell chrome navigator and covers `Scaffold.bottomNavigationBar`.
 - Context-free `pop` / `maybePop` (including Escape and system back) only handle the top pane and root / shell popups that cover everything. A pane-local sheet / dialog in the **other** pane is not closed by them: use `maybePopFrom(context)` (with a context inside the popup or inside that page), or `Navigator.pop(context)` from inside the popup. Stacked popups close outermost first (root → shell → pane).
 - `onExit` runs for `maybePop`, system back, and browser back, after the top page's `PopScope`. At the bottom of the stack, system back asks the route's `onExit` before the app exits. `pop` / `pushReplacementNamed` / `pushNamedAndRemoveUntil` run immediately, like `Navigator`.
 - Web keeps hash URLs. The platform's initial route wins over `initialLocation` when it is not `/`.

@@ -117,7 +117,7 @@ final bool hidesBottomBarWhenPushed; // default true
 
 `false` keeps the page inside the branch navigator (bar stays). Medium rail and expanded two-pane layout ignore this. Branch **root** pages and `onRootNavigator` pages ignore this.
 
-This flag does not affect bottom sheets. A tab-root sheet covers the bar when the shell builder uses `AdaptiveShellChrome` and `showModalBottomSheet(..., useRootNavigator: false)`.
+This flag does not affect bottom sheets. On compact, `showModalBottomSheet(..., useRootNavigator: false)` is routed to the shell chrome navigator and covers `Scaffold.bottomNavigationBar` automatically.
 
 ### Overlay / transition fields
 

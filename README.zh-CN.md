@@ -28,17 +28,18 @@ final router = AdaptiveRouter(
   routes: [
     AdaptiveShellRoute(
       builder: (context, shell, child) {
-        if (!shell.isCompact) return Scaffold(body: child);
-        return AdaptiveShellChrome(
-          bottomNavigationBar: (context) => NavigationBar(
-            selectedIndex: shell.currentIndex,
-            onDestinationSelected: (i) => shell.goBranch(i),
-            destinations: const [
-              NavigationDestination(icon: Icon(Icons.mail), label: 'Mail'),
-              NavigationDestination(icon: Icon(Icons.people), label: 'Contacts'),
-            ],
-          ),
-          child: child,
+        return Scaffold(
+          body: child,
+          bottomNavigationBar: shell.isCompact
+              ? NavigationBar(
+                  selectedIndex: shell.currentIndex,
+                  onDestinationSelected: (i) => shell.goBranch(i),
+                  destinations: const [
+                    NavigationDestination(icon: Icon(Icons.mail), label: 'Mail'),
+                    NavigationDestination(icon: Icon(Icons.people), label: 'Contacts'),
+                  ],
+                )
+              : null,
         );
       },
       branches: [
@@ -109,7 +110,6 @@ flowchart LR
 | [`AdaptiveRouter`](lib/src/router/adaptive_router.dart)       | `RouterConfig<AdaptiveRouteMatchList>`。动词 + `namedLocation` / `refresh`。只读 signal：`location`、`matches`、`currentBranch`。`of` / `maybeOf`。                                                                                                                                |
 | [`AdaptiveRoute`](lib/src/router/adaptive_route.dart)                  | 一页。`path`、可选 `name`、`builder`、`title`、`fullscreen`、`fullscreenDialog`、`hidesBottomBarWhenPushed`、`opaque`、`barrierColor`、`barrierDismissible`、`transitionsBuilder`、`redirect`、`onExit`、子 `routes`。子路径为相对路径，`:param` 表示一个路径段。顺序优先匹配。 |
 | [`AdaptiveShellRoute`](lib/src/router/adaptive_shell_route.dart)             | Tab + 自适应壳。整棵树只允许一个，且必须顶层。`builder(context, shell, child)`、`branches`、`breakpoints`、分割条 / 面包屑，以及 [UI 属性](#自定义-ui)。                                                                                                                           |
-| [`AdaptiveShellChrome`](lib/src/layout/shell_bar.dart)        | compact 底栏。`bottomNavigationBar` 是 `WidgetBuilder`。底栏在分支页面内部，`useRootNavigator: false` 的 sheet 能盖住它。不要再同时设置 `Scaffold.bottomNavigationBar`。                                                                                                                    |
 | [`AdaptiveBranch`](lib/src/router/adaptive_branch.dart)                 | 一个 Tab。`routes`，可选 `initialLocation` / `placeholder`。                                                                                                                                                                                                                       |
 | [`AdaptiveRouteState`](lib/src/router/adaptive_route_state.dart)       | builder 参数，也可 `AdaptiveRouteState.of(context)`：`uri`、`matchedLocation`、`fullPath`、`name`、`pathParameters`、`queryParameters`、`arguments`、`error`、`pageKey`。                                                                                                          |
 | [`AdaptiveShellState`](lib/src/router/adaptive_shell_state.dart)       | 壳 builder 参数：`currentIndex`、宽度 / 断点、`leftPaneFraction`、`goBranch`。                                                                                                                                                                                                     |
@@ -191,7 +191,7 @@ UI 订阅用 `SignalBuilder`（见 `signals_flutter`）。
 | `AdaptiveShellRoute.breadcrumbsBuilder` | `AdaptiveBreadcrumbs` | 整条替换（仍受 `showBreadcrumbs` 控制） |
 | `escapePops`                            | true                  | Escape 调用 `maybePop`                  |
 
-medium / expanded 下嵌套页保留宿主 chrome；compact 下分支根以下的页默认隐藏底栏（`hidesBottomBarWhenPushed`，设 false 保留）。这个属性只管推入的页面。Tab 根页上的 bottom sheet 要盖住底栏，壳层要用 [`AdaptiveShellChrome`](lib/src/layout/shell_bar.dart)（`useRootNavigator: false`）。`Scaffold.bottomNavigationBar` 在分支 Navigator 外面，同样的 sheet 盖不住底栏。`fullscreen` / `fullscreenDialog` 在任何宽度都盖住壳。
+medium / expanded 下嵌套页保留宿主 chrome；compact 下分支根以下的页默认隐藏底栏（`hidesBottomBarWhenPushed`，设 false 保留）。compact 下 `useRootNavigator: false` 的 bottom sheet / dialog 会自动挂到壳层 chrome Navigator 上，直接盖住 `Scaffold.bottomNavigationBar`。`fullscreen` / `fullscreenDialog` 在任何宽度都盖住壳。
 
 ### 覆盖层（`AdaptiveRoute`）
 
@@ -231,7 +231,7 @@ medium / expanded 下嵌套页保留宿主 chrome；compact 下分支根以下�
 | 购物车 | 拥有独立栈的单独分支 | [`pages/shopping_cart`](example/lib/pages/shopping_cart/) |
 | 联系人 | `/contacts/:id` → `edit`；`onExit` 确认框，`useRootNavigator: AdaptivePaneScope.maybeOf(context) != null` | [`pages/contacts`](example/lib/pages/contacts/) |
 | 我的 | 嵌套 `theme` / `account`；`about` 以 `fullscreenDialog` 打开 | [`pages/mine`](example/lib/pages/mine/) |
-| 壳 / 外框 | compact 下 `AdaptiveShellChrome` 里的 `NavigationBar` 与宽屏 `NavigationRail`、再点当前 Tab → `goBranch(i, initialLocation: true)`、`PopScope` 退出确认、宽度预设 | [`app_shell.dart`](example/lib/shell/app_shell.dart)、[`size_preset_screen.dart`](example/lib/pages/size_preset_screen.dart) |
+| 壳 / 外框 | compact 下 `Scaffold(bottomNavigationBar: NavigationBar(...))` 与宽屏 `NavigationRail`、再点当前 Tab → `goBranch(i, initialLocation: true)`、`PopScope` 退出确认、宽度预设 | [`app_shell.dart`](example/lib/shell/app_shell.dart)、[`size_preset_screen.dart`](example/lib/pages/size_preset_screen.dart) |
 | 路由 | 完整路由表：面包屑、自定义 `resizeHandleBuilder`、`Card` 栏位、`errorBuilder` 404 | [`router_pages.dart`](example/lib/router/router_pages.dart) |
 
 ```bash
@@ -269,7 +269,7 @@ cd example && flutter test
 ## 注意点
 
 - 窗口跨越 600 或 840 断点时，页面 `State` 会**保留**（Navigator ↔ 视口、分支 ↔ cover Navigator）。每个页面子树有稳定的 `GlobalKey`，在同一帧里交接。输入框文字、滚动位置、计数器都不会丢。页面本身出栈时 State 仍会销毁。持久数据依旧建议放进 URL、signal 或存储。切换 Tab 时，已访问分支的页面同样保留，包括 compact 下盖住底栏的详情页。还没打开过的分支在第一次切过去之前不会构建。
-- 栏内 Overlay 会被裁剪。对话框、菜单、底部弹层请走根 Overlay：`useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`。compact 上 Tab 根页的 sheet 仍走最近的 Navigator；只有壳层用了 `AdaptiveShellChrome` 时才会盖住底栏。
+- 栏内 Overlay 会被裁剪。对话框、菜单、底部弹层请走根 Overlay：`useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`。compact 上 `useRootNavigator: false` 的 sheet / dialog 会自动走壳层 chrome Navigator 并盖住 `Scaffold.bottomNavigationBar`。
 - 无 context 的 `pop` / `maybePop`（含 Escape、系统返回）只处理栈顶那一栏和盖住整体的根 / 壳层弹层。双栏时另一栏的栏内 sheet / dialog 不会被它关掉：用 `maybePopFrom(context)`（context 在弹层里或那一页里），或在弹层内直接 `Navigator.pop(context)`。多个弹层叠着时外层先关（根 → 壳层 → 栏内）。
 - `onExit` 在 `maybePop`、系统返回、浏览器后退时询问，且排在页内 `PopScope` 之后。栈底时系统返回会在退出应用前询问该路由的 `onExit`。`pop` / `pushReplacementNamed` / `pushNamedAndRemoveUntil` 与 Navigator 一样直接执行。
 - Web 保持 hash URL。平台带了非 `/` 的初始路由时，优先于 `initialLocation`。

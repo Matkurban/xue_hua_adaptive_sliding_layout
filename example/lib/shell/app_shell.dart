@@ -75,8 +75,9 @@ class AppShell extends StatelessWidget {
         if (!didPop) _confirmExit(context);
       },
       child: shell.isCompact
-          ? AdaptiveShellChrome(
-              bottomNavigationBar: (context) => NavigationBar(
+          ? Scaffold(
+              body: child,
+              bottomNavigationBar: NavigationBar(
                 selectedIndex: shell.currentIndex,
                 onDestinationSelected: _select,
                 destinations: [
@@ -87,7 +88,6 @@ class AppShell extends StatelessWidget {
                     ),
                 ],
               ),
-              child: child,
             )
           : Scaffold(
               backgroundColor: theme.colorScheme.surfaceContainerHighest,

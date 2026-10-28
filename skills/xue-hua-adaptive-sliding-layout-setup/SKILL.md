@@ -49,17 +49,18 @@ final router = AdaptiveRouter(
   routes: [
     AdaptiveShellRoute(
       builder: (context, shell, child) {
-        if (!shell.isCompact) return Scaffold(body: child);
-        return AdaptiveShellChrome(
-          bottomNavigationBar: (context) => NavigationBar(
-            selectedIndex: shell.currentIndex,
-            onDestinationSelected: shell.goBranch,
-            destinations: const [
-              NavigationDestination(icon: Icon(Icons.mail), label: 'Mail'),
-              NavigationDestination(icon: Icon(Icons.people), label: 'Contacts'),
-            ],
-          ),
-          child: child,
+        return Scaffold(
+          body: child,
+          bottomNavigationBar: shell.isCompact
+              ? NavigationBar(
+                  selectedIndex: shell.currentIndex,
+                  onDestinationSelected: shell.goBranch,
+                  destinations: const [
+                    NavigationDestination(icon: Icon(Icons.mail), label: 'Mail'),
+                    NavigationDestination(icon: Icon(Icons.people), label: 'Contacts'),
+                  ],
+                )
+              : null,
         );
       },
       branches: [
