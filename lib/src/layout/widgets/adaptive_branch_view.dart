@@ -39,6 +39,26 @@ class AdaptiveBranchView extends StatelessWidget {
         SlidingPane(
           key: match.pageKey,
           title: match.title,
+          transitionsBuilder: match.route.effectiveTransitionsBuilder(
+            shellTransitionType: shell.transitionType,
+            shellTransitionsBuilder: shell.transitionsBuilder,
+            shellTransitionCurve: shell.transitionCurve,
+            shellReverseTransitionCurve: shell.reverseTransitionCurve,
+            routerTransitionType: router.defaultTransitionType,
+            routerTransitionsBuilder: router.defaultTransitionsBuilder,
+            routerTransitionCurve: router.defaultTransitionCurve,
+            routerReverseTransitionCurve: router.defaultReverseTransitionCurve,
+          ),
+          transitionDuration: match.route.effectiveTransitionDuration(
+            shellTransitionDuration: shell.transitionDuration,
+            shellTransitionType: shell.transitionType,
+            routerTransitionDuration: router.defaultTransitionDuration,
+            routerTransitionType: router.defaultTransitionType,
+          ),
+          transitionCurve:
+              match.route.transitionCurve ??
+              shell.transitionCurve ??
+              router.defaultTransitionCurve,
           child: keepState
               ? router.keepAlive(match, router.buildMatch(context, match))
               : router.buildMatch(context, match),

@@ -426,5 +426,69 @@ void main() {
         router.dispose();
       },
     );
+
+    testWidgets(
+      'wide-screen 2-column mode animates right pane entrance on depth 1->2 and 2->2 replacement',
+      (tester) async {
+        await setWidth(tester, 1000);
+        final router = AdaptiveRouter(
+          initialLocation: '/home',
+          routes: [
+            AdaptiveShellRoute(
+              builder: (context, shell, child) => Scaffold(body: child),
+              branches: [
+                AdaptiveBranch(
+                  routes: [
+                    AdaptiveRoute(
+                      path: '/home',
+                      builder: (context, state) =>
+                          const Scaffold(body: Text('left-home')),
+                      routes: [
+                        AdaptiveRoute(
+                          path: 'a',
+                          transitionType: AdaptivePageTransitionType.scale,
+                          builder: (context, state) =>
+                              const Scaffold(body: Text('right-a')),
+                        ),
+                        AdaptiveRoute(
+                          path: 'b',
+                          builder: (context, state) =>
+                              const Scaffold(body: Text('right-b')),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+        expect(find.text('left-home'), findsOneWidget);
+
+        // Push right-a (depth 1 -> 2 with ScaleTransition)
+        router.pushNamed('/home/a');
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.byType(ScaleTransition), findsWidgets);
+        await tester.pumpAndSettle();
+        expect(find.text('right-a'), findsOneWidget);
+
+        // Replace right-a with right-b (depth 2 -> 2 with default right-pane slide+fade)
+        router.pushNamedAndRemoveUntil(
+          '/home/b',
+          (m) => m.matchedLocation == '/home',
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.byType(FractionalTranslation), findsWidgets);
+        await tester.pumpAndSettle();
+        expect(find.text('right-b'), findsOneWidget);
+
+        router.dispose();
+      },
+    );
   });
 }

@@ -14,9 +14,9 @@ class TransitionsPage extends StatefulWidget {
 class _TransitionsPageState extends State<TransitionsPage> {
   String _selectedCategory = '全部';
 
-  /// 双栏宽屏下点击卡片默认使用全屏路由（`fullscreen: true`）以直接展示完整页面过场动画；
-  /// 关闭时在双栏下走右侧分栏滑入，单栏下始终走页面过场动画。
-  bool _preferFullscreenOnExpanded = true;
+  /// 双栏宽屏下点击卡片默认在右栏打开并直接展示过渡动画；
+  /// 开启本开关时改为在根 Navigator 上全屏播放过渡动画。
+  bool _preferFullscreenOnExpanded = false;
 
   static const List<String> _categories = <String>[
     '全部',
@@ -32,9 +32,15 @@ class _TransitionsPageState extends State<TransitionsPage> {
     AdaptivePageTransitionType type, {
     required bool fullscreen,
   }) {
-    final modePrefix = fullscreen ? 'fullscreen' : 'branch';
-    AdaptiveRouter.of(context)
-        .pushNamed('${RouterNames.transitions}/$modePrefix/${type.name}');
+    final router = AdaptiveRouter.of(context);
+    if (fullscreen) {
+      router.pushNamed('${RouterNames.transitions}/fullscreen/${type.name}');
+      return;
+    }
+    router.pushNamedAndRemoveUntil(
+      '${RouterNames.transitions}/branch/${type.name}',
+      (match) => match.matchedLocation == RouterNames.transitions,
+    );
   }
 
   @override
@@ -66,8 +72,8 @@ class _TransitionsPageState extends State<TransitionsPage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  title: const Text('双栏宽屏下点击卡片直接全屏演示过场动画'),
-                  subtitle: const Text('开启时在根 Navigator 上播放完整过渡动画；关闭时在右栏内打开子页'),
+                  title: const Text('双栏宽屏下使用全屏根路由预览'),
+                  subtitle: const Text('关闭时在右侧分栏直接播放过渡动画；开启时在根 Navigator 全屏播放'),
                   value: _preferFullscreenOnExpanded,
                   onChanged: (value) {
                     setState(() => _preferFullscreenOnExpanded = value);
@@ -177,7 +183,7 @@ class _TransitionsPageState extends State<TransitionsPage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  tooltip: '在右栏打开',
+                                  tooltip: '在右栏打开并播放过渡动画',
                                   onPressed: () => _openPreview(
                                     context,
                                     item.type,
@@ -196,7 +202,7 @@ class _TransitionsPageState extends State<TransitionsPage> {
                                     fullscreen: true,
                                   ),
                                   icon: const Icon(
-                                    Icons.play_circle_outline,
+                                    Icons.fullscreen_outlined,
                                     size: 22,
                                   ),
                                 ),

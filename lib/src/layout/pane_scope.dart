@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:signals_flutter/signals_flutter.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_route.dart';
 
 /// 包每一栏（含右侧占位槽）。[index] 为栈下标；等于 `panes.length` 时是占位槽。
 typedef SlidingPaneFrameBuilder = Widget Function(
@@ -15,9 +16,12 @@ class SlidingPane {
     required this.key,
     required this.title,
     required this.child,
+    this.transitionsBuilder,
+    this.transitionDuration,
+    this.transitionCurve,
   });
 
-  /// 与 [AdaptiveRouteMatch.pageKey] 对齐。
+  /// 与 `AdaptiveRouteMatch.pageKey` 对齐。
   final LocalKey key;
 
   /// 面包屑标题，页面可写成 `AdaptivePaneScope.maybeOf(context)?.title.value = …`。
@@ -25,6 +29,15 @@ class SlidingPane {
 
   /// 栏内页面，由栏内 Navigator 挂载。
   final Widget child;
+
+  /// 右栏页面入场或切换时的自定义过渡构建器；为 null 时使用默认右栏滑入淡出过渡。
+  final AdaptiveTransitionsBuilder? transitionsBuilder;
+
+  /// 右栏页面入场过渡时长；为 null 时回落到 `SlidingPaneViewport.slideDuration`。
+  final Duration? transitionDuration;
+
+  /// 右栏页面入场过渡曲线；为 null 时回落到 `SlidingPaneViewport.slideCurve`。
+  final Curve? transitionCurve;
 }
 
 /// 当前栏在滑动栈中的位置。仅双栏栏位内非 null。
@@ -50,7 +63,7 @@ class AdaptivePaneScope extends InheritedWidget {
   /// 本栏面包屑标题。
   final Signal<String> title;
 
-  /// 弹出栈顶。通常接到 [AdaptiveRouter.maybePop]。
+  /// 弹出栈顶。通常接到 `AdaptiveRouter.maybePop`。
   final VoidCallback pop;
 
   /// 本栏是否为栈顶。
