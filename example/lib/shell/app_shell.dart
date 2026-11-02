@@ -20,6 +20,7 @@ class AppShell extends StatelessWidget {
     (icon: Icons.home_outlined, label: '首页'),
     (icon: Icons.shopping_cart_outlined, label: '购物车'),
     (icon: Icons.contacts_outlined, label: '联系人'),
+    (icon: Icons.animation_outlined, label: '过渡'),
     (icon: Icons.person_outlined, label: '我的'),
   ];
 

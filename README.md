@@ -200,9 +200,13 @@ On medium / expanded, nested pages keep the host chrome. On compact, pages below
 | `hidesBottomBarWhenPushed` | true    | Compact only: the pushed page covers the host bottom bar (same name as iOS). Two panes on desktop are untouched |
 | `fullscreen`               | false   | Root Navigator at every width, normal transition                                                                 |
 | `fullscreenDialog`         | false   | Root Navigator at every width as a Material fullscreen dialog (slide up, close icon)                            |
-| `opaque`                   | true    | With `transitionsBuilder`: transparent photo viewer                                                             |
-| `barrierColor`             | null    | With `transitionsBuilder`                                                                                       |
+| `opaque`                   | true    | With `transitionType` / `transitionsBuilder`: transparent photo viewer                                          |
+| `barrierColor`             | null    | With `transitionType` / `transitionsBuilder`                                                                    |
 | `barrierDismissible`       | false   | Tap the barrier to pop                                                                                          |
+| `transitionType`           | null    | Built-in `AdaptivePageTransitionType` preset (`platform`, `none`, `fade`, `fadeThrough`, `slideRightToLeft`, `slideLeftToRight`, `slideBottomToTop`, `slideTopToBottom`, `cupertino`, `scale`, `fadeAndScale`, `sharedAxisHorizontal`, `sharedAxisVertical`, `sharedAxisScale`, `rotation`, `size`, `flipHorizontal`, `flipVertical`); also configurable as defaults on `AdaptiveShellRoute` and `AdaptiveRouter` |
+| `transitionsBuilder`       | null    | Custom builder or `AdaptivePageTransitions.*` factory; overrides `transitionType`                               |
+| `transitionDuration` / `reverseTransitionDuration` | 300ms | Enter / exit animation duration (`0ms` for `none`, `400ms` for 3D flips)                                        |
+| `transitionCurve` / `reverseTransitionCurve` | `Curves.easeOutCubic` | Forward and reverse easing curves for built-in transition presets                                               |
 
 See [`example/lib/router/router_pages.dart`](example/lib/router/router_pages.dart) for a `Card` `paneBuilder`, a 32px breadcrumb strip via `breadcrumbsBuilder`, a custom `resizeHandleBuilder`, and a translucent `/home/:id/preview` overlay.
 

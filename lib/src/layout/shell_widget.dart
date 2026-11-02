@@ -1,17 +1,15 @@
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/layout/breadcrumbs.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/layout/pane_scope.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/layout/sliding_pane_viewport.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/layout/widgets/adaptive_branch_view.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/layout/widgets/parked_covers.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_route_match.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_router.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_shell_route.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_shell_scope.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_shell_state.dart';
 
-import '../router/adaptive_route_match.dart';
-import '../router/adaptive_shell_route.dart';
-import '../router/adaptive_shell_scope.dart';
-import '../router/adaptive_shell_state.dart';
-
-/// 内部壳：按宽度在 1 栏 [Navigator] 与 2 栏 [SlidingPaneViewport] 之间切换。
+/// 内部壳：按宽度在 1 栏 [Navigator] 与 2 栏 `SlidingPaneViewport` 之间切换。
 ///
 /// 由 [AdaptiveRouter] 的根 Navigator 挂载。宿主 UI 走 [AdaptiveShellRoute.builder]。
 class AdaptiveShellHost extends StatefulWidget {
@@ -74,7 +72,7 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
 
   /// compact 下分支栈从哪个下标起盖住宿主 chrome；没有则 [matches.length]。
   ///
-  /// 第一个 [AdaptiveRoute.hidesBottomBarWhenPushed] 为 true 的非根页及其上
+  /// 第一个 `AdaptiveRoute.hidesBottomBarWhenPushed` 为 true 的非根页及其上
   /// 所有页都进 cover Navigator：更深的页在栈上本来就在它之上。
   static int _coverStart(List<AdaptiveRouteMatch> matches) {
     for (var i = 1; i < matches.length; i++) {
@@ -122,7 +120,7 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
               sizing: StackFit.expand,
               children: [
                 for (var i = 0; i < stacks.length; i++)
-                  _BranchView(
+                  AdaptiveBranchView(
                     navigatorKey: _navKeys[i],
                     chromeNavigatorKey: compact ? _chromeNavKey : null,
                     router: _router,
@@ -163,7 +161,7 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
                   transitionDelegate: _router.relocationDelegate,
                 ),
                 for (var i = 0; i < stacks.length; i++)
-                  _ParkedCovers(
+                  ParkedCovers(
                     key: ValueKey<int>(i),
                     router: _router,
                     pages: compact && i != shellState.currentIndex
@@ -190,189 +188,6 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
           },
         );
       },
-    );
-  }
-}
-
-/// 单个分支：1 栏用声明式 Navigator，2 栏用滑动视口。
-class _BranchView extends StatelessWidget {
-  const _BranchView({
-    required this.navigatorKey,
-    this.chromeNavigatorKey,
-    required this.router,
-    required this.shell,
-    required this.branchIndex,
-    required this.matches,
-    required this.visibleCount,
-    required this.keepState,
-  });
-
-  final GlobalKey<NavigatorState> navigatorKey;
-  final GlobalKey<NavigatorState>? chromeNavigatorKey;
-  final AdaptiveRouter router;
-  final AdaptiveShellRoute shell;
-  final int branchIndex;
-  final List<AdaptiveRouteMatch> matches;
-  final int visibleCount;
-
-  /// 非 compact：页面子树带 GlobalKey，跨 840 断点搬家时保留 State。
-  final bool keepState;
-
-  List<SlidingPane> _panes(BuildContext context) {
-    return [
-      for (final match in matches)
-        SlidingPane(
-          key: match.pageKey,
-          title: match.title,
-          child: keepState
-              ? router.keepAlive(match, router.buildMatch(context, match))
-              : router.buildMatch(context, match),
-        ),
-    ];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (matches.isEmpty) return const SizedBox.shrink();
-    if (visibleCount < 2) {
-      return _BranchNavigator(
-        key: navigatorKey,
-        chromeNavigatorKey: chromeNavigatorKey,
-        pages: [
-          for (final match in matches)
-            router.pageFor(context, match, keepState: true),
-        ],
-        onDidRemovePage: router.handleRemovedPage,
-        transitionDelegate: router.relocationDelegate,
-      );
-    }
-    final panes = _panes(context);
-    final branch = shell.branches[branchIndex];
-    void onSelect(SlidingPane pane) {
-      router.popUntil((match) => match.pageKey == pane.key);
-    }
-
-    return Column(
-      children: [
-        if (shell.showBreadcrumbs)
-          shell.breadcrumbsBuilder?.call(context, panes, onSelect) ??
-              AdaptiveBreadcrumbs(panes: panes, onSelect: onSelect),
-        Expanded(
-          child: SignalBuilder(
-            builder: (context) {
-              return SlidingPaneViewport(
-                panes: panes,
-                visibleCount: visibleCount,
-                onPop: router.maybePop,
-                placeholder:
-                    branch.placeholder?.call(context) ??
-                    shell.placeholder?.call(context),
-                leftPaneFraction: router.leftPaneFraction.value,
-                minLeftPaneFraction: shell.minLeftPaneFraction,
-                minRightPaneFraction: shell.minRightPaneFraction,
-                onLeftPaneFractionChanged: (value) {
-                  router.leftPaneFraction.value = value;
-                  shell.onLeftPaneFractionChanged?.call(value);
-                },
-                resizeLeftPane: shell.resizable,
-                slideDuration: shell.slideDuration,
-                slideCurve: shell.slideCurve,
-                paneBuilder: shell.paneBuilder,
-                resizeHandleWidth: shell.resizeHandleWidth,
-                resizeHandleMargin: shell.resizeHandleMargin,
-                resizeHandleBuilder: shell.resizeHandleBuilder,
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// 分支 1 栏 Navigator：compact 下命令式压入的弹层（如 `showModalBottomSheet`、
-/// `showDialog` 且 `useRootNavigator: false`）自动挂到外层 [chromeNavigatorKey]，
-/// 从而盖住宿主 [Scaffold.bottomNavigationBar]。
-class _BranchNavigator extends Navigator {
-  const _BranchNavigator({
-    super.key,
-    this.chromeNavigatorKey,
-    required super.pages,
-    super.onDidRemovePage,
-    required super.transitionDelegate,
-  });
-
-  final GlobalKey<NavigatorState>? chromeNavigatorKey;
-
-  @override
-  NavigatorState createState() => _BranchNavigatorState();
-}
-
-class _BranchNavigatorState extends NavigatorState {
-  NavigatorState? get _chromeNavigator {
-    final w = widget;
-    if (w is! _BranchNavigator) return null;
-    final state = w.chromeNavigatorKey?.currentState;
-    return state != null && state.mounted ? state : null;
-  }
-
-  @override
-  Future<T?> push<T extends Object?>(Route<T> route) {
-    final chrome = _chromeNavigator;
-    if (chrome != null && route.settings is! Page) {
-      return chrome.push<T>(route);
-    }
-    return super.push<T>(route);
-  }
-}
-
-/// cover Navigator 的透明底页：[Navigator.pages] 不能为空，所以每个分支的
-/// cover Navigator 常驻这一页，页面清空时它什么也不画（外层 IgnorePointer）。
-class _CoverBasePage extends Page<void> {
-  const _CoverBasePage()
-    : super(key: const ValueKey<String>('adaptive-cover-base'));
-
-  @override
-  Route<void> createRoute(BuildContext context) {
-    return PageRouteBuilder<void>(
-      settings: this,
-      opaque: false,
-      transitionDuration: Duration.zero,
-      reverseTransitionDuration: Duration.zero,
-      pageBuilder: (_, _, _) => const SizedBox.shrink(),
-    );
-  }
-}
-
-/// 非当前分支的 cover 页停放处：离屏、无焦点、无语义、不响应点击，也不向上
-/// 发 NavigationNotification（返回键只看 chrome Navigator）。
-class _ParkedCovers extends StatelessWidget {
-  const _ParkedCovers({super.key, required this.router, required this.pages});
-
-  final AdaptiveRouter router;
-  final List<AdaptiveRouteMatch> pages;
-
-  @override
-  Widget build(BuildContext context) {
-    return Offstage(
-      child: ExcludeFocus(
-        child: ExcludeSemantics(
-          child: IgnorePointer(
-            child: NotificationListener<NavigationNotification>(
-              onNotification: (_) => true,
-              child: Navigator(
-                pages: [
-                  const _CoverBasePage(),
-                  for (final match in pages)
-                    router.pageFor(context, match, keepState: true),
-                ],
-                onDidRemovePage: router.handleRemovedPage,
-                transitionDelegate: router.relocationDelegate,
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

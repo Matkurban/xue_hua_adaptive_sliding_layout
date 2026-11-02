@@ -17,6 +17,9 @@ sealed class RouterNames {
   ///联系人
   static const String contacts = '/contacts';
 
+  ///页面过渡动画预览
+  static const String transitions = '/transitions';
+
   ///我的
   static const String mine = '/mine';
 

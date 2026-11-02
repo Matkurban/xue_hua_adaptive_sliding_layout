@@ -1,10 +1,12 @@
 import 'package:flutter/widgets.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/transitions/adaptive_page_transition_type.dart';
 
 import '../layout/breadcrumbs.dart';
 import '../layout/layout_breakpoints.dart';
 import '../layout/pane_scope.dart';
 import '../layout/sliding_pane_viewport.dart';
 import 'adaptive_branch.dart';
+import 'adaptive_route.dart';
 import 'adaptive_route_base.dart';
 import 'adaptive_shell_state.dart';
 
@@ -43,6 +45,12 @@ class AdaptiveShellRoute extends AdaptiveRouteBase {
     this.resizeHandleBuilder,
     this.slideDuration = SlidingPaneViewport.defaultSlideDuration,
     this.slideCurve = SlidingPaneViewport.defaultSlideCurve,
+    this.transitionType,
+    this.transitionsBuilder,
+    this.transitionDuration,
+    this.reverseTransitionDuration,
+    this.transitionCurve,
+    this.reverseTransitionCurve,
     this.escapePops = true,
   }) : assert(
          branches.isNotEmpty,
@@ -85,10 +93,10 @@ class AdaptiveShellRoute extends AdaptiveRouteBase {
   /// 包每一栏；透传到 [SlidingPaneViewport.paneBuilder]。
   final SlidingPaneFrameBuilder? paneBuilder;
 
-  ///分隔条的宽度
+  /// 分隔条的宽度。
   final double resizeHandleWidth;
 
-  ///分隔条的外边距，实现显示的是：宽度 - 左右外边距的和
+  /// 分隔条的外边距，实现显示的是：宽度 - 左右外边距的和。
   final EdgeInsets? resizeHandleMargin;
 
   /// 只换分割条视觉；透传到 [SlidingPaneViewport.resizeHandleBuilder]。
@@ -100,6 +108,24 @@ class AdaptiveShellRoute extends AdaptiveRouteBase {
   /// 栏位平移动画曲线。
   final Curve slideCurve;
 
-  /// 为 false 时 Escape 不再调用 [AdaptiveRouter.maybePop]。
+  /// 壳内分支页面默认过渡动画类型（单栏模式下生效，低于单页 [AdaptiveRoute.transitionType]）。
+  final AdaptivePageTransitionType? transitionType;
+
+  /// 壳内分支页面默认过渡构建器（单栏模式下生效，低于单页 [AdaptiveRoute.transitionsBuilder]）。
+  final AdaptiveTransitionsBuilder? transitionsBuilder;
+
+  /// 壳内分支页面默认入场过渡时长。
+  final Duration? transitionDuration;
+
+  /// 壳内分支页面默认退场过渡时长。
+  final Duration? reverseTransitionDuration;
+
+  /// 壳内分支页面默认正向过渡曲线。
+  final Curve? transitionCurve;
+
+  /// 壳内分支页面默认反向过渡曲线。
+  final Curve? reverseTransitionCurve;
+
+  /// 为 false 时 Escape 不再调用 `AdaptiveRouter.maybePop`。
   final bool escapePops;
 }

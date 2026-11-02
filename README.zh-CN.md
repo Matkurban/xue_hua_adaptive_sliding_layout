@@ -200,9 +200,13 @@ medium / expanded 下嵌套页保留宿主 chrome；compact 下分支根以下�
 | `hidesBottomBarWhenPushed` | true  | 仅 compact：推入本页时盖住宿主 bottom bar（与 iOS 同名属性同义）；桌面双栏不受影响       |
 | `fullscreen`               | false | 任何宽度都上根 Navigator，普通过场 |
 | `fullscreenDialog`         | false | 任何宽度都上根 Navigator，按 Material 全屏对话框呈现（上滑、关闭图标）                   |
-| `opaque`                   | true  | 配合 `transitionsBuilder`：透明照片查看器                                                |
-| `barrierColor`             | null  | 配合 `transitionsBuilder`                                                                |
-| `barrierDismissible`       | false | 点屏障弹出                                                                               |
+| `opaque`                   | true  | 配合 `transitionType` / `transitionsBuilder`：透明照片查看器                                                     |
+| `barrierColor`             | null  | 配合 `transitionType` / `transitionsBuilder`                                                                    |
+| `barrierDismissible`       | false | 点屏障弹出                                                                                                      |
+| `transitionType`           | null  | 内置 18 种 `AdaptivePageTransitionType` 预设（`platform`、`none`、`fade`、`fadeThrough`、`slideRightToLeft`、`slideLeftToRight`、`slideBottomToTop`、`slideTopToBottom`、`cupertino`、`scale`、`fadeAndScale`、`sharedAxisHorizontal`、`sharedAxisVertical`、`sharedAxisScale`、`rotation`、`size`、`flipHorizontal`、`flipVertical`）；也可在 `AdaptiveShellRoute` 与 `AdaptiveRouter` 上配置默认过渡 |
+| `transitionsBuilder`       | null  | 自定义过场构建器或 `AdaptivePageTransitions.*` 工厂方法；优先级高于 `transitionType`                            |
+| `transitionDuration` / `reverseTransitionDuration` | 300ms | 入场 / 退场动画时长（`none` 默认 `0ms`，3D 翻转默认 `400ms`）                                                   |
+| `transitionCurve` / `reverseTransitionCurve` | `Curves.easeOutCubic` | 内置过渡预设的正向与反向动画曲线                                                                                |
 
 完整例子见 [`example/lib/router/router_pages.dart`](example/lib/router/router_pages.dart)：`Card` 式 `paneBuilder`、通过 `breadcrumbsBuilder` 定制的 32px 面包屑、自定义 `resizeHandleBuilder`，以及半透明的 `/home/:id/preview` 覆盖层。
 

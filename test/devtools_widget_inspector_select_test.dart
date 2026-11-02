@@ -10,10 +10,7 @@ List<RenderObject> _inspectorHitTest(Offset position, RenderObject root) {
   final regularHits = <RenderObject>[];
   final edgeHits = <RenderObject>[];
 
-  bool hitTestHelper(
-    RenderObject object,
-    Matrix4 transform,
-  ) {
+  bool hitTestHelper(RenderObject object, Matrix4 transform) {
     var hit = false;
     final inverse = Matrix4.tryInvert(transform);
     if (inverse == null) return false;
@@ -149,99 +146,96 @@ void main() {
 
   for (final hidesBottomBar in [true, false]) {
     for (final width in [400.0, 700.0]) {
-      testWidgets(
-        'DevTools WidgetInspector hits only top page at width $width '
-        '(hidesBottomBar: $hidesBottomBar)',
-        (tester) async {
-          tester.view.devicePixelRatio = 1;
-          tester.view.physicalSize = Size(width, 800);
-          addTearDown(tester.view.resetPhysicalSize);
-          addTearDown(tester.view.resetDevicePixelRatio);
+      testWidgets('DevTools WidgetInspector hits only top page at width $width '
+          '(hidesBottomBar: $hidesBottomBar)', (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = Size(width, 800);
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
 
-          final router = _buildRouter(hidesBottomBar: hidesBottomBar);
-          await tester.pumpWidget(MaterialApp.router(routerConfig: router));
-          await tester.pumpAndSettle();
+        final router = _buildRouter(hidesBottomBar: hidesBottomBar);
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
 
-          final rootRenderObject = tester.renderObject(
-            find.byKey(const Key('root-tiny-target'), skipOffstage: false),
-          );
+        final rootRenderObject = tester.renderObject(
+          find.byKey(const Key('root-tiny-target'), skipOffstage: false),
+        );
 
-          // 进入第 2 层页面 (/home/level1)
-          router.pushNamed('/home/level1');
-          await tester.pumpAndSettle();
+        // 进入第 2 层页面 (/home/level1)
+        router.pushNamed('/home/level1');
+        await tester.pumpAndSettle();
 
-          final level1RenderObject = tester.renderObject(
-            find.byKey(const Key('level1-small-target'), skipOffstage: false),
-          );
-          final center = tester.getCenter(
-            find.byKey(const Key('level1-small-target')),
-          );
-          var hits = _inspectorHitTest(center, tester.binding.renderViews.first);
-          expect(hits, contains(level1RenderObject));
-          expect(
-            hits,
-            isNot(contains(rootRenderObject)),
-            reason: 'Root page render object must be offstage in DevTools',
-          );
+        final level1RenderObject = tester.renderObject(
+          find.byKey(const Key('level1-small-target'), skipOffstage: false),
+        );
+        final center = tester.getCenter(
+          find.byKey(const Key('level1-small-target')),
+        );
+        var hits = _inspectorHitTest(center, tester.binding.renderViews.first);
+        expect(hits, contains(level1RenderObject));
+        expect(
+          hits,
+          isNot(contains(rootRenderObject)),
+          reason: 'Root page render object must be offstage in DevTools',
+        );
 
-          // 进入第 3 层页面 (/home/level1/level2)
-          router.pushNamed('/home/level1/level2');
-          await tester.pumpAndSettle();
+        // 进入第 3 层页面 (/home/level1/level2)
+        router.pushNamed('/home/level1/level2');
+        await tester.pumpAndSettle();
 
-          final level2RenderObject = tester.renderObject(
-            find.byKey(const Key('level2-large-target'), skipOffstage: false),
-          );
-          final center2 = tester.getCenter(
-            find.byKey(const Key('level2-large-target')),
-          );
-          hits = _inspectorHitTest(center2, tester.binding.renderViews.first);
-          expect(hits, contains(level2RenderObject));
-          expect(
-            hits,
-            isNot(contains(rootRenderObject)),
-            reason: 'Root page must not be hit at depth 3',
-          );
-          expect(
-            hits,
-            isNot(contains(level1RenderObject)),
-            reason: 'Level 1 page must not be hit at depth 3',
-          );
+        final level2RenderObject = tester.renderObject(
+          find.byKey(const Key('level2-large-target'), skipOffstage: false),
+        );
+        final center2 = tester.getCenter(
+          find.byKey(const Key('level2-large-target')),
+        );
+        hits = _inspectorHitTest(center2, tester.binding.renderViews.first);
+        expect(hits, contains(level2RenderObject));
+        expect(
+          hits,
+          isNot(contains(rootRenderObject)),
+          reason: 'Root page must not be hit at depth 3',
+        );
+        expect(
+          hits,
+          isNot(contains(level1RenderObject)),
+          reason: 'Level 1 page must not be hit at depth 3',
+        );
 
-          // 压入根 Navigator 全屏页 (/fullscreen)
-          router.pushNamed('/fullscreen');
-          await tester.pumpAndSettle();
+        // 压入根 Navigator 全屏页 (/fullscreen)
+        router.pushNamed('/fullscreen');
+        await tester.pumpAndSettle();
 
-          final fullscreenRenderObject = tester.renderObject(
-            find.byKey(const Key('fullscreen-target'), skipOffstage: false),
-          );
-          final centerFs = tester.getCenter(
-            find.byKey(const Key('fullscreen-target')),
-          );
-          hits = _inspectorHitTest(centerFs, tester.binding.renderViews.first);
-          expect(hits, contains(fullscreenRenderObject));
-          expect(hits, isNot(contains(rootRenderObject)));
-          expect(hits, isNot(contains(level1RenderObject)));
-          expect(hits, isNot(contains(level2RenderObject)));
+        final fullscreenRenderObject = tester.renderObject(
+          find.byKey(const Key('fullscreen-target'), skipOffstage: false),
+        );
+        final centerFs = tester.getCenter(
+          find.byKey(const Key('fullscreen-target')),
+        );
+        hits = _inspectorHitTest(centerFs, tester.binding.renderViews.first);
+        expect(hits, contains(fullscreenRenderObject));
+        expect(hits, isNot(contains(rootRenderObject)));
+        expect(hits, isNot(contains(level1RenderObject)));
+        expect(hits, isNot(contains(level2RenderObject)));
 
-          // 逐层 pop 回退后恢复可命中
-          router.pop();
-          await tester.pumpAndSettle();
-          hits = _inspectorHitTest(center2, tester.binding.renderViews.first);
-          expect(hits, contains(level2RenderObject));
-          expect(hits, isNot(contains(rootRenderObject)));
+        // 逐层 pop 回退后恢复可命中
+        router.pop();
+        await tester.pumpAndSettle();
+        hits = _inspectorHitTest(center2, tester.binding.renderViews.first);
+        expect(hits, contains(level2RenderObject));
+        expect(hits, isNot(contains(rootRenderObject)));
 
-          router.pop();
-          await tester.pumpAndSettle();
-          hits = _inspectorHitTest(center, tester.binding.renderViews.first);
-          expect(hits, contains(level1RenderObject));
-          expect(hits, isNot(contains(rootRenderObject)));
+        router.pop();
+        await tester.pumpAndSettle();
+        hits = _inspectorHitTest(center, tester.binding.renderViews.first);
+        expect(hits, contains(level1RenderObject));
+        expect(hits, isNot(contains(rootRenderObject)));
 
-          router.pop();
-          await tester.pumpAndSettle();
-          hits = _inspectorHitTest(center, tester.binding.renderViews.first);
-          expect(hits, contains(rootRenderObject));
-        },
-      );
+        router.pop();
+        await tester.pumpAndSettle();
+        hits = _inspectorHitTest(center, tester.binding.renderViews.first);
+        expect(hits, contains(rootRenderObject));
+      });
     }
   }
 

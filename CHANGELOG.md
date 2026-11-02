@@ -1,3 +1,23 @@
+## 3.6.2
+
+### Features
+
+- **18 built-in configurable page transition animations**: Added `AdaptivePageTransitionType` enum and `AdaptivePageTransitions` builder factory (`lib/src/transitions/`) with 18 ready-to-use page transition presets:
+  - `platform` (default Material / theme transition), `none` (instant zero-duration switch), `fade`, `fadeThrough` (Material 3 fade-through), `slideRightToLeft`, `slideLeftToRight`, `slideBottomToTop`, `slideTopToBottom`, `cupertino` (iOS/macOS parallax slide), `scale`, `fadeAndScale`, `sharedAxisHorizontal` (Material Shared Axis X), `sharedAxisVertical` (Material Shared Axis Y), `sharedAxisScale` (Material Shared Axis Z), `rotation`, `size`, `flipHorizontal` (3D Y-axis perspective flip), and `flipVertical` (3D X-axis perspective flip).
+- **Hierarchical transition configuration (`AdaptiveRoute` > `AdaptiveShellRoute` > `AdaptiveRouter`)**:
+  - `AdaptiveRoute` gained `transitionType`, `reverseTransitionDuration`, `transitionCurve`, and `reverseTransitionCurve` alongside `transitionsBuilder` and `transitionDuration`.
+  - `AdaptiveShellRoute` gained `transitionType`, `transitionsBuilder`, `transitionDuration`, `reverseTransitionDuration`, `transitionCurve`, and `reverseTransitionCurve` for shell-level branch defaults.
+  - `AdaptiveRouter` gained `defaultTransitionType`, `defaultTransitionsBuilder`, `defaultTransitionDuration`, `defaultReverseTransitionDuration`, `defaultTransitionCurve`, and `defaultReverseTransitionCurve` for global router defaults.
+- **Opaque secondary-animation backdrop for custom transitions**: `AdaptiveTransitionRoute` automatically wraps opaque routes in a `ColorScheme.surface` backdrop while `secondaryAnimation` is active (such as 3rd-level pushes with `fadeThrough`, `sharedAxis*`, or parallax slides), preventing deeper pages from bleeding through while keeping `OffstagePageHost` and `TickerMode` guarantees intact.
+
+### Architecture & Refactoring
+
+- **Modular Dart/Flutter package directory structure**: Split oversized multi-class files into single-responsibility modules without changing any public APIs:
+  - Extracted layout widgets from `sliding_pane_viewport.dart` and `shell_widget.dart` into `lib/src/layout/widgets/` (`pane_resize_handle.dart`, `sliding_pane_strip.dart`, `sliding_pane_frame.dart`, `pane_card_shell.dart`, `pane_navigator.dart`, `sliding_dismissal_binder.dart`, `sliding_placeholder.dart`, `adaptive_branch_view.dart`, `adaptive_branch_navigator.dart`, and `parked_covers.dart`).
+  - Extracted router internals, delegates, pages, and routes from `adaptive_router.dart` into `lib/src/router/delegate/` (`adaptive_route_information_parser.dart`, `adaptive_router_delegate.dart`, `relocation_transition_delegate.dart`), `lib/src/router/internal/` (`branch_stack_store.dart`, `navigation_layer.dart`, `popup_layer_resolver.dart`, `route_redirect_resolver.dart`), `lib/src/router/pages/` (`adaptive_page.dart`, `adaptive_container_page.dart`, `adaptive_page_host.dart`), and `lib/src/router/routes/` (`adaptive_material_route.dart`, `adaptive_transition_route.dart`, `exit_guard_route_mixin.dart`, `keep_underlying_ticker_route.dart`).
+  - Split `example/lib/model/domains/product.dart` into `product.dart` and `mock_products.dart`.
+- **Tests**: Added `test/page_transitions_test.dart` covering all 18 `AdaptivePageTransitionType` values, parameterized `AdaptivePageTransitions` builders, 3-level nested push/pop `secondaryAnimation` and `OffstagePageHost` behavior, and route/shell/router override precedence.
+
 ## 3.6.1
 
 ### Bug Fixes & Improvements

@@ -1,10 +1,9 @@
-import 'dart:math' as math;
-
-import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/layout/offstage_host.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/pane_scope.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/layout/widgets/pane_resize_handle.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/layout/widgets/sliding_pane_strip.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/layout/widgets/sliding_placeholder.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_shell_route.dart';
 
 /// 水平滑动视口：始终展示栈顶最后 [visibleCount] 栏。
@@ -93,13 +92,13 @@ class SlidingPaneViewport extends StatefulWidget {
   /// 缺省双栏用卡片、单栏平铺。
   final SlidingPaneFrameBuilder? paneBuilder;
 
-  ///分隔条的宽度
+  /// 分隔条的宽度。
   final double resizeHandleWidth;
 
-  ///分隔条的外边距，实现显示的是：宽度 - 左右外边距的和
+  /// 分隔条的外边距，实现显示的是：宽度 - 左右外边距的和。
   final EdgeInsets? resizeHandleMargin;
 
-  /// 只换分割条视觉；Listener、光标、44px 命中区仍由包负责。
+  /// 只换分割条视觉；Listener、光标、命中区仍由包负责。
   final ResizeHandleWidgetBuilder? resizeHandleBuilder;
 
   /// 把 [fraction] 夹到 [minLeftPaneFraction] 与 `1 - minRightPaneFraction` 之间。
@@ -236,7 +235,7 @@ class _SlidingPaneViewportState extends State<SlidingPaneViewport> {
           key: _viewportKey,
           clipBehavior: Clip.hardEdge,
           children: [
-            _SlidingPaneStrip(
+            SlidingPaneStrip(
               panes: widget.panes,
               visibleCount: count,
               leftPaneWidth: leftPaneWidth,
@@ -244,7 +243,7 @@ class _SlidingPaneViewportState extends State<SlidingPaneViewport> {
               viewportHeight: height,
               decoratePanes: count == 2,
               onPop: widget.onPop,
-              placeholder: widget.placeholder ?? const _SlidingPlaceholder(),
+              placeholder: widget.placeholder ?? const SlidingPlaceholder(),
               slideDuration: widget.slideDuration,
               slideCurve: widget.slideCurve,
               paneBuilder: widget.paneBuilder,
@@ -255,7 +254,7 @@ class _SlidingPaneViewportState extends State<SlidingPaneViewport> {
                 top: 0,
                 bottom: 0,
                 width: widget.resizeHandleWidth,
-                child: _PaneResizeHandle(
+                child: PaneResizeHandle(
                   onPointerDown: _onHandlePointerDown,
                   resizeHandleWidth: widget.resizeHandleWidth,
                   resizeHandleMargin: widget.resizeHandleMargin,
@@ -263,7 +262,6 @@ class _SlidingPaneViewportState extends State<SlidingPaneViewport> {
                   builder: widget.resizeHandleBuilder,
                 ),
               ),
-
             if (_dragging)
               const Positioned.fill(
                 child: MouseRegion(
@@ -274,495 +272,6 @@ class _SlidingPaneViewportState extends State<SlidingPaneViewport> {
           ],
         );
       },
-    );
-  }
-}
-
-/// 双栏中间的拖动手柄：视觉 2px，命中宽度 [resizeHandleWidth]。
-class _PaneResizeHandle extends StatefulWidget {
-  const _PaneResizeHandle({
-    required this.onPointerDown,
-    this.isDragging = false,
-    this.builder,
-    this.resizeHandleMargin,
-    required this.resizeHandleWidth,
-  });
-
-  final ValueChanged<PointerDownEvent> onPointerDown;
-  final bool isDragging;
-  final ResizeHandleWidgetBuilder? builder;
-  final double resizeHandleWidth;
-  final EdgeInsets? resizeHandleMargin;
-
-  @override
-  State<_PaneResizeHandle> createState() => _PaneResizeHandleState();
-}
-
-class _PaneResizeHandleState extends State<_PaneResizeHandle> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    // 悬停中 或 拖拽中 均保持高亮色
-    final isActive = _isHovered || widget.isDragging;
-    final handleColor = isActive ? colorScheme.primary : colorScheme.surfaceDim;
-
-    return MouseRegion(
-      cursor: SystemMouseCursors.resizeColumn,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: Listener(
-        key: SlidingPaneViewport.resizeHandleKey,
-        behavior: HitTestBehavior.translucent,
-        onPointerDown: widget.onPointerDown,
-        child:
-            widget.builder?.call(context, isActive) ??
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              curve: Curves.easeInOut,
-              height: double.infinity,
-              width: widget.resizeHandleWidth,
-              margin: widget.resizeHandleMargin,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: handleColor,
-              ),
-            ),
-      ),
-    );
-  }
-}
-
-/// 整条水平页带：深度变化时平移动画，宽度变化时跳到目标偏移。
-class _SlidingPaneStrip extends StatefulWidget {
-  const _SlidingPaneStrip({
-    required this.panes,
-    required this.visibleCount,
-    required this.leftPaneWidth,
-    required this.rightPaneWidth,
-    required this.viewportHeight,
-    required this.decoratePanes,
-    required this.placeholder,
-    required this.onPop,
-    required this.slideDuration,
-    required this.slideCurve,
-    this.paneBuilder,
-  });
-
-  final List<SlidingPane> panes;
-  final int visibleCount;
-  final double leftPaneWidth;
-  final double rightPaneWidth;
-  final double viewportHeight;
-  final bool decoratePanes;
-  final Widget placeholder;
-  final VoidCallback? onPop;
-  final Duration slideDuration;
-  final Curve slideCurve;
-  final SlidingPaneFrameBuilder? paneBuilder;
-
-  @override
-  State<_SlidingPaneStrip> createState() => _SlidingPaneStripState();
-}
-
-class _SlidingPaneStripState extends State<_SlidingPaneStrip>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late CurvedAnimation _curved;
-  late final ValueNotifier<bool> _settledNotifier;
-  double _fromOffset = 0;
-  double _toOffset = 0;
-
-  void _onSlideStatusChanged(AnimationStatus _) {
-    _settledNotifier.value = !_controller.isAnimating;
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.slideDuration,
-    )..addStatusListener(_onSlideStatusChanged);
-    _settledNotifier = ValueNotifier<bool>(!_controller.isAnimating);
-    _curved = CurvedAnimation(parent: _controller, curve: widget.slideCurve);
-    _toOffset = _targetOffset(widget);
-    _fromOffset = _toOffset;
-  }
-
-  @override
-  void didUpdateWidget(covariant _SlidingPaneStrip oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.slideDuration != oldWidget.slideDuration) {
-      _controller.duration = widget.slideDuration;
-    }
-    if (widget.slideCurve != oldWidget.slideCurve) {
-      _curved.dispose();
-      _curved = CurvedAnimation(parent: _controller, curve: widget.slideCurve);
-    }
-    final next = _targetOffset(widget);
-    final widthChanged =
-        oldWidget.leftPaneWidth != widget.leftPaneWidth ||
-        oldWidget.rightPaneWidth != widget.rightPaneWidth;
-    final depthChanged = oldWidget.panes.length != widget.panes.length;
-    if (widthChanged && !depthChanged) {
-      _fromOffset = next;
-      _toOffset = next;
-      _controller.value = 1;
-      _settledNotifier.value = !_controller.isAnimating;
-      return;
-    }
-    if (next == _toOffset) return;
-    final current = _fromOffset + (_toOffset - _fromOffset) * _curved.value;
-    _fromOffset = current;
-    _toOffset = next;
-    _controller
-      ..stop()
-      ..forward(from: 0);
-    _settledNotifier.value = !_controller.isAnimating;
-  }
-
-  double _targetOffset(_SlidingPaneStrip w) {
-    final start = math.max(0, w.panes.length - w.visibleCount);
-    return start * w.leftPaneWidth;
-  }
-
-  double _paneWidth(_SlidingPaneStrip w, int index) {
-    if (w.visibleCount < 2) return w.leftPaneWidth;
-    final start = math.max(0, w.panes.length - w.visibleCount);
-    if (index == start + 1) return w.rightPaneWidth;
-    return w.leftPaneWidth;
-  }
-
-  @override
-  void dispose() {
-    _controller.removeStatusListener(_onSlideStatusChanged);
-    _settledNotifier.dispose();
-    _curved.dispose();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final panes = widget.panes;
-    final visibleCount = widget.visibleCount;
-    final start = math.max(0, panes.length - visibleCount);
-    final colorScheme = Theme.of(context).colorScheme;
-
-    var stripWidth = 0.0;
-    for (var i = 0; i < panes.length; i++) {
-      stripWidth += _paneWidth(widget, i);
-    }
-    if (panes.length < visibleCount) {
-      stripWidth += widget.rightPaneWidth;
-    }
-    return ClipRect(
-      child: OverflowBox(
-        alignment: Alignment.topLeft,
-        minWidth: stripWidth,
-        maxWidth: stripWidth,
-        minHeight: widget.viewportHeight,
-        maxHeight: widget.viewportHeight,
-        child: AnimatedBuilder(
-          animation: _curved,
-          builder: (context, child) {
-            final offset =
-                _fromOffset + (_toOffset - _fromOffset) * _curved.value;
-            return Transform.translate(
-              offset: Offset(-offset, 0),
-              child: child,
-            );
-          },
-          child: Row(
-            children: [
-              for (var i = 0; i < panes.length; i++)
-                _SlidingPaneFrame(
-                  pane: panes[i],
-                  index: i,
-                  depth: panes.length,
-                  width: _paneWidth(widget, i),
-                  height: widget.viewportHeight,
-                  ticking: i >= start,
-                  settledListenable: _settledNotifier,
-                  decorate: widget.decoratePanes,
-                  showDivider: !widget.decoratePanes && i > 0,
-                  dividerColor: colorScheme.outlineVariant.withValues(
-                    alpha: 0.4,
-                  ),
-                  onPop: widget.onPop,
-                  paneBuilder: widget.paneBuilder,
-                  layoutKey: visibleCount >= 2 && i == start
-                      ? SlidingPaneViewport.visibleLeftPaneKey
-                      : visibleCount >= 2 && i == start + 1
-                      ? SlidingPaneViewport.visibleRightPaneKey
-                      : null,
-                ),
-              if (panes.length < visibleCount)
-                SizedBox(
-                  key: visibleCount >= 2
-                      ? SlidingPaneViewport.visibleRightPaneKey
-                      : null,
-                  width: widget.rightPaneWidth,
-                  height: widget.viewportHeight,
-                  child: widget.paneBuilder != null
-                      ? widget.paneBuilder!(
-                          context,
-                          panes.length,
-                          widget.placeholder,
-                        )
-                      : widget.decoratePanes
-                      ? _PaneCardShell(child: widget.placeholder)
-                      : widget.placeholder,
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// 单栏：屏外屏蔽语义、焦点与指针命中（保留 TickerMode 避免图片重解析闪白）；
-/// 可见栏包 [AdaptivePaneScope] 与栏内 Navigator。
-class _SlidingPaneFrame extends StatelessWidget {
-  const _SlidingPaneFrame({
-    required this.pane,
-    required this.index,
-    required this.depth,
-    required this.width,
-    required this.height,
-    required this.ticking,
-    required this.settledListenable,
-    required this.decorate,
-    required this.showDivider,
-    required this.dividerColor,
-    required this.onPop,
-    this.layoutKey,
-    this.paneBuilder,
-  });
-
-  final SlidingPane pane;
-  final int index;
-  final int depth;
-  final double width;
-  final double height;
-  final bool ticking;
-  final ValueListenable<bool> settledListenable;
-  final bool decorate;
-  final bool showDivider;
-  final Color dividerColor;
-  final VoidCallback? onPop;
-  final Key? layoutKey;
-  final SlidingPaneFrameBuilder? paneBuilder;
-
-  @override
-  Widget build(BuildContext context) {
-    final inner = ExcludeSemantics(
-      excluding: !ticking,
-      child: ExcludeFocus(
-        excluding: !ticking,
-        child: IgnorePointer(
-          ignoring: !ticking,
-          child: PageStorage(
-            bucket: PageStorage.of(context),
-            child: KeyedSubtree(
-              key: PageStorageKey<LocalKey>(pane.key),
-              child: _PaneNavigator(pane: pane, onPop: onPop),
-            ),
-          ),
-        ),
-      ),
-    );
-    final decorated = paneBuilder != null
-        ? paneBuilder!(context, index, inner)
-        : decorate
-        ? _PaneCardShell(child: inner)
-        : DecoratedBox(
-            decoration: BoxDecoration(
-              border: showDivider
-                  ? Border(left: BorderSide(color: dividerColor))
-                  : null,
-            ),
-            child: inner,
-          );
-    return AdaptivePaneScope(
-      index: index,
-      depth: depth,
-      title: pane.title,
-      pop: onPop ?? () {},
-      child: KeyedSubtree(
-        key: pane.key,
-        child: SizedBox(
-          width: width,
-          height: height,
-          child: OffstagePageHost(
-            offstageListenable: ticking ? null : settledListenable,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (layoutKey != null)
-                  IgnorePointer(child: SizedBox.expand(key: layoutKey)),
-                decorated,
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PaneCardShell extends StatelessWidget {
-  const _PaneCardShell({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Material(
-        elevation: 2,
-        color: colorScheme.surface,
-        shadowColor: Colors.black26,
-        borderRadius: BorderRadius.circular(12),
-        clipBehavior: Clip.antiAlias,
-        child: child,
-      ),
-    );
-  }
-}
-
-/// 栏内独立 [Navigator]，让栏内 Overlay 不冒到隔壁栏。
-class _PaneNavigator extends StatelessWidget {
-  const _PaneNavigator({required this.pane, required this.onPop});
-
-  final SlidingPane pane;
-  final VoidCallback? onPop;
-
-  @override
-  Widget build(BuildContext context) {
-    return Navigator(
-      onGenerateRoute: (settings) {
-        return MaterialPageRoute<void>(
-          settings: settings,
-          builder: (routeContext) {
-            return _SlidingDismissalBinder(onPop: onPop, child: pane.child);
-          },
-        );
-      },
-    );
-  }
-}
-
-/// 仅栈顶栏向内部 [ModalRoute] 注册 [LocalHistoryEntry]，默认 AppBar 才有返回。
-///
-/// 滑动栈 pop 走本 entry 的 onRemove → [onPop]（通常是 [AdaptiveRouter.maybePop]）。
-class _SlidingDismissalBinder extends StatefulWidget {
-  const _SlidingDismissalBinder({required this.child, required this.onPop});
-
-  final Widget child;
-  final VoidCallback? onPop;
-
-  @override
-  State<_SlidingDismissalBinder> createState() =>
-      _SlidingDismissalBinderState();
-}
-
-class _SlidingDismissalBinderState extends State<_SlidingDismissalBinder> {
-  LocalHistoryEntry? _entry;
-  ModalRoute<dynamic>? _route;
-  bool _popOnRemove = true;
-  bool _dependenciesInitialized = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final showBack = AdaptivePaneScope.maybeOf(context)?.showBack ?? false;
-    if (!showBack) {
-      _detachWithoutPop();
-    } else if (!_dependenciesInitialized) {
-      _attach();
-    } else if (_entry == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || _entry != null) return;
-        final scope = context
-            .getInheritedWidgetOfExactType<AdaptivePaneScope>();
-        if (scope != null && scope.showBack) _attach();
-      });
-    }
-    _dependenciesInitialized = true;
-  }
-
-  @override
-  void dispose() {
-    _detachWithoutPop();
-    super.dispose();
-  }
-
-  void _attach() {
-    if (_entry != null) return;
-    final route = ModalRoute.of(context);
-    if (route == null) return;
-    _route = route;
-    _popOnRemove = true;
-    _entry = LocalHistoryEntry(onRemove: _onRemove);
-    route.addLocalHistoryEntry(_entry!);
-  }
-
-  void _onRemove() {
-    _entry = null;
-    _route = null;
-    if (!_popOnRemove) return;
-    final onPop = widget.onPop;
-    if (onPop == null) return;
-    onPop();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _entry != null) return;
-      final scope = context.getInheritedWidgetOfExactType<AdaptivePaneScope>();
-      if (scope != null && scope.showBack) _attach();
-    });
-  }
-
-  void _detachWithoutPop() {
-    final entry = _entry;
-    final route = _route;
-    if (entry == null || route == null) {
-      _entry = null;
-      _route = null;
-      _popOnRemove = true;
-      return;
-    }
-    _popOnRemove = false;
-    route.removeLocalHistoryEntry(entry);
-    _entry = null;
-    _route = null;
-    _popOnRemove = true;
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
-}
-
-class _SlidingPlaceholder extends StatelessWidget {
-  const _SlidingPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return ColoredBox(
-      color: colorScheme.surfaceContainerLow,
-      child: Center(
-        child: Icon(
-          Icons.web_asset_outlined,
-          size: 48,
-          color: colorScheme.outline,
-        ),
-      ),
     );
   }
 }

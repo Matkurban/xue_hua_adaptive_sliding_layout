@@ -15,6 +15,9 @@ import 'package:xue_hua_adaptive_sliding_layout_example/pages/mine/account_page.
 import 'package:xue_hua_adaptive_sliding_layout_example/pages/mine/mine_page.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/pages/mine/theme_page.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/pages/shopping_cart/shopping_cart_page.dart';
+import 'package:xue_hua_adaptive_sliding_layout_example/pages/transitions/transition_detail_page.dart';
+import 'package:xue_hua_adaptive_sliding_layout_example/pages/transitions/transition_preset_meta.dart';
+import 'package:xue_hua_adaptive_sliding_layout_example/pages/transitions/transitions_page.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/router/empty_page.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/router/not_found_page.dart';
 import 'package:xue_hua_adaptive_sliding_layout_example/router/router_names.dart';
@@ -119,13 +122,7 @@ sealed class RouterPages {
                         barrierColor: Colors.black,
                         barrierDismissible: true,
                         transitionDuration: const Duration(milliseconds: 200),
-                        transitionsBuilder:
-                            (context, animation, secondaryAnimation, child) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: child,
-                              );
-                            },
+                        transitionType: AdaptivePageTransitionType.fade,
                         builder: (context, state) => const ImagePreviewPage(),
                       ),
                     ],
@@ -202,6 +199,63 @@ sealed class RouterPages {
                       ),
                     ],
                   ),
+                ],
+              ),
+            ],
+          ),
+          AdaptiveBranch(
+            routes: [
+              AdaptiveRoute(
+                path: RouterNames.transitions,
+                title: (_) => '过渡动画',
+                builder: (context, state) => const TransitionsPage(),
+                routes: [
+                  for (final preset in transitionPresets) ...[
+                    AdaptiveRoute(
+                      path: 'branch/${preset.type.name}',
+                      title: (_) => preset.title,
+                      transitionType: preset.type,
+                      builder: (context, state) => TransitionDetailPage(
+                        transitionType: preset.type,
+                        isFullscreen: false,
+                      ),
+                      routes: [
+                        AdaptiveRoute(
+                          path: 'sub',
+                          title: (_) => '${preset.title} (第2层)',
+                          transitionType: preset.type,
+                          builder: (context, state) => TransitionDetailPage(
+                            transitionType: preset.type,
+                            isFullscreen: false,
+                            level: 2,
+                          ),
+                        ),
+                      ],
+                    ),
+                    AdaptiveRoute(
+                      path: 'fullscreen/${preset.type.name}',
+                      title: (_) => preset.title,
+                      fullscreen: true,
+                      transitionType: preset.type,
+                      builder: (context, state) => TransitionDetailPage(
+                        transitionType: preset.type,
+                        isFullscreen: true,
+                      ),
+                      routes: [
+                        AdaptiveRoute(
+                          path: 'sub',
+                          title: (_) => '${preset.title} (第2层)',
+                          fullscreen: true,
+                          transitionType: preset.type,
+                          builder: (context, state) => TransitionDetailPage(
+                            transitionType: preset.type,
+                            isFullscreen: true,
+                            level: 2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ],

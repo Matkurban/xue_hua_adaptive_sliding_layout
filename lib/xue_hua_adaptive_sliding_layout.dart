@@ -23,3 +23,6 @@ export 'src/router/adaptive_shell_route.dart';
 export 'src/router/adaptive_shell_scope.dart';
 export 'src/router/adaptive_shell_state.dart';
 export 'src/router/route_registry.dart';
+
+export 'src/transitions/adaptive_page_transition_type.dart';
+export 'src/transitions/adaptive_page_transitions.dart';

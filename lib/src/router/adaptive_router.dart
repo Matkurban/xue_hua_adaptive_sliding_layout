@@ -1,21 +1,30 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:material_ui/material_ui.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/layout/offstage_host.dart';
-import 'package:xue_hua_adaptive_sliding_layout/src/layout/shell_widget.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_route.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_route_base.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_route_match.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_route_match_list.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_route_scope.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_route_state.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_router_scope.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_shell_route.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/delegate/adaptive_route_information_parser.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/delegate/adaptive_router_delegate.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/delegate/relocation_transition_delegate.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/internal/branch_stack_store.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/internal/navigation_layer.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/internal/popup_layer_resolver.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/internal/route_redirect_resolver.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/navigation.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/pages/adaptive_page.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/pages/adaptive_page_host.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/route_registry.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/router/routes/exit_guard_route_mixin.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/transitions/adaptive_page_transition_type.dart';
 
-import 'adaptive_route.dart';
-import 'adaptive_route_base.dart';
-import 'adaptive_route_match.dart';
-import 'adaptive_route_match_list.dart';
-import 'adaptive_route_scope.dart';
-import 'adaptive_route_state.dart';
-import 'adaptive_router_scope.dart';
-import 'adaptive_shell_route.dart';
-import 'route_registry.dart';
+export 'pages/adaptive_container_page.dart';
 
 /// 自适应多栏路由器。调用 API 与 [NavigatorState] 同名。
 ///
@@ -31,10 +40,23 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     GlobalKey<NavigatorState>? navigatorKey,
     this.observers = const <NavigatorObserver>[],
     this.redirectLimit = 5,
+    this.defaultTransitionType,
+    this.defaultTransitionsBuilder,
+    this.defaultTransitionDuration,
+    this.defaultReverseTransitionDuration,
+    this.defaultTransitionCurve,
+    this.defaultReverseTransitionCurve,
   }) : registry = RouteRegistry(routes),
        navigatorKey = navigatorKey ?? GlobalKey<NavigatorState>() {
     WidgetsFlutterBinding.ensureInitialized();
     _engine = NavigationEngine(registry);
+    _branchStore = BranchStackStore(registry);
+    _popupResolver = PopupLayerResolver(_hostRoutes);
+    _redirectResolver = RouteRedirectResolver(
+      registry: registry,
+      redirect: redirect,
+      redirectLimit: redirectLimit,
+    );
     final effective = _effectiveInitial(initialLocation);
     _current = AdaptiveRouteMatchList(
       matches: const <AdaptiveRouteMatch>[],
@@ -47,8 +69,8 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     routeInformationProvider = PlatformRouteInformationProvider(
       initialRouteInformation: RouteInformation(uri: Uri.parse(effective)),
     );
-    routeInformationParser = _AdaptiveRouteInformationParser(this);
-    _delegate = _AdaptiveRouterDelegate(this);
+    routeInformationParser = AdaptiveRouteInformationParser(this);
+    _delegate = AdaptiveRouterDelegate(this);
     routerDelegate = _delegate;
     backButtonDispatcher = RootBackButtonDispatcher();
   }
@@ -68,12 +90,32 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   /// redirect 最大跳数，超出视为循环。
   final int redirectLimit;
 
+  /// 全局默认页面过渡动画类型（低于单页 [AdaptiveRoute.transitionType] 与壳级 [AdaptiveShellRoute.transitionType]）。
+  final AdaptivePageTransitionType? defaultTransitionType;
+
+  /// 全局默认页面过渡构建器（低于单页 [AdaptiveRoute.transitionsBuilder] 与壳级 [AdaptiveShellRoute.transitionsBuilder]）。
+  final AdaptiveTransitionsBuilder? defaultTransitionsBuilder;
+
+  /// 全局默认页面入场过渡时长。
+  final Duration? defaultTransitionDuration;
+
+  /// 全局默认页面退场过渡时长。
+  final Duration? defaultReverseTransitionDuration;
+
+  /// 全局默认页面正向过渡曲线。
+  final Curve? defaultTransitionCurve;
+
+  /// 全局默认页面反向过渡曲线。
+  final Curve? defaultReverseTransitionCurve;
+
   /// 编译后的路由表。
   final RouteRegistry registry;
 
-  late NavigationEngine _engine;
-
-  late final _AdaptiveRouterDelegate _delegate;
+  late final NavigationEngine _engine;
+  late final BranchStackStore _branchStore;
+  late final PopupLayerResolver _popupResolver;
+  late final RouteRedirectResolver _redirectResolver;
+  late final AdaptiveRouterDelegate _delegate;
 
   @override
   late final RouteInformationProvider routeInformationProvider;
@@ -107,21 +149,33 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
 
   bool _ready = false;
 
-  final Map<int, List<AdaptiveRouteMatch>> _branchStacks =
-      <int, List<AdaptiveRouteMatch>>{};
+  /// 是否已完成首次路由应用（供内部 [AdaptiveRouterDelegate] 读取）。
+  bool get isReady => _ready;
 
-  final Map<int, String> _branchLocations = <int, String>{};
+  /// 当前完整匹配结果（供内部 [AdaptiveRouterDelegate] 读取）。
+  AdaptiveRouteMatchList get currentConfigurationMatchList => _current;
 
-  /// 栈上每页（按 matchedLocation）最近一次携带的 arguments。
-  ///
-  /// 页面的 arguments 永远跟着它自己的 match 走；但按 URL 重新推导出来的 match（系统 /
-  /// 浏览器 URL、[refresh] 重定向、未保存栈的分支切换、未访问分支的初始栈）没有参数，
-  /// 这里用同一位置上次的参数补回，避免重建时拿到 null。只保留仍在某个栈里的位置。
-  final Map<String, Object> _argumentsByLocation = <String, Object>{};
+  /// 是否已有保存过的分支栈快照（供内部 [AdaptiveRouterDelegate] 判断壳层保留）。
+  bool get hasSavedBranches => _branchStore.hasSavedBranches;
 
-  /// 每页当前所在的 [ModalRoute]，供 [maybePop] / [popRoute] 问 PopScope。
+  /// 每页当前所在的 [ModalRoute]，供 [maybePop] / `popRoute` 问 PopScope。
   final Map<LocalKey, ModalRoute<dynamic>> _hostRoutes =
       <LocalKey, ModalRoute<dynamic>>{};
+
+  /// 查询指定 [pageKey] 当前挂载的 [ModalRoute]。
+  ModalRoute<dynamic>? hostRouteFor(LocalKey pageKey) => _hostRoutes[pageKey];
+
+  /// 登记页面 [pageKey] 所在的 [ModalRoute]（由 [AdaptivePageHost] 调用）。
+  void registerHostRoute(LocalKey pageKey, ModalRoute<dynamic> route) {
+    _hostRoutes[pageKey] = route;
+  }
+
+  /// 解绑页面 [pageKey] 所在的 [ModalRoute]（由 [AdaptivePageHost] 调用）。
+  void unregisterHostRoute(LocalKey pageKey, ModalRoute<dynamic> route) {
+    if (_hostRoutes[pageKey] == route) {
+      _hostRoutes.remove(pageKey);
+    }
+  }
 
   /// 位于 [AdaptiveRouterScope] 内时返回路由器；否则 assert。
   static AdaptiveRouter of(BuildContext context) {
@@ -217,7 +271,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   /// 栈顶页上若有 dialog、sheet 或 menu（栏内、壳层或根），只关掉那一层，页面栈不动。
   /// 只看栈顶那一栏：双栏时另一栏的栏内弹层用 [popFrom] 关。
   void pop<T extends Object?>([T? result]) {
-    final popup = _popupNavigator();
+    final popup = _popupResolver.popupNavigator(_current);
     if (popup != null) {
       popup.pop<T>(result);
       return;
@@ -233,29 +287,21 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   /// AppBar 返回、系统返回、浏览器后退、Escape 都走这里。
   /// 栈底（[canPop] 为 false）时返回 false，不弹退出确认——那是系统返回 / popRoute 的事。
   Future<bool> maybePop<T extends Object?>([T? result]) {
-    final popup = _popupNavigator();
+    final popup = _popupResolver.popupNavigator(_current);
     if (popup != null) return popup.maybePop<T>(result);
     return _maybePopPage(result);
   }
 
   /// 与 [pop] 一样不问 [PopScope] / [AdaptiveRoute.onExit]，但只动 [context] 所在的那一层。
-  ///
-  /// - context 在 dialog / sheet / menu 里：关掉它所在 Navigator 的栈顶（通常就是它自己）。
-  /// - context 在某页里且该页被弹层盖住：关掉盖住它的弹层（栏内 → 壳层 → 根，外层优先）。
-  /// - context 在栈顶页里且没被盖住：弹出该页。
-  /// - context 在非栈顶页里且没被盖住：不动。
-  /// - context 不在任何页面 / 弹层里（壳层 chrome、壳外）：等同 [pop]。
-  ///
-  /// 双栏时左右两栏各开了一个 sheet，传哪个 context 就关哪个。
   void popFrom<T extends Object?>(BuildContext context, [T? result]) {
-    switch (_layerOf(context)) {
-      case _PopupLayer(:final navigator):
+    switch (_popupResolver.layerOf(context, _current)) {
+      case PopupNavigationLayer(:final navigator):
         navigator.pop<T>(result);
-      case _TopPageLayer():
+      case TopPageNavigationLayer():
         _popPage(result);
-      case _GlobalLayer():
+      case GlobalNavigationLayer():
         pop<T>(result);
-      case _IdleLayer():
+      case IdleNavigationLayer():
         break;
     }
   }
@@ -266,11 +312,11 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     BuildContext context, [
     T? result,
   ]) {
-    return switch (_layerOf(context)) {
-      _PopupLayer(:final navigator) => navigator.maybePop<T>(result),
-      _TopPageLayer() => _maybePopPage(result),
-      _GlobalLayer() => maybePop<T>(result),
-      _IdleLayer() => Future<bool>.value(false),
+    return switch (_popupResolver.layerOf(context, _current)) {
+      PopupNavigationLayer(:final navigator) => navigator.maybePop<T>(result),
+      TopPageNavigationLayer() => _maybePopPage(result),
+      GlobalNavigationLayer() => maybePop<T>(result),
+      IdleNavigationLayer() => Future<bool>.value(false),
     };
   }
 
@@ -281,15 +327,12 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   }
 
   /// 栈顶页的询问路径：栈底 → false；页内 [PopScope] 否决 → false；再问 onExit，通过则出栈。
-  ///
-  /// 不问 [ModalRoute.isCurrent]：2 栏栏内 [LocalHistoryEntry] 的 onRemove 调用
-  /// [maybePop] 时，该 pageless 路由可能已经不是 current，但页面还在自适应栈顶。
   Future<bool> _maybePopPage(Object? result) async {
     if (!_current.canPop) return false;
     final top = _current.last!;
     final route = _hostRoutes[top.pageKey];
     if (route != null) {
-      final disposition = route is _ExitGuard
+      final disposition = route is ExitGuardRouteMixin
           ? route.scopeDisposition
           : route.popDisposition;
       if (disposition == RoutePopDisposition.doNotPop) {
@@ -297,31 +340,12 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
         return false;
       }
     }
-    return _exitThenPop(top, result);
-  }
-
-  /// [context] 落在哪一层，供 [popFrom] / [maybePopFrom] 决定动什么。
-  _Layer _layerOf(BuildContext context) {
-    final route = ModalRoute.of(context);
-    if (route == null) return const _GlobalLayer();
-    if (!_hostRoutes.containsValue(route)) {
-      // 托管页面之外：pageless 的是 dialog / sheet / menu，带 Page 的是壳层容器页。
-      final nav = route.navigator;
-      if (route.settings is Page || nav == null) return const _GlobalLayer();
-      return _PopupLayer(nav);
-    }
-    final popup = _popupOver(route);
-    if (popup != null) return _PopupLayer(popup);
-    final top = _current.last;
-    if (top != null && identical(_hostRoutes[top.pageKey], route)) {
-      return const _TopPageLayer();
-    }
-    return const _IdleLayer();
+    return exitThenPop(top, result);
   }
 
   /// PopScope 已放行后：询问 onExit，通过且栈顶未变则出栈。
-  Future<bool> _exitThenPop(AdaptiveRouteMatch top, Object? result) async {
-    if (!await _allowExit(top)) return false;
+  Future<bool> exitThenPop(AdaptiveRouteMatch top, Object? result) async {
+    if (!await allowExit(top)) return false;
     if (_current.last != top) return false;
     _setCurrent(_engine.pop(_current, result));
     return true;
@@ -331,66 +355,14 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   ///
   /// 先关掉盖住栈顶页的 dialog、sheet、menu，再按 [predicate] 弹页面。
   void popUntil(AdaptiveRoutePredicate predicate) {
-    _dismissPopups();
+    _popupResolver.dismissPopups(_current);
     _setCurrent(_engine.popUntil(_current, predicate));
-  }
-
-  /// 盖住栈顶页的 pageless 路由（dialog、sheet、menu）所在的 [NavigatorState]；没有则 null。
-  ///
-  /// 只看栈顶页那一栏及其祖先（壳层、根）；双栏时另一栏的栏内弹层由 [popFrom] /
-  /// [maybePopFrom] 处理。
-  NavigatorState? _popupNavigator() {
-    final top = _current.last;
-    final host = top == null ? null : _hostRoutes[top.pageKey];
-    return host == null ? null : _popupOver(host);
-  }
-
-  /// 盖住 [page] 的弹层所在 Navigator：先祖先链（根、壳层，外层优先，因为外层弹层
-  /// 盖住一切），再 [page] 自己的 Navigator。栏内 local history 不算弹层，因为它不会
-  /// 让页面路由失去 [ModalRoute.isCurrent]。
-  NavigatorState? _popupOver(ModalRoute<dynamic> page) {
-    NavigatorState? found;
-    var nav = page.navigator;
-    final seen = <NavigatorState>{};
-    while (nav != null && seen.add(nav)) {
-      // 布局切换后旧 Navigator 可能已卸载，不能再向上查祖先。
-      if (!nav.mounted) break;
-      final parent = ModalRoute.of(nav.context);
-      if (parent == null) break;
-      if (_coveredByPopup(parent)) found = parent.navigator;
-      nav = parent.navigator;
-    }
-    return found ?? (_coveredByPopup(page) ? page.navigator : null);
-  }
-
-  /// [route] 本该在其 Navigator 顶上却被压住，且压住它的不是本路由器托管的页面。
-  bool _coveredByPopup(ModalRoute<dynamic> route) {
-    final nav = route.navigator;
-    if (nav == null || route.isCurrent || !nav.canPop()) return false;
-    return !_hostRoutes.values.any(
-      (page) => identical(page.navigator, nav) && page.isCurrent,
-    );
-  }
-
-  /// 逐个关掉盖住页面的弹层，页面栈不动。
-  ///
-  /// 最多 32 层。再多说明 [Navigator.pop] 没拆掉路由，停下来避免空转。
-  void _dismissPopups() {
-    for (var i = 0; i < 32; i++) {
-      final popup = _popupNavigator();
-      if (popup == null) return;
-      popup.pop<Object?>();
-    }
   }
 
   /// 与 [Navigator.canPop] 同名。
   bool canPop() => _current.canPop;
 
   /// 重新对当前 URI 跑 redirect（登录态变化后调用）。
-  ///
-  /// redirect 结果仍是当前位置时保留现有栈（同一批 match，各页 arguments 与 pageKey 不变），
-  /// 只有真正被重定向到别处才换栈。否则按 URL 重新匹配会把列表级 arguments 塞给栈里每一页，
-  /// 中间页（例如聊天页）重建时拿到别的页面的参数或 null。
   void refresh() {
     final context = navigatorKey.currentContext;
     if (context == null) return;
@@ -398,8 +370,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     resolve(context, before.uri, arguments: before.arguments).then((next) {
       final unchanged = next.error == null && _sameUri(next.uri, before.uri);
       if (unchanged || !identical(_current, before)) {
-        // 位置没变，或等待 redirect 期间栈已被其它导航改动：丢弃这次匹配结果。
-        _disposeMatches(next.matches);
+        RouteRedirectResolver.disposeMatches(next.matches);
         return;
       }
       _setCurrent(next);
@@ -413,12 +384,13 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     if (index < 0 || index >= shellRoute.branches.length) return;
     final branch = shellRoute.branches[index];
     if (!initialLocation) {
-      final stored = _branchStacks[index];
+      final stored = _branchStore.branchStacks[index];
       if (stored != null && stored.isNotEmpty) {
         _setCurrent(
           _engine.goBranch(
             _current,
-            location: _branchLocations[index] ?? branch.initialLocation,
+            location:
+                _branchStore.branchLocations[index] ?? branch.initialLocation,
             restored: stored,
           ),
         );
@@ -427,7 +399,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     }
     final loc = initialLocation
         ? branch.initialLocation
-        : (_branchLocations[index] ?? branch.initialLocation);
+        : (_branchStore.branchLocations[index] ?? branch.initialLocation);
     _setCurrent(_engine.goBranch(_current, location: loc));
   }
 
@@ -436,70 +408,18 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     BuildContext context,
     Uri uri, {
     Object? arguments,
-  }) async {
-    var current = uri;
-    for (var hop = 0; hop < redirectLimit; hop++) {
-      if (!context.mounted) {
-        return registry.match(current, arguments: arguments);
-      }
-      final matched = registry.match(current, arguments: arguments);
-      final state = _stateFor(matched, current);
-      final top = await redirect?.call(context, state);
-      if (top != null && !_sameLocation(current, top)) {
-        _disposeMatches(matched.matches);
-        current = _parse(top);
-        continue;
-      }
-      if (!context.mounted) {
-        return matched;
-      }
-      var redirected = false;
-      for (final match in matched.matches) {
-        if (!context.mounted) return matched;
-        final next = await match.route.redirect?.call(
-          context,
-          match.toState(current, error: matched.error),
-        );
-        if (next != null && !_sameLocation(current, next)) {
-          current = _parse(next);
-          redirected = true;
-          break;
-        }
-      }
-      if (redirected) {
-        _disposeMatches(matched.matches);
-        continue;
-      }
-      return matched;
-    }
-    return AdaptiveRouteMatchList(
-      matches: const <AdaptiveRouteMatch>[],
-      uri: current,
-      error: Exception('Redirect loop after $redirectLimit hops'),
-    );
+  }) {
+    return _redirectResolver.resolve(context, uri, arguments: arguments);
   }
 
   /// [index] 分支是否打开过（当前分支，或离开时存过栈）。没打开过的分支不建页面。
   bool hasVisitedBranch(int index) {
-    if (_current.branchIndex == index) return true;
-    final stored = _branchStacks[index];
-    return stored != null && stored.isNotEmpty;
+    return _branchStore.hasVisitedBranch(index, _current);
   }
 
   /// 当前分支应展示的栈；非当前分支用上次快照或 initialLocation。
   List<AdaptiveRouteMatch> stackForBranch(int index) {
-    if (_current.branchIndex == index) return _current.branchMatches;
-    final stored = _branchStacks[index];
-    if (stored != null && stored.isNotEmpty) return stored;
-    final shellRoute = shell;
-    if (shellRoute == null || index >= shellRoute.branches.length) {
-      return const <AdaptiveRouteMatch>[];
-    }
-    return _restoreArguments(
-      registry
-          .match(Uri.parse(shellRoute.branches[index].initialLocation))
-          .branchMatches,
-    );
+    return _branchStore.stackForBranch(index, _current);
   }
 
   /// 把 match 建成带 [AdaptiveRouteScope] 的页面子树。
@@ -509,15 +429,18 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
         match.route.builder?.call(context, state) ?? const SizedBox.shrink();
     return AdaptiveRouteScope(
       state: state,
-      child: _PageHost(router: this, pageKey: match.pageKey, child: built),
+      child: AdaptivePageHost(
+        router: this,
+        pageKey: match.pageKey,
+        child: built,
+      ),
     );
   }
 
   final Map<LocalKey, GlobalKey> _contentKeys = <LocalKey, GlobalKey>{};
 
   /// 每个页面一个稳定的 [GlobalKey]：跨断点时页面子树在 Navigator 与
-  /// [SlidingPaneViewport] 之间搬家，State 随 key 一起被接管而不是重建。
-  /// 清理在 [_setCurrent] 里做，这里只取或创建。
+  /// `SlidingPaneViewport` 之间搬家，State 随 key 一起被接管而不是重建。
   Widget keepAlive(AdaptiveRouteMatch match, Widget child) {
     final key = _contentKeys.putIfAbsent(
       match.pageKey,
@@ -534,7 +457,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   }) {
     final raw = buildMatch(context, match);
     final built = keepState ? keepAlive(match, raw) : raw;
-    return _AdaptivePage<Object?>(
+    return AdaptivePage<Object?>(
       key: match.pageKey,
       name: match.matchedLocation,
       arguments: match.arguments,
@@ -557,12 +480,9 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
   /// 动画）、新页面直接加入，这样同一个 GlobalKey 的子树在同一帧里从旧
   /// Navigator 交接给新 Navigator，不会两边同时挂载。
   late final TransitionDelegate<dynamic> relocationDelegate =
-      _RelocationTransitionDelegate(() => _relocatingPages);
+      RelocationTransitionDelegate(() => _relocatingPages);
 
   /// 壳在跨 compact 断点的这一帧里把页面从一个 Navigator 搬到另一个。
-  ///
-  /// 被搬走的页面会被旧 Navigator 当作“移除”并回调 [handleRemovedPageKey]，
-  /// 但这不是用户出栈；帧结束前忽略这些回调，页面栈（URL）保持不变。
   void beginPageRelocation() {
     if (_relocatingPages) return;
     _relocatingPages = true;
@@ -594,17 +514,18 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     if (context == null) return routeName;
     final resolved = await resolve(
       context,
-      _parse(routeName),
+      RouteRedirectResolver.parseLocation(routeName),
       arguments: arguments,
     );
-    _disposeMatches(resolved.matches);
+    RouteRedirectResolver.disposeMatches(resolved.matches);
     if (resolved.error != null && resolved.matches.isEmpty) {
       return routeName;
     }
-    return _loc(resolved.uri);
+    return RouteRedirectResolver.formatLocation(resolved.uri);
   }
 
-  Future<bool> _allowExit(AdaptiveRouteMatch match) async {
+  /// 询问 [match] 的 [AdaptiveRoute.onExit] 是否允许离开。
+  Future<bool> allowExit(AdaptiveRouteMatch match) async {
     final onExit = match.route.onExit;
     if (onExit == null) return true;
     final context = navigatorKey.currentContext;
@@ -614,14 +535,14 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
 
   Future<bool> _allowExitAll(Iterable<AdaptiveRouteMatch> removing) async {
     for (final match in removing) {
-      if (!await _allowExit(match)) return false;
+      if (!await allowExit(match)) return false;
     }
     return true;
   }
 
   Future<void> applyParsed(AdaptiveRouteMatchList configuration) async {
     if (_ready && _sameUri(_current.uri, configuration.uri)) {
-      _disposeUnkeptMatches(configuration.matches);
+      _branchStore.disposeUnkeptMatches(configuration.matches, _current);
       return;
     }
     if (_ready) {
@@ -630,7 +551,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
           if (!_containsKey(configuration, match.pageKey)) match,
       ];
       if (!await _allowExitAll(removing)) {
-        _disposeUnkeptMatches(configuration.matches);
+        _branchStore.disposeUnkeptMatches(configuration.matches, _current);
         _delegate.notify();
         return;
       }
@@ -638,62 +559,9 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     _setCurrent(configuration);
   }
 
-  /// 给新推导出的缺少 arguments 的 match 补回同一位置记住的参数；
-  /// 已在栈上且原本无参的 match 保持 null，不补参数。
-  List<AdaptiveRouteMatch> _restoreArguments(List<AdaptiveRouteMatch> matches) {
-    final liveNullMatches = <AdaptiveRouteMatch>{
-      for (final m in _current.matches)
-        if (m.arguments == null) m,
-      for (final stack in _branchStacks.values)
-        for (final m in stack)
-          if (m.arguments == null) m,
-    };
-    bool shouldRestore(AdaptiveRouteMatch m) {
-      return m.arguments == null &&
-          !liveNullMatches.contains(m) &&
-          _argumentsByLocation.containsKey(m.matchedLocation);
-    }
-
-    if (!matches.any(shouldRestore)) {
-      return matches;
-    }
-    return [
-      for (final m in matches)
-        if (shouldRestore(m))
-          m.copyWith(arguments: _argumentsByLocation[m.matchedLocation])
-        else
-          m,
-    ];
-  }
-
-  /// 记住当前所有栈里每页非空的 arguments，并清掉已无非空参数的栈位置。
-  void _rememberArguments() {
-    _argumentsByLocation.clear();
-    void visit(Iterable<AdaptiveRouteMatch> matches) {
-      for (final m in matches) {
-        final args = m.arguments;
-        if (args != null) _argumentsByLocation[m.matchedLocation] = args;
-      }
-    }
-
-    for (final stack in _branchStacks.values) {
-      visit(stack);
-    }
-    visit(_current.matches);
-  }
-
   /// 释放路由器持有的所有 [Signal]、分支栈匹配与代理监听器。
   void dispose() {
-    final allMatches = <AdaptiveRouteMatch>{
-      ..._current.matches,
-      for (final stack in _branchStacks.values) ...stack,
-    };
-    for (final match in allMatches) {
-      match.dispose();
-    }
-    _branchStacks.clear();
-    _branchLocations.clear();
-    _argumentsByLocation.clear();
+    _branchStore.disposeAll(_current);
     _hostRoutes.clear();
     _contentKeys.clear();
     location.dispose();
@@ -706,57 +574,20 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     }
   }
 
-  static void _disposeMatches(Iterable<AdaptiveRouteMatch> matches) {
-    for (final match in matches) {
-      match.dispose();
-    }
-  }
-
-  void _disposeUnkeptMatches(Iterable<AdaptiveRouteMatch> candidates) {
-    final kept = <AdaptiveRouteMatch>{
-      ..._current.matches,
-      for (final stack in _branchStacks.values) ...stack,
-    };
-    for (final match in candidates) {
-      if (!kept.contains(match)) {
-        match.dispose();
-      }
-    }
-  }
-
   void _setCurrent(AdaptiveRouteMatchList next) {
-    final restored = _restoreArguments(next.matches);
+    final restored = _branchStore.restoreArguments(next.matches, _current);
     if (!identical(restored, next.matches)) {
       next = next.copyWith(matches: restored);
     }
     final old = _current;
-    if (old.branchIndex != null &&
-        old.branchIndex != next.branchIndex &&
-        old.branchMatches.isNotEmpty) {
-      _branchStacks[old.branchIndex!] = old.branchMatches;
-      _branchLocations[old.branchIndex!] = _branchLoc(old);
-    }
-    if (next.branchIndex != null) {
-      _branchStacks[next.branchIndex!] = next.branchMatches;
-      _branchLocations[next.branchIndex!] = _branchLoc(next);
-    }
-    final kept = <Key>{
-      for (final match in next.matches) match.pageKey,
-      for (final stack in _branchStacks.values)
-        for (final match in stack) match.pageKey,
-    };
-    for (final match in old.matches) {
-      if (!kept.contains(match.pageKey)) {
-        match.dispose();
-      }
-    }
+    final kept = _branchStore.syncStacksOnTransition(old, next);
     // 页面保活 key 只在栈变化时清理：当前栈和所有分支快照里的页面保留，
     // build 路径上不做任何清理，切 Tab 时目标分支的 key 不会丢。
     _contentKeys.removeWhere((key, _) => !kept.contains(key));
     _current = next;
-    _rememberArguments();
+    _branchStore.rememberArguments(_current);
     _ready = true;
-    location.value = _loc(next.uri);
+    location.value = RouteRedirectResolver.formatLocation(next.uri);
     matches.value = next;
     if (next.branchIndex != null) {
       currentBranch.value = next.branchIndex!;
@@ -764,18 +595,9 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     _delegate.notify();
   }
 
-  AdaptiveRouteState _stateFor(AdaptiveRouteMatchList list, Uri uri) {
-    final last = list.last;
-    if (last != null) return last.toState(uri, error: list.error);
-    return AdaptiveRouteState(
-      uri: uri,
-      matchedLocation: uri.path.isEmpty ? '/' : uri.path,
-      fullPath: uri.path,
-      pageKey: const ValueKey<String>('adaptive-empty'),
-      queryParameters: uri.queryParameters,
-      arguments: list.arguments,
-      error: list.error,
-    );
+  /// 将匹配结果 [list] 转换为顶层 redirect 或错误页使用的 [AdaptiveRouteState]。
+  AdaptiveRouteState stateFor(AdaptiveRouteMatchList list, Uri uri) {
+    return RouteRedirectResolver.stateFor(list, uri);
   }
 
   Future<T?> _wait<T>(AdaptiveRouteMatchList next) {
@@ -788,27 +610,6 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     return list.matches.any((match) => match.pageKey == key);
   }
 
-  static String _branchLoc(AdaptiveRouteMatchList list) {
-    final branch = list.branchMatches;
-    if (branch.isEmpty) return _loc(list.uri);
-    return _loc(branch.last.uri);
-  }
-
-  static String _loc(Uri uri) {
-    if (uri.hasQuery) return '${uri.path}?${uri.query}';
-    return uri.path.isEmpty ? '/' : uri.path;
-  }
-
-  static Uri _parse(String routeName) {
-    if (!routeName.startsWith('/')) return Uri.parse('/$routeName');
-    return Uri.parse(routeName);
-  }
-
-  static bool _sameLocation(Uri uri, String other) {
-    final parsed = _parse(other);
-    return uri.path == parsed.path && uri.query == parsed.query;
-  }
-
   static bool _sameUri(Uri a, Uri b) => a.path == b.path && a.query == b.query;
 
   static String _effectiveInitial(String initialLocation) {
@@ -818,631 +619,5 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
       return fromPlatform;
     }
     return initialLocation;
-  }
-}
-
-class _AdaptiveRouteInformationParser
-    extends RouteInformationParser<AdaptiveRouteMatchList> {
-  _AdaptiveRouteInformationParser(this.router);
-
-  final AdaptiveRouter router;
-
-  @override
-  Future<AdaptiveRouteMatchList> parseRouteInformationWithDependencies(
-    RouteInformation routeInformation,
-    BuildContext context,
-  ) {
-    return router.resolve(context, routeInformation.uri);
-  }
-
-  @override
-  RouteInformation? restoreRouteInformation(
-    AdaptiveRouteMatchList configuration,
-  ) {
-    return RouteInformation(uri: configuration.uri);
-  }
-}
-
-class _AdaptiveRouterDelegate extends RouterDelegate<AdaptiveRouteMatchList>
-    with ChangeNotifier {
-  _AdaptiveRouterDelegate(this.router);
-
-  final AdaptiveRouter router;
-
-  /// 供 [AdaptiveRouter] 在栈变化后通知 [Router]。
-  void notify() => notifyListeners();
-
-  @override
-  AdaptiveRouteMatchList? get currentConfiguration =>
-      router._ready ? router._current : null;
-
-  @override
-  Future<void> setNewRoutePath(AdaptiveRouteMatchList configuration) {
-    return router.applyParsed(configuration);
-  }
-
-  @override
-  Future<void> setInitialRoutePath(AdaptiveRouteMatchList configuration) {
-    return router.applyParsed(configuration);
-  }
-
-  @override
-  Future<bool> popRoute() async {
-    final navs = _currentNavigators();
-    if (navs.isNotEmpty && await navs.first.maybePop()) {
-      // 2 栏栏内 Navigator 只有一页：maybePop 只消化 LocalHistoryEntry，
-      // 其 onRemove 已经调用 router.maybePop()（含 onExit）。这里不再补弹，
-      // 否则 onExit 刚弹出的确认框会被立刻关掉。
-      return true;
-    }
-    if (router.canPop()) {
-      await router.maybePop();
-      return true;
-    }
-    for (final nav in navs.skip(1)) {
-      if (await nav.maybePop()) return true;
-    }
-    final top = router._current.last;
-    return top?.route.onExit != null && !await router._allowExit(top!);
-  }
-
-  /// 栈顶页所在 Navigator → … → 根 Navigator；被上层 pageless 路由压住的内层不问。
-  ///
-  /// 不能用 [Navigator.maybeOf]：3.47 起它在 Navigator 自己的 context 上返回自身。
-  List<NavigatorState> _currentNavigators() {
-    final root = router.navigatorKey.currentState;
-    if (root == null) return const <NavigatorState>[];
-    final top = router._current.last;
-    final chain = <NavigatorState>[];
-    NavigatorState? nav =
-        (top == null ? null : router._hostRoutes[top.pageKey]?.navigator) ??
-        root;
-    final seen = <NavigatorState>{};
-    while (nav != null && seen.add(nav)) {
-      chain.add(nav);
-      if (nav == root) break;
-      nav = nav.context.findAncestorStateOfType<NavigatorState>();
-    }
-    if (chain.isEmpty || chain.last != root) {
-      chain.add(root);
-    }
-    var start = 0;
-    for (var i = 0; i < chain.length - 1; i++) {
-      if (ModalRoute.of(chain[i].context)?.isCurrent == false) {
-        start = i + 1;
-      }
-    }
-    return chain.sublist(start);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AdaptiveRouterScope(
-      router: router,
-      child: Navigator(
-        key: router.navigatorKey,
-        observers: router.observers,
-        pages: _pages(context),
-        onDidRemovePage: router.handleRemovedPage,
-      ),
-    );
-  }
-
-  List<Page<dynamic>> _pages(BuildContext context) {
-    final current = router._current;
-    final pages = <Page<dynamic>>[];
-    if (current.error != null &&
-        current.matches.isEmpty &&
-        router.errorBuilder != null) {
-      pages.add(_errorPage(context, current));
-      return pages;
-    }
-    if (current.shell != null && current.branchIndex != null) {
-      pages.add(
-        const AdaptiveContainerPage<void>(
-          key: ValueKey<String>('adaptive-shell'),
-          child: _ShellPage(),
-        ),
-      );
-    } else if (router.shell != null &&
-        current.overlayMatches.isNotEmpty &&
-        router._branchStacks.isNotEmpty) {
-      pages.add(
-        const AdaptiveContainerPage<void>(
-          key: ValueKey<String>('adaptive-shell'),
-          child: _ShellPage(),
-        ),
-      );
-    }
-    for (final overlay in current.overlayMatches) {
-      pages.add(router.pageFor(context, overlay));
-    }
-    if (pages.isEmpty && router.errorBuilder != null) {
-      pages.add(_errorPage(context, current));
-    }
-    if (pages.isEmpty) {
-      pages.add(
-        const AdaptiveContainerPage<void>(
-          key: ValueKey<String>('adaptive-empty'),
-          child: SizedBox.shrink(),
-        ),
-      );
-    }
-    return pages;
-  }
-
-  Page<dynamic> _errorPage(
-    BuildContext context,
-    AdaptiveRouteMatchList current,
-  ) {
-    final state = router._stateFor(current, current.uri);
-    return AdaptiveContainerPage<void>(
-      key: const ValueKey<String>('adaptive-error'),
-      child: AdaptiveRouteScope(
-        state: state,
-        child: router.errorBuilder!(context, state),
-      ),
-    );
-  }
-}
-
-/// 从 scope 取 router 再画壳，避免 MaterialPage.child 在构造时抓不到 InheritedWidget。
-class _ShellPage extends StatelessWidget {
-  const _ShellPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return AdaptiveShellHost(router: AdaptiveRouter.of(context));
-  }
-}
-
-/// 声明式页：Material 过场或自定义 [AdaptiveRoute.transitionsBuilder]。
-class _AdaptivePage<T> extends Page<T> {
-  const _AdaptivePage({
-    required this.router,
-    required this.match,
-    required this.child,
-    this.branchIndex = 0,
-    this.error,
-    super.key,
-    super.name,
-    super.arguments,
-  });
-
-  final AdaptiveRouter router;
-  final AdaptiveRouteMatch match;
-  final Widget child;
-  final int branchIndex;
-  final Exception? error;
-
-  bool shouldRebuild(_AdaptivePage<T> oldPage) {
-    return branchIndex != oldPage.branchIndex ||
-        name != oldPage.name ||
-        !identical(arguments, oldPage.arguments) ||
-        !mapEquals(match.queryParameters, oldPage.match.queryParameters) ||
-        error != oldPage.error;
-  }
-
-  @override
-  Route<T> createRoute(BuildContext context) {
-    if (match.route.transitionsBuilder != null) {
-      return _AdaptiveTransitionRoute<T>(page: this);
-    }
-    return _AdaptiveMaterialRoute<T>(page: this);
-  }
-}
-
-/// [AdaptiveRouter.popFrom] / [AdaptiveRouter.maybePopFrom] 对 context 的落点。
-sealed class _Layer {
-  const _Layer();
-}
-
-/// 要关的弹层所在 Navigator。
-final class _PopupLayer extends _Layer {
-  const _PopupLayer(this.navigator);
-
-  final NavigatorState navigator;
-}
-
-/// context 在栈顶页里且没被盖住：走页面路径。
-final class _TopPageLayer extends _Layer {
-  const _TopPageLayer();
-}
-
-/// context 在非栈顶页里且没被盖住：无事可做。
-final class _IdleLayer extends _Layer {
-  const _IdleLayer();
-}
-
-/// context 不在托管页面 / 弹层里（壳层 chrome、壳外）：回落到全局动词。
-final class _GlobalLayer extends _Layer {
-  const _GlobalLayer();
-}
-
-/// 壳层与容器页（如根 Navigator 上的 `adaptive-shell` 与壳层 `_chromeNavKey` 上的
-/// `adaptive-chrome`），接入 [_KeepUnderlyingTickerRoute]，在上层不透明路由完成
-/// 入场转场后自动将底层壳与根页面标记为 offstage。
-class AdaptiveContainerPage<T> extends Page<T> {
-  const AdaptiveContainerPage({
-    required this.child,
-    super.key,
-    super.name,
-    super.arguments,
-  });
-
-  final Widget child;
-
-  @override
-  Route<T> createRoute(BuildContext context) {
-    return _AdaptiveContainerRoute<T>(page: this);
-  }
-}
-
-/// 保持 `ModalRoute.opaqueOf(context)` 与 [AdaptiveRoute.opaque] 一致（确保 Android
-/// `FadeForwardsPageTransitionsBuilder` 在压入三级路由时为下层页面包裹不透明的
-/// `ColoredBox(color: ColorScheme.of(context).surface)` 底衬，避免露出黑色底幕闪烁），
-/// 同时始终将自身 [OverlayEntry.opaque] 保持为 `false`，避免 [OverlayState] 关闭下层路由的
-/// [TickerMode] 导致下层页面触发 `didChangeDependencies` 重解析图标闪白；
-/// 并通过 [OffstagePageHost] 在上层不透明路由入场完成后将下层被遮挡页面标记为
-/// `DiagnosticsTreeStyle.offstage`，使 Flutter DevTools `WidgetInspector` 点击选择时
-/// 直接跳过被遮挡的根页面与中间页。
-mixin _KeepUnderlyingTickerRoute<T> on PageRoute<T> {
-  static final Expando<List<_KeepUnderlyingTickerRoute<dynamic>>>
-  _routesByNavigator = Expando<List<_KeepUnderlyingTickerRoute<dynamic>>>();
-
-  final ValueNotifier<bool> _offstageNotifier = ValueNotifier<bool>(false);
-
-  NavigatorState? _registeredNavigator;
-
-  _AdaptivePage<T>? _lastBuiltPage;
-
-  Widget wrapOffstageContent(Widget child) {
-    return OffstagePageHost(
-      offstageListenable: _offstageNotifier,
-      child: child,
-    );
-  }
-
-  void _onRouteStatusChanged(AnimationStatus status) {
-    _keepOverlayNonOpaque(status);
-    _syncNavigatorOffstage();
-  }
-
-  void _keepOverlayNonOpaque([AnimationStatus? _]) {
-    if (overlayEntries.isEmpty) return;
-    overlayEntries.first.opaque = false;
-  }
-
-  @override
-  bool canTransitionTo(TransitionRoute<dynamic> nextRoute) {
-    if (nextRoute is MaterialRouteTransitionMixin) {
-      return true;
-    }
-    return super.canTransitionTo(nextRoute);
-  }
-
-  static int _pageIndexOf(
-    _KeepUnderlyingTickerRoute<dynamic> route,
-    List<Page<dynamic>> pages,
-  ) {
-    final s = route.settings;
-    if (s is! Page<dynamic>) return -1;
-    for (var i = 0; i < pages.length; i++) {
-      if (identical(pages[i], s) ||
-          (pages[i].key != null && pages[i].key == s.key)) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  void _syncNavigatorOffstage([NavigatorState? targetNavigator]) {
-    final nav = targetNavigator ?? _registeredNavigator ?? navigator;
-    if (nav == null || !nav.mounted) return;
-    final list = _routesByNavigator[nav];
-    if (list == null || list.isEmpty) return;
-    final pages = nav.widget.pages;
-    var highestCompletedOpaqueIndex = -1;
-    for (final route in list) {
-      if (!route.isActive || !route.opaque) continue;
-      if (route.animation?.status != AnimationStatus.completed) continue;
-      final idx = _pageIndexOf(route, pages);
-      if (idx > highestCompletedOpaqueIndex) {
-        highestCompletedOpaqueIndex = idx;
-      }
-    }
-    for (final route in list) {
-      final idx = _pageIndexOf(route, pages);
-      final shouldOffstage =
-          idx >= 0 && route.isActive && idx < highestCompletedOpaqueIndex;
-      route._offstageNotifier.value = shouldOffstage;
-    }
-  }
-
-  @override
-  void install() {
-    final current = settings;
-    if (current is _AdaptivePage<T>) {
-      _lastBuiltPage = current;
-    }
-    super.install();
-    final nav = navigator;
-    if (nav != null) {
-      _registeredNavigator = nav;
-      final list = _routesByNavigator[nav] ??=
-          <_KeepUnderlyingTickerRoute<dynamic>>[];
-      if (!list.contains(this)) {
-        list.add(this);
-      }
-    }
-    animation?.addStatusListener(_onRouteStatusChanged);
-    _keepOverlayNonOpaque();
-    _syncNavigatorOffstage(nav);
-  }
-
-  @override
-  void didAdd() {
-    super.didAdd();
-    _keepOverlayNonOpaque();
-    _syncNavigatorOffstage();
-  }
-
-  @override
-  TickerFuture didPush() {
-    final future = super.didPush();
-    _keepOverlayNonOpaque();
-    _syncNavigatorOffstage();
-    return future;
-  }
-
-  @override
-  bool didPop(T? result) {
-    final popped = super.didPop(result);
-    _keepOverlayNonOpaque();
-    _syncNavigatorOffstage();
-    return popped;
-  }
-
-  @override
-  void didPopNext(Route<dynamic> nextRoute) {
-    super.didPopNext(nextRoute);
-    _syncNavigatorOffstage();
-  }
-
-  @override
-  void didChangeNext(Route<dynamic>? nextRoute) {
-    super.didChangeNext(nextRoute);
-    _syncNavigatorOffstage();
-  }
-
-  @override
-  void changedExternalState() {
-    _syncNavigatorOffstage();
-    final current = settings;
-    if (current is _AdaptivePage<T>) {
-      final previous = _lastBuiltPage;
-      _lastBuiltPage = current;
-      if (previous != null && !current.shouldRebuild(previous)) {
-        return;
-      }
-    }
-    super.changedExternalState();
-  }
-
-  @override
-  void dispose() {
-    animation?.removeStatusListener(_onRouteStatusChanged);
-    final nav = _registeredNavigator ?? navigator;
-    if (nav != null) {
-      _routesByNavigator[nav]?.remove(this);
-      _syncNavigatorOffstage(nav);
-    }
-    _registeredNavigator = null;
-    _offstageNotifier.dispose();
-    super.dispose();
-  }
-}
-
-class _AdaptiveContainerRoute<T> extends PageRoute<T>
-    with MaterialRouteTransitionMixin<T>, _KeepUnderlyingTickerRoute<T> {
-  _AdaptiveContainerRoute({required AdaptiveContainerPage<T> page})
-    : super(settings: page);
-
-  AdaptiveContainerPage<T> get _page => settings as AdaptiveContainerPage<T>;
-
-  @override
-  Widget buildContent(BuildContext context) => wrapOffstageContent(_page.child);
-
-  @override
-  bool get maintainState => true;
-}
-
-/// 页面路由的 onExit 守卫：先让页内 PopScope 表态，再由 onExit 否决，二者互不覆盖。
-mixin _ExitGuard<T> on ModalRoute<T> {
-  AdaptiveRouter get router;
-
-  AdaptiveRouteMatch get match;
-
-  /// 不含 onExit 否决的 disposition；doNotPop 即页内 PopScope 否决。
-  RoutePopDisposition get scopeDisposition => super.popDisposition;
-
-  @override
-  RoutePopDisposition get popDisposition {
-    final inner = super.popDisposition;
-    return match.route.onExit != null && inner == RoutePopDisposition.pop
-        ? RoutePopDisposition.doNotPop
-        : inner;
-  }
-
-  @override
-  void onPopInvokedWithResult(bool didPop, T? result) {
-    super.onPopInvokedWithResult(didPop, result);
-    if (didPop) {
-      router.handleRemovedPageKey(match.pageKey, result);
-    } else if (match.route.onExit != null &&
-        scopeDisposition != RoutePopDisposition.doNotPop) {
-      unawaited(router._exitThenPop(match, result));
-    }
-  }
-}
-
-/// 与 Flutter 私有 `_PageBasedMaterialPageRoute` 对齐的 Material 页路由。
-class _AdaptiveMaterialRoute<T> extends PageRoute<T>
-    with
-        MaterialRouteTransitionMixin<T>,
-        _ExitGuard<T>,
-        _KeepUnderlyingTickerRoute<T> {
-  _AdaptiveMaterialRoute({required _AdaptivePage<T> page})
-    : super(
-        settings: page,
-        fullscreenDialog: page.match.route.fullscreenDialog,
-      );
-
-  _AdaptivePage<T> get _page => settings as _AdaptivePage<T>;
-
-  @override
-  AdaptiveRouter get router => _page.router;
-
-  @override
-  AdaptiveRouteMatch get match => _page.match;
-
-  @override
-  bool get opaque => match.route.opaque;
-
-  @override
-  Widget buildContent(BuildContext context) => wrapOffstageContent(_page.child);
-
-  @override
-  bool get maintainState => true;
-}
-
-/// 自定义过场的页路由。
-class _AdaptiveTransitionRoute<T> extends PageRouteBuilder<T>
-    with _ExitGuard<T>, _KeepUnderlyingTickerRoute<T> {
-  _AdaptiveTransitionRoute({required _AdaptivePage<T> page})
-    : super(
-        settings: page,
-        fullscreenDialog: page.match.route.fullscreenDialog,
-        opaque: page.match.route.opaque,
-        barrierColor: page.match.route.barrierColor,
-        barrierDismissible: page.match.route.barrierDismissible,
-        transitionDuration:
-            page.match.route.transitionDuration ??
-            const Duration(milliseconds: 300),
-        pageBuilder: (context, animation, secondaryAnimation) => page.child,
-        transitionsBuilder: page.match.route.transitionsBuilder!,
-      );
-
-  _AdaptivePage<T> get _page => settings as _AdaptivePage<T>;
-
-  @override
-  AdaptiveRouter get router => _page.router;
-
-  @override
-  AdaptiveRouteMatch get match => _page.match;
-
-  @override
-  bool get opaque => match.route.opaque;
-
-  @override
-  Widget buildPage(
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-  ) => wrapOffstageContent(_page.child);
-}
-
-/// 记下本页所在 [ModalRoute]，供路由器询问 PopScope / 走 Navigator 链。
-class _PageHost extends StatefulWidget {
-  const _PageHost({
-    required this.router,
-    required this.pageKey,
-    required this.child,
-  });
-
-  final AdaptiveRouter router;
-  final LocalKey pageKey;
-  final Widget child;
-
-  @override
-  State<_PageHost> createState() => _PageHostState();
-}
-
-class _PageHostState extends State<_PageHost> {
-  ModalRoute<dynamic>? _route;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final route = ModalRoute.of(context);
-    if (_route == route) return;
-    _unbind();
-    _route = route;
-    if (route != null) {
-      widget.router._hostRoutes[widget.pageKey] = route;
-    }
-  }
-
-  @override
-  void dispose() {
-    _unbind();
-    super.dispose();
-  }
-
-  void _unbind() {
-    if (_route == null) return;
-    if (widget.router._hostRoutes[widget.pageKey] == _route) {
-      widget.router._hostRoutes.remove(widget.pageKey);
-    }
-    _route = null;
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
-}
-
-class _RelocationTransitionDelegate extends DefaultTransitionDelegate<dynamic> {
-  _RelocationTransitionDelegate(this._relocating);
-
-  final bool Function() _relocating;
-
-  @override
-  Iterable<RouteTransitionRecord> resolve({
-    required List<RouteTransitionRecord> newPageRouteHistory,
-    required Map<RouteTransitionRecord?, RouteTransitionRecord>
-    locationToExitingPageRoute,
-    required Map<RouteTransitionRecord?, List<RouteTransitionRecord>>
-    pageRouteToPagelessRoutes,
-  }) {
-    if (!_relocating()) {
-      return super.resolve(
-        newPageRouteHistory: newPageRouteHistory,
-        locationToExitingPageRoute: locationToExitingPageRoute,
-        pageRouteToPagelessRoutes: pageRouteToPagelessRoutes,
-      );
-    }
-    final results = <RouteTransitionRecord>[];
-    void exiting(RouteTransitionRecord? location) {
-      final route = locationToExitingPageRoute[location];
-      if (route == null) return;
-      if (route.isWaitingForExitingDecision) {
-        route.markForComplete(route.route.currentResult);
-        for (final pageless in pageRouteToPagelessRoutes[route] ?? const []) {
-          if (pageless.isWaitingForExitingDecision) {
-            pageless.markForComplete(pageless.route.currentResult);
-          }
-        }
-      }
-      results.add(route);
-      exiting(route);
-    }
-
-    exiting(null);
-    for (final route in newPageRouteHistory) {
-      if (route.isWaitingForEnteringDecision) route.markForAdd();
-      results.add(route);
-      exiting(route);
-    }
-    return results;
   }
 }
