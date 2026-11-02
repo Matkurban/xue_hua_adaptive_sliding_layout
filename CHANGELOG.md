@@ -1,3 +1,10 @@
+## 3.6.1
+
+### Bug Fixes & Improvements
+
+- **DevTools `WidgetInspector` offstage isolation**: Added `OffstagePageHost` (`RenderOffstagePage`) around navigator route contents and settled offscreen panes in `SlidingPaneViewport`. Underlying covered pages and slid-out panes are now marked with `DiagnosticsTreeStyle.offstage` (with `Rect.zero` paint clip and semantic bounds) without disabling `TickerMode` or skipping background painting, so Flutter DevTools' "Select Widget Mode" accurately selects widgets on the active top page rather than falling through to the root page.
+- **Eliminated transition flash on `fullscreenDialog: true` routes**: Overrode `canTransitionTo` in `_KeepUnderlyingTickerRoute` to return `true` for `MaterialRouteTransitionMixin` routes even when `fullscreenDialog` is `true`, ensuring `FadeForwardsPageTransitionsBuilder` activates `secondaryAnimation` and wraps the underlying route in its opaque `ColorScheme.surface` backdrop during push and pop transitions. Also propagated `onRootNavigator` to child routes nested under `fullscreen` / `fullscreenDialog` routes so child pages stack on the root `Navigator` above their parent dialog.
+
 ## 3.6.0
 
 ### Breaking Changes ⚠️

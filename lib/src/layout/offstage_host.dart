@@ -95,14 +95,7 @@ class RenderOffstagePage extends RenderProxyBox {
   }
 
   void _onOffstageChanged() {
-    markNeedsPaint();
     markNeedsSemanticsUpdate();
-  }
-
-  @override
-  void paint(PaintingContext context, Offset offset) {
-    if (isEffectiveOffstage) return;
-    super.paint(context, offset);
   }
 
   @override

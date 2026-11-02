@@ -1113,6 +1113,14 @@ mixin _KeepUnderlyingTickerRoute<T> on PageRoute<T> {
     overlayEntries.first.opaque = false;
   }
 
+  @override
+  bool canTransitionTo(TransitionRoute<dynamic> nextRoute) {
+    if (nextRoute is MaterialRouteTransitionMixin) {
+      return true;
+    }
+    return super.canTransitionTo(nextRoute);
+  }
+
   static int _pageIndexOf(
     _KeepUnderlyingTickerRoute<dynamic> route,
     List<Page<dynamic>> pages,

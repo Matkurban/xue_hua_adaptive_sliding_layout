@@ -123,6 +123,7 @@ class RouteRegistry {
     required List<AdaptiveRouteMatch> prefix,
     required Uri uri,
     required Object? arguments,
+    bool parentOnRootNavigator = false,
   }) {
     for (final node in nodes) {
       switch (node) {
@@ -154,6 +155,7 @@ class RouteRegistry {
             prefix: prefix,
             uri: uri,
             arguments: arguments,
+            parentOnRootNavigator: parentOnRootNavigator,
           );
           if (hit != null) return hit;
       }
@@ -173,6 +175,7 @@ class RouteRegistry {
     required List<AdaptiveRouteMatch> prefix,
     required Uri uri,
     required Object? arguments,
+    bool parentOnRootNavigator = false,
   }) {
     final pattern = PathPattern(route.path);
     final pm = pattern.match(pathSegments, start: start);
@@ -185,6 +188,7 @@ class RouteRegistry {
     // arguments 只属于目标页（叶子）；中间页按 URL 推导，不能拿叶子的参数。
     final isLeaf = consumedEnd == pathSegments.length;
     final ownArguments = isLeaf ? arguments : null;
+    final effectiveOnRoot = parentOnRootNavigator || route.onRootNavigator;
     final match = AdaptiveRouteMatch(
       route: route,
       matchedLocation: matchedLocation,
@@ -203,7 +207,7 @@ class RouteRegistry {
           ownArguments,
         ),
       ),
-      branchIndex: route.onRootNavigator ? null : branchIndex,
+      branchIndex: effectiveOnRoot ? null : branchIndex,
     );
     final nextPrefix = [...prefix, match];
     if (consumedEnd == pathSegments.length) {
@@ -230,6 +234,7 @@ class RouteRegistry {
       prefix: nextPrefix,
       uri: uri,
       arguments: arguments,
+      parentOnRootNavigator: effectiveOnRoot,
     );
     if (nested == null) {
       match.dispose();
