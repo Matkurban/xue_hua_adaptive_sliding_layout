@@ -78,7 +78,7 @@ jobs:
       - name: Build docs
         working-directory: docs_site
         run: |
-          dart pub global activate jaspr_cli 0.23.5
+          dart pub global activate jaspr_cli 0.24.0-beta.0
           dart pub global run jaspr_cli:jaspr build --dart-define=SITE_BASE=/xue_hua_adaptive_sliding_layout/docs
       # Pages layout: /example/ (Flutter), /docs/ (Jaspr), / -> redirect to /docs/
       - name: Assemble Pages artifact

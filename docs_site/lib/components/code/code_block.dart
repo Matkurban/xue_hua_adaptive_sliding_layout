@@ -77,7 +77,10 @@ class _CodeBlockState extends State<CodeBlock> {
       pre(classes: 'code-block__pre', [
         code(classes: 'language-${component.language.label}', [
           for (final t in tokens)
-            if (t.type == TokenType.plain) .text(t.text) else span(classes: 'tok-${t.type.name}', [.text(t.text)]),
+            if (t.type == TokenType.plain)
+              .text(t.text)
+            else
+              span(classes: 'tok-${t.type.name}', [.text(t.text)]),
         ]),
       ]),
     ]);

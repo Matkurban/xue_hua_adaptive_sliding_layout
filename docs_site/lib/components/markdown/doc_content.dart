@@ -60,7 +60,8 @@ class DocContent extends StatelessComponent {
 
   Component _diagram(DocLayoutDiagram d) {
     Component bar(String text) => div(classes: 'ld__bar', [.text(text)]);
-    Component rows(int n) => div(classes: 'ld__rows', [for (var i = 0; i < n; i++) const div(classes: 'ld__row', [])]);
+    Component rows(int n) =>
+        div(classes: 'ld__rows', [for (var i = 0; i < n; i++) const div(classes: 'ld__row', [])]);
     return figure(classes: 'layout-diagram', [
       div(classes: 'ld__frames', [
         div(classes: 'ld__item', [

@@ -51,7 +51,9 @@ router.pop();''';
                 ),
               ]),
             ]),
-            const div(classes: 'hero__code', [CodeBlock(code: _snippet, language: CodeLanguage.dart)]),
+            const div(classes: 'hero__code', [
+              CodeBlock(code: _snippet, language: CodeLanguage.dart),
+            ]),
           ]),
         ),
       ]),
@@ -62,7 +64,11 @@ router.pop();''';
             div(classes: 'features__grid', [
               for (final f in l10n.homeFeatures)
                 div(classes: 'feature-card', [
-                  span(classes: 'feature-card__icon', attributes: {'aria-hidden': 'true'}, [.text(f.icon)]),
+                  span(
+                    classes: 'feature-card__icon',
+                    attributes: {'aria-hidden': 'true'},
+                    [.text(f.icon)],
+                  ),
                   h3([.text(f.title)]),
                   p([.text(f.body)]),
                 ]),

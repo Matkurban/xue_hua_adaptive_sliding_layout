@@ -80,7 +80,8 @@ class ZhMessages extends AppLocalizations {
   @override
   String get homeHeroTitle => '一张路由表，一栏或两栏';
   @override
-  String get homeHeroSubtitle => '面向 Flutter 的声明式自适应路由：URL 映射成页面栈，窄屏时是经典 Navigator，宽屏时变成可滑动的双栏。调用方式与 Navigator 完全一致。';
+  String get homeHeroSubtitle =>
+      '面向 Flutter 的声明式自适应路由：URL 映射成页面栈，窄屏时是经典 Navigator，宽屏时变成可滑动的双栏。调用方式与 Navigator 完全一致。';
   @override
   String get homeCtaPrimary => '快速开始';
   @override
@@ -89,8 +90,16 @@ class ZhMessages extends AppLocalizations {
   String get homeFeaturesTitle => '为什么选择它';
   @override
   List<({String icon, String title, String body})> get homeFeatures => const [
-    (icon: '🗺️', title: '一张路由表', body: 'AdaptiveRouter + MaterialApp.router。所有页面都在表里，URL 总能完整表达页面栈。'),
-    (icon: '🔗', title: 'URL 即栈', body: '后退、深链、刷新走同一条路径。Web 使用 hash URL，部署到 GitHub Pages 无需 404 回退。'),
+    (
+      icon: '🗺️',
+      title: '一张路由表',
+      body: 'AdaptiveRouter + MaterialApp.router。所有页面都在表里，URL 总能完整表达页面栈。',
+    ),
+    (
+      icon: '🔗',
+      title: 'URL 即栈',
+      body: '后退、深链、刷新走同一条路径。Web 使用 hash URL，部署到 GitHub Pages 无需 404 回退。',
+    ),
     (icon: '↔️', title: '一栏或两栏', body: '窗口小于 840 时是 Navigator；达到 840 后最后两页并排滑动，支持拖动分割条与面包屑。'),
     (
       icon: '🧭',

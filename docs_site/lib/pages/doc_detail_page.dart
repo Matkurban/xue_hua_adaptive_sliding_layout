@@ -29,7 +29,11 @@ class DocDetailPage extends StatelessComponent {
     return .fragment([
       SeoHead(title: page.title, description: page.description, path: AppPaths.doc(id)),
       DocLayout(
-        sidebar: Sidebar(groups: docs.navigation, activeId: id, onNavigate: NavDrawerScope.of(context).onClose),
+        sidebar: Sidebar(
+          groups: docs.navigation,
+          activeId: id,
+          onNavigate: NavDrawerScope.of(context).onClose,
+        ),
         toc: TableOfContents(pageId: id, headings: page.toc),
         child: .fragment([
           p(classes: 'doc-eyebrow', [.text(l10n.docGroup(id.group))]),
@@ -61,7 +65,10 @@ class DocDetailPage extends StatelessComponent {
     return nav(
       classes: 'pager',
       attributes: {'aria-label': '${l10n.previousPage} / ${l10n.nextPage}'},
-      [cell(id.previous, '← ${l10n.previousPage}', 'prev'), cell(id.next, '${l10n.nextPage} →', 'next')],
+      [
+        cell(id.previous, '← ${l10n.previousPage}', 'prev'),
+        cell(id.next, '${l10n.nextPage} →', 'next'),
+      ],
     );
   }
 }

@@ -14,7 +14,10 @@ class SeoHead extends StatelessComponent {
   final String path;
 
   /// Configure for your deployment domain.
-  static const String siteOrigin = String.fromEnvironment('SITE_ORIGIN', defaultValue: 'https://matkurban.github.io');
+  static const String siteOrigin = String.fromEnvironment(
+    'SITE_ORIGIN',
+    defaultValue: 'https://matkurban.github.io',
+  );
 
   @override
   Component build(BuildContext context) {

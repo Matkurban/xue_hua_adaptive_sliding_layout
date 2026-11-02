@@ -68,7 +68,6 @@ class _ContactEditPageState extends State<ContactEditPage> {
               padding: .all(16),
               child: TextField(
                 controller: _controller,
-                autofocus: true,
                 decoration: const InputDecoration(labelText: '备注'),
                 onChanged: (value) {
                   ContactServices.instance.remarkDirty.value = value != _origin;

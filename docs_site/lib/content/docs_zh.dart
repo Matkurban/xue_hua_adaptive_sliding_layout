@@ -85,7 +85,10 @@ dependencies:
       DocCode(CodeLanguage.dart, '''
 import 'package:material_ui/material_ui.dart';
 import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.dart';'''),
-      DocCallout(CalloutKind.tip, '在用编码助手？本包附带 agent skills，能让助手按真实 API 写代码，见 [AI：Skills](doc:skills)。'),
+      DocCallout(
+        CalloutKind.tip,
+        '在用编码助手？本包附带 agent skills，能让助手按真实 API 写代码，见 [AI：Skills](doc:skills)。',
+      ),
       DocParagraph('**下一步：**[第一个应用](doc:first-app)。'),
     ],
   ),
@@ -175,7 +178,10 @@ import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.
           ],
           ['`namedLocation(name, pathParameters:)`', '根据名为 `product` 的路由生成 `/products/2`，不用手工拼路径。'],
           ['`pushReplacementNamed(location)`', '「下一件」替换栈顶页。返回仍然回到列表，而不是上一件商品。'],
-          ['`pushNamedAndRemoveUntil(location, (_) => false)`', '「回到列表」按 URL 重建整个栈——登录回跳和深链接用的也是这个调用。'],
+          [
+            '`pushNamedAndRemoveUntil(location, (_) => false)`',
+            '「回到列表」按 URL 重建整个栈——登录回跳和深链接用的也是这个调用。',
+          ],
         ],
       ),
       DocHeading('code', '完整代码'),
@@ -233,7 +239,10 @@ import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.
         '把窗口拉宽到 600 像素以上：侧边导航栏取代底栏。',
         '再拉宽到 840 像素以上并打开一件商品……列表和详情**并排**出现。你没有为此写任何代码——下一页会解释。',
       ]),
-      DocCallout(CalloutKind.warning, '使用 `AdaptiveShellChrome` 时不要再设置 `Scaffold.bottomNavigationBar`，一个底栏就够了。'),
+      DocCallout(
+        CalloutKind.warning,
+        '使用 `AdaptiveShellChrome` 时不要再设置 `Scaffold.bottomNavigationBar`，一个底栏就够了。',
+      ),
       DocParagraph('**下一步：**[双栏与断点](doc:two-columns)。'),
     ],
   ),
@@ -261,7 +270,9 @@ import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.
         '返回时再滑回来。拖动两栏之间的分隔条可以调整宽度（左栏初始占 40%，两边都至少保留 35%）。',
       ], ordered: true),
       DocHeading('code', '完整代码'),
-      DocParagraph('只改了 `AdaptiveShellRoute`：显式写出 `breakpoints`（840 是默认值，想换别的值时再写），并加上 `placeholder`。'),
+      DocParagraph(
+        '只改了 `AdaptiveShellRoute`：显式写出 `breakpoints`（840 是默认值，想换别的值时再写），并加上 `placeholder`。',
+      ),
       DocCode(CodeLanguage.dart, twoColumnsMain, fileName: 'lib/main.dart'),
       DocHeading('see', '你会看到'),
       DocList([
@@ -282,12 +293,18 @@ import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.
     title: '标题与面包屑',
     description: '给路由加上标题，让双栏上方的面包屑显示当前位置。',
     blocks: [
-      DocCallout(CalloutKind.info, '在两栏上方显示 “Products › Coffee mug › Rate”，点击其中一节即可跳回。', title: '目标'),
+      DocCallout(
+        CalloutKind.info,
+        '在两栏上方显示 “Products › Coffee mug › Rate”，点击其中一节即可跳回。',
+        title: '目标',
+      ),
       DocHeading('title', '路由标题'),
       DocParagraph(
         '`AdaptiveRoute.title` 的类型是 `String Function(AdaptiveRouteState state)`。它**在路由匹配时只执行一次**，没有 `BuildContext`——请从 `state.pathParameters` 或 `state.uri` 推导标题。',
       ),
-      DocParagraph('双栏模式下，外壳会在两栏上方绘制 `AdaptiveBreadcrumbs`（`showBreadcrumbs: true` 为默认值）。点击前面的某一节会返回到那一页。'),
+      DocParagraph(
+        '双栏模式下，外壳会在两栏上方绘制 `AdaptiveBreadcrumbs`（`showBreadcrumbs: true` 为默认值）。点击前面的某一节会返回到那一页。',
+      ),
       DocHeading('code', '完整代码'),
       DocParagraph('每条路由都加上 `title`；详情页标题根据 id 查出来。'),
       DocCode(CodeLanguage.dart, titlesMain, fileName: 'lib/main.dart'),
@@ -317,7 +334,11 @@ AdaptivePaneScope.maybeOf(context)?.title.value = product.name;'''),
     title: '重定向、登录与 onExit',
     description: '用 redirect 把页面放到登录之后，登录完再送回原处；离开未保存的编辑前先确认。',
     blocks: [
-      DocCallout(CalloutKind.info, '让 `/account/profile` 必须登录，登录后回到那里；离开改过的资料页时询问“放弃修改？”。', title: '目标'),
+      DocCallout(
+        CalloutKind.info,
+        '让 `/account/profile` 必须登录，登录后回到那里；离开改过的资料页时询问“放弃修改？”。',
+        title: '目标',
+      ),
       DocHeading('redirect', 'redirect'),
       DocList([
         '`AdaptiveRouter.redirect` 在每次导航前执行；`AdaptiveRoute.redirect` 只对单条路由生效。两者都是 `(context, state) => FutureOr<String?>`：返回一个 location 就改去那里，返回 `null` 则继续。',
@@ -325,7 +346,9 @@ AdaptivePaneScope.maybeOf(context)?.title.value = product.name;'''),
         '登录状态变化后调用 `router.refresh()`，对当前位置重新执行 redirect。',
       ]),
       DocHeading('fullscreen', '全屏的登录路由'),
-      DocParagraph('声明在外壳**之外**（或设置了 `fullscreen: true`）的路由显示在根 `Navigator` 上，任何宽度下都盖住 Tab——适合登录、启动页、引导页。'),
+      DocParagraph(
+        '声明在外壳**之外**（或设置了 `fullscreen: true`）的路由显示在根 `Navigator` 上，任何宽度下都盖住 Tab——适合登录、启动页、引导页。',
+      ),
       DocHeading('on-exit', 'onExit'),
       DocParagraph(
         '通过 `maybePop`、返回按钮、系统返回或浏览器后退离开页面前，会先询问 `AdaptiveRoute.onExit`。返回 `false` 就留在原页。`pop`、`pushReplacementNamed` 和 `pushNamedAndRemoveUntil` **不会**询问——与 `Navigator` 一致。',
@@ -334,7 +357,9 @@ AdaptivePaneScope.maybeOf(context)?.title.value = product.name;'''),
         '在分栏内部，对话框要显示在根 Navigator 上才不会被裁剪在栏内：`useRootNavigator: AdaptivePaneScope.maybeOf(context) != null`。',
       ),
       DocHeading('code', '完整代码'),
-      DocParagraph('新增：两个保存应用状态的 signal、顶层 `redirect`、外壳之外的 `/login` 路由，以及带 `onExit` 的子路由 `profile`。'),
+      DocParagraph(
+        '新增：两个保存应用状态的 signal、顶层 `redirect`、外壳之外的 `/login` 路由，以及带 `onExit` 的子路由 `profile`。',
+      ),
       DocCode(CodeLanguage.dart, redirectsMain, fileName: 'lib/main.dart'),
       DocHeading('see', '你会看到'),
       DocList([
@@ -425,7 +450,11 @@ AdaptiveShellRoute(
           ['`backgroundColor`', '`surfaceContainerLow`', '条带颜色'],
           ['`itemBuilder`', 'InkWell + Text', '单个面包屑'],
           ['`separatorBuilder`', '箭头', '面包屑之间的分隔'],
-          ['`AdaptiveShellRoute.breadcrumbsBuilder`', '`AdaptiveBreadcrumbs`', '替换整条面包屑（仍受 `showBreadcrumbs` 控制）'],
+          [
+            '`AdaptiveShellRoute.breadcrumbsBuilder`',
+            '`AdaptiveBreadcrumbs`',
+            '替换整条面包屑（仍受 `showBreadcrumbs` 控制）',
+          ],
           ['`escapePops`', 'true', '按 Escape 调用 `maybePop`'],
         ],
       ),
@@ -460,7 +489,9 @@ AdaptiveRoute(
   },
   builder: (context, state) => const Center(child: Icon(Icons.image, size: 200)),
 )'''),
-      DocParagraph('在详情页用 `router.pushNamed(\'/products/1/photo\')` 打开。它在任何宽度下都以淡入方式盖住整个窗口；点黑色遮罩即可关闭。'),
+      DocParagraph(
+        '在详情页用 `router.pushNamed(\'/products/1/photo\')` 打开。它在任何宽度下都以淡入方式盖住整个窗口；点黑色遮罩即可关闭。',
+      ),
       DocParagraph('**下一步：**[读取状态](doc:reading-state)。'),
     ],
   ),
@@ -506,7 +537,9 @@ SignalBuilder(
     description: '只想要滑动分栏时，直接使用 SlidingPaneViewport、SlidingPane 和 AdaptiveBreadcrumbs。',
     blocks: [
       DocCallout(CalloutKind.info, '用你自己维护的页面列表做一个带滑动分栏的文件夹浏览器——没有路由，也没有 URL。', title: '目标'),
-      DocParagraph('外壳内部用到的这些 Widget 都是公开的，可以单独使用，例如放在一个已经使用其他路由方案的应用的某个页面里。栈由你自己持有（一个 `List`），变化时重建即可。'),
+      DocParagraph(
+        '外壳内部用到的这些 Widget 都是公开的，可以单独使用，例如放在一个已经使用其他路由方案的应用的某个页面里。栈由你自己持有（一个 `List`），变化时重建即可。',
+      ),
       DocHeading('code', '完整代码'),
       DocCode(CodeLanguage.dart, layoutWithoutRouterMain, fileName: 'lib/main.dart'),
       DocHeading('see', '你会看到'),
@@ -523,7 +556,10 @@ SignalBuilder(
             '`SlidingPaneViewport`',
             '必填：`panes`（`List<SlidingPane>`）、`visibleCount`、`resizeHandleWidth`。可选：`onPop`、`placeholder`、`leftPaneFraction`、`minLeftPaneFraction`、`minRightPaneFraction`、`onLeftPaneFractionChanged`、`slideDuration`、`slideCurve`、`paneBuilder`、`resizeHandleMargin`、`resizeHandleBuilder`。',
           ],
-          ['`SlidingPane`', '`key`（`LocalKey`，深度变化时必须保持稳定，栏内 State 才不会重建）、`title`（`Signal<String>`）、`child`。'],
+          [
+            '`SlidingPane`',
+            '`key`（`LocalKey`，深度变化时必须保持稳定，栏内 State 才不会重建）、`title`（`Signal<String>`）、`child`。',
+          ],
           [
             '`AdaptiveBreadcrumbs`',
             '必填：`panes`、`onSelect`（传入被点击的栏）。可选：`height`、`padding`、`backgroundColor`、`itemBuilder`、`separatorBuilder`。',
@@ -586,7 +622,10 @@ SignalBuilder(
       ),
       DocHeading('paths', '路径规则'),
       DocList(['子路径相对于父路由。', '`:param` 表示一个路径段。', '按声明顺序，先匹配者优先。']),
-      DocCallout(CalloutKind.info, '页面由 `builder` + `transitionsBuilder` 提供，因为宽屏栏位需要的是 `Widget`，而不是 `Page`。'),
+      DocCallout(
+        CalloutKind.info,
+        '页面由 `builder` + `transitionsBuilder` 提供，因为宽屏栏位需要的是 `Widget`，而不是 `Page`。',
+      ),
       DocHeading('redirect', '重定向与错误页'),
       DocParagraph(
         '顶层 `redirect` 与路由级 `redirect` 都可以返回新的 location（`FutureOr<String?>`）。跳转次数超过 `redirectLimit`（5）视为循环，进入 `errorBuilder`。示例中这样保护账号页：',
@@ -657,7 +696,10 @@ AdaptiveRoute(
             '`popFrom(context)`',
             '只作用于 `context` 所在的那一层：在 dialog / sheet 里就关闭它；在某个页面里就关闭盖住该页的弹层，若没有弹层且该页是栈顶则弹出该页。**不询问** `onExit`。',
           ],
-          ['`maybePopFrom(context)`', '`popFrom` 的询问版：弹层走自己的 `PopScope`，页面依次走 `PopScope` → `onExit`。'],
+          [
+            '`maybePopFrom(context)`',
+            '`popFrom` 的询问版：弹层走自己的 `PopScope`，页面依次走 `PopScope` → `onExit`。',
+          ],
           ['`popUntil`', '弹出直到 predicate 为 true，不会越过分支根。'],
           ['`canPop`', '存在覆盖层，或当前分支深度 > 1。'],
         ],

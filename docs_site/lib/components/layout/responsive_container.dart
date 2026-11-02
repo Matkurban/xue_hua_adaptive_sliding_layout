@@ -5,7 +5,12 @@ enum ContainerWidth { content, wide }
 
 /// Centers its child with responsive horizontal padding and a max width.
 class ResponsiveContainer extends StatelessComponent {
-  const ResponsiveContainer({required this.child, this.width = ContainerWidth.wide, this.classes, super.key});
+  const ResponsiveContainer({
+    required this.child,
+    this.width = ContainerWidth.wide,
+    this.classes,
+    super.key,
+  });
 
   final Component child;
   final ContainerWidth width;

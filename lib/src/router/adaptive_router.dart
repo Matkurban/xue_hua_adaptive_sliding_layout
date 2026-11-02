@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:material_ui/material_ui.dart';
 import 'package:signals_flutter/signals_flutter.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/layout/offstage_host.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/shell_widget.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/navigation.dart';
 
@@ -938,7 +939,7 @@ class _AdaptiveRouterDelegate extends RouterDelegate<AdaptiveRouteMatchList>
     }
     if (current.shell != null && current.branchIndex != null) {
       pages.add(
-        const MaterialPage<void>(
+        const AdaptiveContainerPage<void>(
           key: ValueKey<String>('adaptive-shell'),
           child: _ShellPage(),
         ),
@@ -947,7 +948,7 @@ class _AdaptiveRouterDelegate extends RouterDelegate<AdaptiveRouteMatchList>
         current.overlayMatches.isNotEmpty &&
         router._branchStacks.isNotEmpty) {
       pages.add(
-        const MaterialPage<void>(
+        const AdaptiveContainerPage<void>(
           key: ValueKey<String>('adaptive-shell'),
           child: _ShellPage(),
         ),
@@ -961,7 +962,7 @@ class _AdaptiveRouterDelegate extends RouterDelegate<AdaptiveRouteMatchList>
     }
     if (pages.isEmpty) {
       pages.add(
-        const MaterialPage<void>(
+        const AdaptiveContainerPage<void>(
           key: ValueKey<String>('adaptive-empty'),
           child: SizedBox.shrink(),
         ),
@@ -975,7 +976,7 @@ class _AdaptiveRouterDelegate extends RouterDelegate<AdaptiveRouteMatchList>
     AdaptiveRouteMatchList current,
   ) {
     final state = router._stateFor(current, current.uri);
-    return MaterialPage<void>(
+    return AdaptiveContainerPage<void>(
       key: const ValueKey<String>('adaptive-error'),
       child: AdaptiveRouteScope(
         state: state,
@@ -1058,22 +1059,96 @@ final class _GlobalLayer extends _Layer {
   const _GlobalLayer();
 }
 
+/// 壳层与容器页（如根 Navigator 上的 `adaptive-shell` 与壳层 `_chromeNavKey` 上的
+/// `adaptive-chrome`），接入 [_KeepUnderlyingTickerRoute]，在上层不透明路由完成
+/// 入场转场后自动将底层壳与根页面标记为 offstage。
+class AdaptiveContainerPage<T> extends Page<T> {
+  const AdaptiveContainerPage({
+    required this.child,
+    super.key,
+    super.name,
+    super.arguments,
+  });
+
+  final Widget child;
+
+  @override
+  Route<T> createRoute(BuildContext context) {
+    return _AdaptiveContainerRoute<T>(page: this);
+  }
+}
+
 /// 保持 `ModalRoute.opaqueOf(context)` 与 [AdaptiveRoute.opaque] 一致（确保 Android
 /// `FadeForwardsPageTransitionsBuilder` 在压入三级路由时为下层页面包裹不透明的
 /// `ColoredBox(color: ColorScheme.of(context).surface)` 底衬，避免露出黑色底幕闪烁），
 /// 同时始终将自身 [OverlayEntry.opaque] 保持为 `false`，避免 [OverlayState] 关闭下层路由的
-/// [TickerMode] 导致下层页面触发 `didChangeDependencies` 重解析图标闪白。
+/// [TickerMode] 导致下层页面触发 `didChangeDependencies` 重解析图标闪白；
+/// 并通过 [OffstagePageHost] 在上层不透明路由入场完成后将下层被遮挡页面标记为
+/// `DiagnosticsTreeStyle.offstage`，使 Flutter DevTools `WidgetInspector` 点击选择时
+/// 直接跳过被遮挡的根页面与中间页。
 mixin _KeepUnderlyingTickerRoute<T> on PageRoute<T> {
-  AdaptiveRouteMatch get match;
+  static final Expando<List<_KeepUnderlyingTickerRoute<dynamic>>>
+  _routesByNavigator = Expando<List<_KeepUnderlyingTickerRoute<dynamic>>>();
+
+  final ValueNotifier<bool> _offstageNotifier = ValueNotifier<bool>(false);
+
+  NavigatorState? _registeredNavigator;
 
   _AdaptivePage<T>? _lastBuiltPage;
 
-  @override
-  bool get opaque => match.route.opaque;
+  Widget wrapOffstageContent(Widget child) {
+    return OffstagePageHost(
+      offstageListenable: _offstageNotifier,
+      child: child,
+    );
+  }
+
+  void _onRouteStatusChanged(AnimationStatus status) {
+    _keepOverlayNonOpaque(status);
+    _syncNavigatorOffstage();
+  }
 
   void _keepOverlayNonOpaque([AnimationStatus? _]) {
     if (overlayEntries.isEmpty) return;
     overlayEntries.first.opaque = false;
+  }
+
+  static int _pageIndexOf(
+    _KeepUnderlyingTickerRoute<dynamic> route,
+    List<Page<dynamic>> pages,
+  ) {
+    final s = route.settings;
+    if (s is! Page<dynamic>) return -1;
+    for (var i = 0; i < pages.length; i++) {
+      if (identical(pages[i], s) ||
+          (pages[i].key != null && pages[i].key == s.key)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  void _syncNavigatorOffstage([NavigatorState? targetNavigator]) {
+    final nav = targetNavigator ?? _registeredNavigator ?? navigator;
+    if (nav == null || !nav.mounted) return;
+    final list = _routesByNavigator[nav];
+    if (list == null || list.isEmpty) return;
+    final pages = nav.widget.pages;
+    var highestCompletedOpaqueIndex = -1;
+    for (final route in list) {
+      if (!route.isActive || !route.opaque) continue;
+      if (route.animation?.status != AnimationStatus.completed) continue;
+      final idx = _pageIndexOf(route, pages);
+      if (idx > highestCompletedOpaqueIndex) {
+        highestCompletedOpaqueIndex = idx;
+      }
+    }
+    for (final route in list) {
+      final idx = _pageIndexOf(route, pages);
+      final shouldOffstage =
+          idx >= 0 && route.isActive && idx < highestCompletedOpaqueIndex;
+      route._offstageNotifier.value = shouldOffstage;
+    }
   }
 
   @override
@@ -1083,25 +1158,58 @@ mixin _KeepUnderlyingTickerRoute<T> on PageRoute<T> {
       _lastBuiltPage = current;
     }
     super.install();
-    animation?.addStatusListener(_keepOverlayNonOpaque);
+    final nav = navigator;
+    if (nav != null) {
+      _registeredNavigator = nav;
+      final list = _routesByNavigator[nav] ??=
+          <_KeepUnderlyingTickerRoute<dynamic>>[];
+      if (!list.contains(this)) {
+        list.add(this);
+      }
+    }
+    animation?.addStatusListener(_onRouteStatusChanged);
     _keepOverlayNonOpaque();
+    _syncNavigatorOffstage(nav);
   }
 
   @override
   void didAdd() {
     super.didAdd();
     _keepOverlayNonOpaque();
+    _syncNavigatorOffstage();
   }
 
   @override
   TickerFuture didPush() {
     final future = super.didPush();
     _keepOverlayNonOpaque();
+    _syncNavigatorOffstage();
     return future;
   }
 
   @override
+  bool didPop(T? result) {
+    final popped = super.didPop(result);
+    _keepOverlayNonOpaque();
+    _syncNavigatorOffstage();
+    return popped;
+  }
+
+  @override
+  void didPopNext(Route<dynamic> nextRoute) {
+    super.didPopNext(nextRoute);
+    _syncNavigatorOffstage();
+  }
+
+  @override
+  void didChangeNext(Route<dynamic>? nextRoute) {
+    super.didChangeNext(nextRoute);
+    _syncNavigatorOffstage();
+  }
+
+  @override
   void changedExternalState() {
+    _syncNavigatorOffstage();
     final current = settings;
     if (current is _AdaptivePage<T>) {
       final previous = _lastBuiltPage;
@@ -1115,9 +1223,30 @@ mixin _KeepUnderlyingTickerRoute<T> on PageRoute<T> {
 
   @override
   void dispose() {
-    animation?.removeStatusListener(_keepOverlayNonOpaque);
+    animation?.removeStatusListener(_onRouteStatusChanged);
+    final nav = _registeredNavigator ?? navigator;
+    if (nav != null) {
+      _routesByNavigator[nav]?.remove(this);
+      _syncNavigatorOffstage(nav);
+    }
+    _registeredNavigator = null;
+    _offstageNotifier.dispose();
     super.dispose();
   }
+}
+
+class _AdaptiveContainerRoute<T> extends PageRoute<T>
+    with MaterialRouteTransitionMixin<T>, _KeepUnderlyingTickerRoute<T> {
+  _AdaptiveContainerRoute({required AdaptiveContainerPage<T> page})
+    : super(settings: page);
+
+  AdaptiveContainerPage<T> get _page => settings as AdaptiveContainerPage<T>;
+
+  @override
+  Widget buildContent(BuildContext context) => wrapOffstageContent(_page.child);
+
+  @override
+  bool get maintainState => true;
 }
 
 /// 页面路由的 onExit 守卫：先让页内 PopScope 表态，再由 onExit 否决，二者互不覆盖。
@@ -1170,7 +1299,10 @@ class _AdaptiveMaterialRoute<T> extends PageRoute<T>
   AdaptiveRouteMatch get match => _page.match;
 
   @override
-  Widget buildContent(BuildContext context) => _page.child;
+  bool get opaque => match.route.opaque;
+
+  @override
+  Widget buildContent(BuildContext context) => wrapOffstageContent(_page.child);
 
   @override
   bool get maintainState => true;
@@ -1202,11 +1334,14 @@ class _AdaptiveTransitionRoute<T> extends PageRouteBuilder<T>
   AdaptiveRouteMatch get match => _page.match;
 
   @override
+  bool get opaque => match.route.opaque;
+
+  @override
   Widget buildPage(
     BuildContext context,
     Animation<double> animation,
     Animation<double> secondaryAnimation,
-  ) => _page.child;
+  ) => wrapOffstageContent(_page.child);
 }
 
 /// 记下本页所在 [ModalRoute]，供路由器询问 PopScope / 走 Navigator 链。

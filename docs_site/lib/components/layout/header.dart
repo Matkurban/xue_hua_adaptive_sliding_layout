@@ -61,7 +61,12 @@ class Header extends StatelessComponent {
                 classes: inDocs ? 'is-active' : null,
                 child: .text(l10n.navDocs),
               ),
-              a(href: githubUrl, target: Target.blank, attributes: {'rel': 'noopener'}, [.text(l10n.navGithub)]),
+              a(
+                href: githubUrl,
+                target: Target.blank,
+                attributes: {'rel': 'noopener'},
+                [.text(l10n.navGithub)],
+              ),
             ],
           ),
           const div(classes: 'site-header__actions', [LanguageSwitcher(), ThemeToggle()]),

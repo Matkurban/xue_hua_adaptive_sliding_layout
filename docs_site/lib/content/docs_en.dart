@@ -24,8 +24,7 @@ DocPage page(DocId id) => switch (id) {
         expandedLabel: 'Wide window (≥ 840): two sliding columns',
         listLabel: 'Products',
         detailLabel: 'Coffee mug',
-        caption:
-            'Same URL `/products/1`, same stack `[Products, Coffee mug]`. Narrow: a normal `Navigator` shows the top page. Wide: the last two pages sit side by side, with breadcrumbs and a resize handle.',
+        caption: 'Same URL `/products/1`, same stack `[Products, Coffee mug]`. Narrow: a normal `Navigator` shows the top page. Wide: the last two pages sit side by side, with breadcrumbs and a resize handle.',
       ),
       DocHeading('how', 'How it works in one line'),
       DocCode(CodeLanguage.plain, '''
@@ -61,7 +60,11 @@ URL /products/1/reviews
     title: 'Installation',
     description: 'SDK requirements and the three dependencies the tutorial uses.',
     blocks: [
-      DocCallout(CalloutKind.info, 'Add the package to a Flutter app and check the imports compile.', title: 'Goal'),
+      DocCallout(
+        CalloutKind.info,
+        'Add the package to a Flutter app and check the imports compile.',
+        title: 'Goal',
+      ),
       DocHeading('requirements', 'Requirements'),
       DocTable(
         ['Item', 'Constraint'],
@@ -102,7 +105,8 @@ import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.
   DocId.firstApp => const DocPage(
     id: DocId.firstApp,
     title: 'Your First App',
-    description: 'The smallest runnable app: one route in an AdaptiveRouter, handed to MaterialApp.router.',
+    description:
+        'The smallest runnable app: one route in an AdaptiveRouter, handed to MaterialApp.router.',
     blocks: [
       DocCallout(
         CalloutKind.info,
@@ -281,7 +285,8 @@ import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.
   DocId.twoColumns => const DocPage(
     id: DocId.twoColumns,
     title: 'Two Columns & Breakpoints',
-    description: 'What happens at 840 px, how pages slide, the empty right column and the resize handle.',
+    description:
+        'What happens at 840 px, how pages slide, the empty right column and the resize handle.',
     blocks: [
       DocCallout(
         CalloutKind.info,
@@ -295,7 +300,11 @@ import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.
         [
           ['< 600 (`compactMaxWidth`)', 'compact', 'One column: a classic `Navigator`'],
           ['600 – 839', 'medium', 'Still one column; your chrome can react via `shell.isMedium`'],
-          ['≥ 840 (`expandedMinWidth`)', 'expanded', 'Two columns: the **last two pages** of the stack'],
+          [
+            '≥ 840 (`expandedMinWidth`)',
+            'expanded',
+            'Two columns: the **last two pages** of the stack',
+          ],
         ],
       ),
       DocHeading('sliding', 'How pages move'),
@@ -327,7 +336,8 @@ import 'package:xue_hua_adaptive_sliding_layout/xue_hua_adaptive_sliding_layout.
   DocId.titlesBreadcrumbs => const DocPage(
     id: DocId.titlesBreadcrumbs,
     title: 'Titles & Breadcrumbs',
-    description: 'Give routes titles so the breadcrumb strip above the two columns can show where you are.',
+    description:
+        'Give routes titles so the breadcrumb strip above the two columns can show where you are.',
     blocks: [
       DocCallout(
         CalloutKind.info,
@@ -368,8 +378,7 @@ AdaptivePaneScope.maybeOf(context)?.title.value = product.name;'''),
   DocId.redirectsOnExit => const DocPage(
     id: DocId.redirectsOnExit,
     title: 'Redirects, Sign-in & onExit',
-    description:
-        'Guard a page behind sign-in with redirect, return the user afterwards, and confirm before leaving unsaved edits.',
+    description: 'Guard a page behind sign-in with redirect, return the user afterwards, and confirm before leaving unsaved edits.',
     blocks: [
       DocCallout(
         CalloutKind.info,
@@ -440,9 +449,17 @@ AdaptivePaneScope.maybeOf(context)?.title.value = product.name;'''),
             'rounded animated bar',
             '`Widget Function(BuildContext context, bool isHovered)`; highlights with `colorScheme.primary` on hover / drag',
           ],
-          ['`resizeHandleWidth`', '4 (shell route)', 'Hit-test width of the handle; required on `SlidingPaneViewport`'],
+          [
+            '`resizeHandleWidth`',
+            '4 (shell route)',
+            'Hit-test width of the handle; required on `SlidingPaneViewport`',
+          ],
           ['`resizeHandleMargin`', '—', 'Insets the handle independently of its hit area'],
-          ['`placeholder`', 'outline icon', 'Shell-level empty right pane; `AdaptiveBranch.placeholder` wins if set'],
+          [
+            '`placeholder`',
+            'outline icon',
+            'Shell-level empty right pane; `AdaptiveBranch.placeholder` wins if set',
+          ],
         ],
       ),
       DocParagraph('Default pane split: left fraction 0.4, minimum left / right fraction 0.35.'),
@@ -519,7 +536,11 @@ AdaptiveShellRoute(
             'Compact only: the pushed page covers the host bottom bar. Two panes on desktop are untouched',
           ],
           ['`fullscreen`', 'false', 'Root Navigator at every width, normal transition'],
-          ['`fullscreenDialog`', 'false', 'Root Navigator at every width as a Material fullscreen dialog'],
+          [
+            '`fullscreenDialog`',
+            'false',
+            'Root Navigator at every width as a Material fullscreen dialog',
+          ],
           ['`opaque`', 'true', 'With `transitionsBuilder`: transparent photo viewer'],
           ['`barrierColor`', 'null', 'With `transitionsBuilder`'],
           ['`barrierDismissible`', 'false', 'Tap the barrier to pop'],
@@ -549,7 +570,8 @@ AdaptiveRoute(
   DocId.readingState => const DocPage(
     id: DocId.readingState,
     title: 'Reading State',
-    description: 'Read the current location, route parameters, pane and shell scopes from any widget.',
+    description:
+        'Read the current location, route parameters, pane and shell scopes from any widget.',
     blocks: [
       DocCallout(
         CalloutKind.info,
@@ -589,8 +611,7 @@ SignalBuilder(
   DocId.layoutWithoutRouter => const DocPage(
     id: DocId.layoutWithoutRouter,
     title: 'Layout Without the Router',
-    description:
-        'Use SlidingPaneViewport, SlidingPane and AdaptiveBreadcrumbs directly when you only want the sliding columns.',
+    description: 'Use SlidingPaneViewport, SlidingPane and AdaptiveBreadcrumbs directly when you only want the sliding columns.',
     blocks: [
       DocCallout(
         CalloutKind.info,
@@ -640,14 +661,15 @@ SignalBuilder(
         CalloutKind.info,
         'The viewport is 1 or 2 columns. Three-plus columns would require changing `visibleColumnCount` and teaching `SlidingPaneViewport` to lay out N panes.',
       ),
-      DocParagraph('That completes the tutorial. **Next:** the [Route table reference](doc:route-table).'),
+      DocParagraph(
+        'That completes the tutorial. **Next:** the [Route table reference](doc:route-table).',
+      ),
     ],
   ),
   DocId.routeTable => const DocPage(
     id: DocId.routeTable,
     title: 'Route Table',
-    description:
-        'Reference for AdaptiveRouter, AdaptiveRoute, AdaptiveShellRoute, AdaptiveBranch and the state objects.',
+    description: 'Reference for AdaptiveRouter, AdaptiveRoute, AdaptiveShellRoute, AdaptiveBranch and the state objects.',
     blocks: [
       DocHeading('types', 'Types'),
       DocTable(
@@ -678,11 +700,18 @@ SignalBuilder(
             '`AdaptiveShellState`',
             'Shell builder argument: `currentIndex`, width / breakpoints (`isCompact`, `isMedium`, `isExpanded`), `leftPaneFraction`, `goBranch`.',
           ],
-          ['`LayoutBreakpoints`', '`const` class, defaults `compactMaxWidth: 600`, `expandedMinWidth: 840`.'],
+          [
+            '`LayoutBreakpoints`',
+            '`const` class, defaults `compactMaxWidth: 600`, `expandedMinWidth: 840`.',
+          ],
         ],
       ),
       DocHeading('paths', 'Paths'),
-      DocList(['Child paths are relative to their parent.', '`:param` is one path segment.', 'First match wins.']),
+      DocList([
+        'Child paths are relative to their parent.',
+        '`:param` is one path segment.',
+        'First match wins.',
+      ]),
       DocCallout(
         CalloutKind.info,
         '`builder` + `transitionsBuilder` supply the page, because wide panes need a `Widget`, not a `Page`.',
@@ -729,8 +758,7 @@ AdaptiveRoute(
   DocId.navigationVerbs => const DocPage(
     id: DocId.navigationVerbs,
     title: 'Navigation Verbs',
-    description:
-        'Every verb on AdaptiveRouter, how it behaves in one and two columns, tab switching and exit confirmation.',
+    description: 'Every verb on AdaptiveRouter, how it behaves in one and two columns, tab switching and exit confirmation.',
     blocks: [
       DocParagraph(
         'All names and signatures match `NavigatorState`. `routeName` is a location. There is no non-named `push(Route)` — every page must be in the table so the URL can express it.',
@@ -743,7 +771,10 @@ AdaptiveRoute(
             '`pushNamed`',
             'Push onto the branch `Navigator`, or overlay the root if `fullscreen` / off-shell. Same-branch prefix extends the stack (`/mail` → `/mail/inbox/42` can slide in two panes). Same-branch non-prefix appends the leaf (`/mail/inbox/41` → `/mail/inbox/42` yields `[mail, inbox, 41, 42]`). Other branch: switch tab and rebuild that stack from the URL.',
           ],
-          ['`pushReplacementNamed`', 'Replace stack top. Same-level swap; the right pane updates in place.'],
+          [
+            '`pushReplacementNamed`',
+            'Replace stack top. Same-level swap; the right pane updates in place.',
+          ],
           [
             '`pushNamedAndRemoveUntil`',
             'Pop while the predicate is false, then `pushNamed`. `(_) => false` rebuilds from the URL (deep link, login return, reset tab).',
@@ -864,7 +895,12 @@ flutter test'''),
             '[Nested routes](doc:nested-routes), [Customizing](doc:customizing-ui)',
             '`pages/home/`',
           ],
-          ['Shopping cart', 'A separate branch with its own stack', '[Tabs](doc:tabs)', '`pages/shopping_cart/`'],
+          [
+            'Shopping cart',
+            'A separate branch with its own stack',
+            '[Tabs](doc:tabs)',
+            '`pages/shopping_cart/`',
+          ],
           [
             'Contacts',
             'List → `/contacts/:id` → `edit`; `onExit` dialog with `useRootNavigator` chosen via `AdaptivePaneScope`',
@@ -917,7 +953,8 @@ flutter test'''),
   DocId.skills => const DocPage(
     id: DocId.skills,
     title: 'Skills',
-    description: 'Install the agent skills shipped with the package so coding agents use the real APIs.',
+    description:
+        'Install the agent skills shipped with the package so coding agents use the real APIs.',
     blocks: [
       DocParagraph(
         'This package ships [agent skills](https://dart.dev/tools/pub/package-skills) under `skills/`. After you depend on it, install them so coding agents use the real APIs:',
@@ -928,7 +965,10 @@ flutter test'''),
         ['Skill', 'When'],
         [
           ['`xue-hua-adaptive-sliding-layout-setup`', '`AdaptiveRouter` + `MaterialApp.router`'],
-          ['`xue-hua-adaptive-sliding-layout-routing`', 'Route table, `:param`, `redirect`, `onExit`'],
+          [
+            '`xue-hua-adaptive-sliding-layout-routing`',
+            'Route table, `:param`, `redirect`, `onExit`',
+          ],
           ['`xue-hua-adaptive-sliding-layout-navigation`', '`pushNamed` / `pop` / `goBranch`'],
           ['`xue-hua-adaptive-sliding-layout-layout`', 'Panes, breakpoints, breadcrumbs'],
         ],

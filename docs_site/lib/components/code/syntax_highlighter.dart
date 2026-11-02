@@ -1,7 +1,19 @@
 import '../../models/doc_page.dart';
 
 /// Token categories → CSS classes `tok-<name>`.
-enum TokenType { plain, comment, string, keyword, type, number, annotation, key, punctuation, command, flag }
+enum TokenType {
+  plain,
+  comment,
+  string,
+  keyword,
+  type,
+  number,
+  annotation,
+  key,
+  punctuation,
+  command,
+  flag,
+}
 
 typedef Token = ({TokenType type, String text});
 

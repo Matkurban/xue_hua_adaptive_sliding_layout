@@ -14,7 +14,14 @@ import '../../routes/app_paths.dart';
 /// `<base href>` identically on server and client, and still performs
 /// client-side navigation on plain left-clicks.
 class AppLink extends StatelessComponent {
-  const AppLink({required this.to, this.classes, this.attributes, this.child, this.children, super.key});
+  const AppLink({
+    required this.to,
+    this.classes,
+    this.attributes,
+    this.child,
+    this.children,
+    super.key,
+  });
 
   /// Route path relative to the site base, e.g. `AppPaths.doc(DocId.faq)`.
   final String to;
@@ -34,7 +41,11 @@ class AppLink extends StatelessComponent {
           final router = Router.maybeOf(context);
           if (router == null) return;
           final mouse = event as web.MouseEvent; // click events are always MouseEvents
-          if (mouse.button != 0 || mouse.metaKey || mouse.ctrlKey || mouse.shiftKey || mouse.altKey) {
+          if (mouse.button != 0 ||
+              mouse.metaKey ||
+              mouse.ctrlKey ||
+              mouse.shiftKey ||
+              mouse.altKey) {
             return; // let the browser open new tabs/windows
           }
           event.preventDefault();

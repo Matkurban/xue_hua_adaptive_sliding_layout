@@ -151,7 +151,7 @@ class _AdaptiveShellHostState extends State<AdaptiveShellHost> {
                 Navigator(
                   key: _chromeNavKey,
                   pages: [
-                    MaterialPage<void>(
+                    AdaptiveContainerPage<void>(
                       key: const ValueKey<String>('adaptive-chrome'),
                       child: _shell.builder(context, shellState, child),
                     ),

@@ -93,20 +93,17 @@ class EnMessages extends AppLocalizations {
     (
       icon: '🗺️',
       title: 'One route table',
-      body:
-          'AdaptiveRouter + MaterialApp.router. Every page lives in the table, so the URL can always express the stack.',
+      body: 'AdaptiveRouter + MaterialApp.router. Every page lives in the table, so the URL can always express the stack.',
     ),
     (
       icon: '🔗',
       title: 'URL is the stack',
-      body:
-          'Back, deep links and refresh all take the same path. Web uses hash URLs, so GitHub Pages needs no 404 fallback.',
+      body: 'Back, deep links and refresh all take the same path. Web uses hash URLs, so GitHub Pages needs no 404 fallback.',
     ),
     (
       icon: '↔️',
       title: '1 or 2 columns',
-      body:
-          'Below 840 px a Navigator; at or above it the last two pages slide side by side with a resizable sash and breadcrumbs.',
+      body: 'Below 840 px a Navigator; at or above it the last two pages slide side by side with a resizable sash and breadcrumbs.',
     ),
     (
       icon: '🧭',
@@ -121,7 +118,8 @@ class EnMessages extends AppLocalizations {
   String get notFoundBody => 'The page you are looking for does not exist or has moved.';
 
   @override
-  String footerCopyright(int year) => '© $year XueHua. Documentation released under the MIT license.';
+  String footerCopyright(int year) =>
+      '© $year XueHua. Documentation released under the MIT license.';
   @override
   String get footerBuiltWith => 'Built with Jaspr';
 }

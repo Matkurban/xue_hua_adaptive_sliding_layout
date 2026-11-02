@@ -52,7 +52,11 @@ class _SidebarState extends State<Sidebar> {
                 onClick: () => _toggle(group.group),
                 [
                   span([.text(l10n.docGroup(group.group))]),
-                  const span(classes: 'sidebar__chevron', attributes: {'aria-hidden': 'true'}, [.text('›')]),
+                  const span(
+                    classes: 'sidebar__chevron',
+                    attributes: {'aria-hidden': 'true'},
+                    [.text('›')],
+                  ),
                 ],
               ),
               ul(id: listId, classes: 'sidebar__list', [
@@ -62,7 +66,9 @@ class _SidebarState extends State<Sidebar> {
                     [
                       AppLink(
                         to: AppPaths.doc(item.id),
-                        classes: item.id == component.activeId ? 'sidebar__link is-active' : 'sidebar__link',
+                        classes: item.id == component.activeId
+                            ? 'sidebar__link is-active'
+                            : 'sidebar__link',
                         attributes: item.id == component.activeId ? {'aria-current': 'page'} : null,
                         child: .text(item.label),
                       ),

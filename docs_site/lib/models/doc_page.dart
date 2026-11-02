@@ -78,7 +78,12 @@ final class DocLayoutDiagram extends DocBlock {
 }
 
 class DocPage {
-  const DocPage({required this.id, required this.title, required this.description, required this.blocks});
+  const DocPage({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.blocks,
+  });
 
   final DocId id;
   final String title;

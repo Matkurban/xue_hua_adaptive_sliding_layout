@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:xue_hua_adaptive_sliding_layout/src/layout/offstage_host.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/layout/pane_scope.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_shell_route.dart';
 
@@ -369,8 +371,13 @@ class _SlidingPaneStripState extends State<_SlidingPaneStrip>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late CurvedAnimation _curved;
+  late final ValueNotifier<bool> _settledNotifier;
   double _fromOffset = 0;
   double _toOffset = 0;
+
+  void _onSlideStatusChanged(AnimationStatus _) {
+    _settledNotifier.value = !_controller.isAnimating;
+  }
 
   @override
   void initState() {
@@ -378,7 +385,8 @@ class _SlidingPaneStripState extends State<_SlidingPaneStrip>
     _controller = AnimationController(
       vsync: this,
       duration: widget.slideDuration,
-    );
+    )..addStatusListener(_onSlideStatusChanged);
+    _settledNotifier = ValueNotifier<bool>(!_controller.isAnimating);
     _curved = CurvedAnimation(parent: _controller, curve: widget.slideCurve);
     _toOffset = _targetOffset(widget);
     _fromOffset = _toOffset;
@@ -403,6 +411,7 @@ class _SlidingPaneStripState extends State<_SlidingPaneStrip>
       _fromOffset = next;
       _toOffset = next;
       _controller.value = 1;
+      _settledNotifier.value = !_controller.isAnimating;
       return;
     }
     if (next == _toOffset) return;
@@ -412,6 +421,7 @@ class _SlidingPaneStripState extends State<_SlidingPaneStrip>
     _controller
       ..stop()
       ..forward(from: 0);
+    _settledNotifier.value = !_controller.isAnimating;
   }
 
   double _targetOffset(_SlidingPaneStrip w) {
@@ -428,6 +438,8 @@ class _SlidingPaneStripState extends State<_SlidingPaneStrip>
 
   @override
   void dispose() {
+    _controller.removeStatusListener(_onSlideStatusChanged);
+    _settledNotifier.dispose();
     _curved.dispose();
     _controller.dispose();
     super.dispose();
@@ -474,6 +486,7 @@ class _SlidingPaneStripState extends State<_SlidingPaneStrip>
                   width: _paneWidth(widget, i),
                   height: widget.viewportHeight,
                   ticking: i >= start,
+                  settledListenable: _settledNotifier,
                   decorate: widget.decoratePanes,
                   showDivider: !widget.decoratePanes && i > 0,
                   dividerColor: colorScheme.outlineVariant.withValues(
@@ -522,6 +535,7 @@ class _SlidingPaneFrame extends StatelessWidget {
     required this.width,
     required this.height,
     required this.ticking,
+    required this.settledListenable,
     required this.decorate,
     required this.showDivider,
     required this.dividerColor,
@@ -536,6 +550,7 @@ class _SlidingPaneFrame extends StatelessWidget {
   final double width;
   final double height;
   final bool ticking;
+  final ValueListenable<bool> settledListenable;
   final bool decorate;
   final bool showDivider;
   final Color dividerColor;
@@ -583,13 +598,16 @@ class _SlidingPaneFrame extends StatelessWidget {
         child: SizedBox(
           width: width,
           height: height,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              decorated,
-              if (layoutKey != null)
-                IgnorePointer(child: SizedBox.expand(key: layoutKey)),
-            ],
+          child: OffstagePageHost(
+            offstageListenable: ticking ? null : settledListenable,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (layoutKey != null)
+                  IgnorePointer(child: SizedBox.expand(key: layoutKey)),
+                decorated,
+              ],
+            ),
           ),
         ),
       ),

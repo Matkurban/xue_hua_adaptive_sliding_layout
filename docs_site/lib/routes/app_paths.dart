@@ -23,7 +23,8 @@ abstract final class AppPaths {
   static const String home = '/';
 
   /// The Flutter web demo deployed next to the docs.
-  static const String liveDemoUrl = 'https://matkurban.github.io/xue_hua_adaptive_sliding_layout/example/';
+  static const String liveDemoUrl =
+      'https://matkurban.github.io/xue_hua_adaptive_sliding_layout/example/';
 
   /// Route prefix of doc pages.
   static const String docsRoot = base == '' ? '/docs' : '';
@@ -34,7 +35,8 @@ abstract final class AppPaths {
 
   /// href for a plain `<a>` (not `Link`): made relative so the browser
   /// resolves it against `<base href>` identically on server and client.
-  static String relative(String routePath) => routePath.startsWith('/') ? routePath.substring(1) : routePath;
+  static String relative(String routePath) =>
+      routePath.startsWith('/') ? routePath.substring(1) : routePath;
 
   static String anchor(DocId id, String anchor) => '${relative(doc(id))}#$anchor';
 

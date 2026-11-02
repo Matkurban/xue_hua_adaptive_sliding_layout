@@ -23,7 +23,8 @@ class AppRouter extends StatelessComponent {
         }
         return null;
       },
-      errorBuilder: (context, state) => SiteShell(location: state.location, child: const NotFoundPage()),
+      errorBuilder: (context, state) =>
+          SiteShell(location: state.location, child: const NotFoundPage()),
       routes: [
         ShellRoute(
           builder: (context, state, child) => SiteShell(location: state.location, child: child),
