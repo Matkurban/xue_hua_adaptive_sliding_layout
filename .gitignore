@@ -33,3 +33,4 @@ pubspec.lock
 .cursor/
 .codegraph/
 .config/
+.vscode/
