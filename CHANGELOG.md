@@ -1,3 +1,12 @@
+## 3.6.3
+
+### Bug Fixes
+
+- **Eliminated first-frame `errorBuilder` flash on startup**:
+  - `AdaptiveRouterDelegate._pages` now checks `router.isReady` before falling back to `errorBuilder`, rendering an empty placeholder instead of the error page (which previously flashed the initial URI such as `/splash`) while an asynchronous initial route resolution is still pending.
+  - `RouteRedirectResolver.resolve` and `AdaptiveRouter.applyParsed` now return `SynchronousFuture` when all active redirects are synchronous (or absent) and no `onExit` guard needs to be awaited, allowing Flutter's `Router` to resolve and mount the initial route on the very first frame without any blank or error-page flash.
+  - Added `test/initial_route_flash_test.dart` covering synchronous initial routes, synchronous redirects, asynchronous redirects, and genuine unknown-route 404 rendering.
+
 ## 3.6.2
 
 ### Features

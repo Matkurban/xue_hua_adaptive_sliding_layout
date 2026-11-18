@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show SynchronousFuture;
 import 'package:material_ui/material_ui.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_route.dart';
@@ -540,23 +541,42 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     return true;
   }
 
-  Future<void> applyParsed(AdaptiveRouteMatchList configuration) async {
+  Future<void> applyParsed(
+    AdaptiveRouteMatchList configuration, {
+    bool notify = true,
+  }) {
     if (_ready && _sameUri(_current.uri, configuration.uri)) {
       _branchStore.disposeUnkeptMatches(configuration.matches, _current);
-      return;
+      return SynchronousFuture<void>(null);
     }
     if (_ready) {
       final removing = [
         for (final match in _current.matches.reversed)
           if (!_containsKey(configuration, match.pageKey)) match,
       ];
-      if (!await _allowExitAll(removing)) {
-        _branchStore.disposeUnkeptMatches(configuration.matches, _current);
-        _delegate.notify();
-        return;
+      if (removing.any((match) => match.route.onExit != null)) {
+        return _applyParsedWithExitGuard(
+          configuration,
+          removing,
+          notify: notify,
+        );
       }
     }
-    _setCurrent(configuration);
+    _setCurrent(configuration, notify: notify);
+    return SynchronousFuture<void>(null);
+  }
+
+  Future<void> _applyParsedWithExitGuard(
+    AdaptiveRouteMatchList configuration,
+    List<AdaptiveRouteMatch> removing, {
+    required bool notify,
+  }) async {
+    if (!await _allowExitAll(removing)) {
+      _branchStore.disposeUnkeptMatches(configuration.matches, _current);
+      _delegate.notify();
+      return;
+    }
+    _setCurrent(configuration, notify: notify);
   }
 
   /// 释放路由器持有的所有 [Signal]、分支栈匹配与代理监听器。
@@ -574,7 +594,7 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     }
   }
 
-  void _setCurrent(AdaptiveRouteMatchList next) {
+  void _setCurrent(AdaptiveRouteMatchList next, {bool notify = true}) {
     final restored = _branchStore.restoreArguments(next.matches, _current);
     if (!identical(restored, next.matches)) {
       next = next.copyWith(matches: restored);
@@ -592,7 +612,9 @@ class AdaptiveRouter implements RouterConfig<AdaptiveRouteMatchList> {
     if (next.branchIndex != null) {
       currentBranch.value = next.branchIndex!;
     }
-    _delegate.notify();
+    if (notify) {
+      _delegate.notify();
+    }
   }
 
   /// 将匹配结果 [list] 转换为顶层 redirect 或错误页使用的 [AdaptiveRouteState]。

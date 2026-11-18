@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show SynchronousFuture;
 import 'package:flutter/widgets.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_route.dart';
 import 'package:xue_hua_adaptive_sliding_layout/src/router/adaptive_route_match.dart';
@@ -18,34 +19,72 @@ class RouteRedirectResolver {
   final int redirectLimit;
 
   /// 解析 [uri] 并跑顶层 / 路由级 redirect。
+  ///
+  /// 所有命中的 redirect 均为同步返回（或未配置）时返回 [SynchronousFuture]，
+  /// 使 Flutter [Router] 能在首帧 `build()` 之前同步完成初始路由解析。
   Future<AdaptiveRouteMatchList> resolve(
     BuildContext context,
     Uri uri, {
     Object? arguments,
-  }) async {
+  }) {
+    return _resolveFrom(context, uri, 0, arguments: arguments);
+  }
+
+  Future<AdaptiveRouteMatchList> _resolveFrom(
+    BuildContext context,
+    Uri uri,
+    int startHop, {
+    Object? arguments,
+  }) {
     var current = uri;
-    for (var hop = 0; hop < redirectLimit; hop++) {
+    for (var hop = startHop; hop < redirectLimit; hop++) {
       if (!context.mounted) {
-        return registry.match(current, arguments: arguments);
+        return SynchronousFuture<AdaptiveRouteMatchList>(
+          registry.match(current, arguments: arguments),
+        );
       }
       final matched = registry.match(current, arguments: arguments);
       final state = stateFor(matched, current);
-      final top = await redirect?.call(context, state);
+      final top = redirect?.call(context, state);
+      if (top is Future<String?>) {
+        return _continueAfterTopRedirect(
+          context,
+          current,
+          hop,
+          matched,
+          top,
+          arguments: arguments,
+        );
+      }
       if (top != null && !_sameLocation(current, top)) {
         disposeMatches(matched.matches);
         current = parseLocation(top);
         continue;
       }
       if (!context.mounted) {
-        return matched;
+        return SynchronousFuture<AdaptiveRouteMatchList>(matched);
       }
       var redirected = false;
-      for (final match in matched.matches) {
-        if (!context.mounted) return matched;
-        final next = await match.route.redirect?.call(
+      for (var i = 0; i < matched.matches.length; i++) {
+        if (!context.mounted) {
+          return SynchronousFuture<AdaptiveRouteMatchList>(matched);
+        }
+        final match = matched.matches[i];
+        final next = match.route.redirect?.call(
           context,
           match.toState(current, error: matched.error),
         );
+        if (next is Future<String?>) {
+          return _continueAfterRouteRedirect(
+            context,
+            current,
+            hop,
+            matched,
+            i,
+            next,
+            arguments: arguments,
+          );
+        }
         if (next != null && !_sameLocation(current, next)) {
           current = parseLocation(next);
           redirected = true;
@@ -56,13 +95,103 @@ class RouteRedirectResolver {
         disposeMatches(matched.matches);
         continue;
       }
+      return SynchronousFuture<AdaptiveRouteMatchList>(matched);
+    }
+    return SynchronousFuture<AdaptiveRouteMatchList>(
+      AdaptiveRouteMatchList(
+        matches: const <AdaptiveRouteMatch>[],
+        uri: current,
+        error: Exception('Redirect loop after $redirectLimit hops'),
+      ),
+    );
+  }
+
+  Future<AdaptiveRouteMatchList> _continueAfterTopRedirect(
+    BuildContext context,
+    Uri current,
+    int hop,
+    AdaptiveRouteMatchList matched,
+    Future<String?> topFuture, {
+    Object? arguments,
+  }) async {
+    final top = await topFuture;
+    if (top != null && !_sameLocation(current, top)) {
+      disposeMatches(matched.matches);
+      final nextUri = parseLocation(top);
+      if (!context.mounted) {
+        return registry.match(nextUri, arguments: arguments);
+      }
+      return _resolveFrom(context, nextUri, hop + 1, arguments: arguments);
+    }
+    if (!context.mounted) {
       return matched;
     }
-    return AdaptiveRouteMatchList(
-      matches: const <AdaptiveRouteMatch>[],
-      uri: current,
-      error: Exception('Redirect loop after $redirectLimit hops'),
+    return _continueRouteRedirects(
+      context,
+      current,
+      hop,
+      matched,
+      0,
+      arguments: arguments,
     );
+  }
+
+  Future<AdaptiveRouteMatchList> _continueAfterRouteRedirect(
+    BuildContext context,
+    Uri current,
+    int hop,
+    AdaptiveRouteMatchList matched,
+    int index,
+    Future<String?> nextFuture, {
+    Object? arguments,
+  }) async {
+    final next = await nextFuture;
+    if (next != null && !_sameLocation(current, next)) {
+      disposeMatches(matched.matches);
+      final nextUri = parseLocation(next);
+      if (!context.mounted) {
+        return registry.match(nextUri, arguments: arguments);
+      }
+      return _resolveFrom(context, nextUri, hop + 1, arguments: arguments);
+    }
+    if (!context.mounted) {
+      return matched;
+    }
+    return _continueRouteRedirects(
+      context,
+      current,
+      hop,
+      matched,
+      index + 1,
+      arguments: arguments,
+    );
+  }
+
+  Future<AdaptiveRouteMatchList> _continueRouteRedirects(
+    BuildContext context,
+    Uri current,
+    int hop,
+    AdaptiveRouteMatchList matched,
+    int startIndex, {
+    Object? arguments,
+  }) async {
+    for (var i = startIndex; i < matched.matches.length; i++) {
+      if (!context.mounted) return matched;
+      final match = matched.matches[i];
+      final next = await match.route.redirect?.call(
+        context,
+        match.toState(current, error: matched.error),
+      );
+      if (next != null && !_sameLocation(current, next)) {
+        disposeMatches(matched.matches);
+        final nextUri = parseLocation(next);
+        if (!context.mounted) {
+          return registry.match(nextUri, arguments: arguments);
+        }
+        return _resolveFrom(context, nextUri, hop + 1, arguments: arguments);
+      }
+    }
+    return matched;
   }
 
   /// 将匹配结果 [list] 转换为顶层 redirect 或错误页使用的 [AdaptiveRouteState]。

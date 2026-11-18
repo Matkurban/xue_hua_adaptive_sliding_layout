@@ -26,7 +26,7 @@ class AdaptiveRouterDelegate extends RouterDelegate<AdaptiveRouteMatchList>
 
   @override
   Future<void> setInitialRoutePath(AdaptiveRouteMatchList configuration) {
-    return router.applyParsed(configuration);
+    return router.applyParsed(configuration, notify: false);
   }
 
   @override
@@ -92,6 +92,14 @@ class AdaptiveRouterDelegate extends RouterDelegate<AdaptiveRouteMatchList>
   }
 
   List<Page<dynamic>> _pages(BuildContext context) {
+    if (!router.isReady) {
+      return const <Page<dynamic>>[
+        AdaptiveContainerPage<void>(
+          key: ValueKey<String>('adaptive-empty'),
+          child: SizedBox.shrink(),
+        ),
+      ];
+    }
     final current = router.currentConfigurationMatchList;
     final pages = <Page<dynamic>>[];
     if (current.error != null &&
